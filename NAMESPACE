@@ -1,0 +1,71 @@
+# Export all names
+export(
+ anisoMatrix,krige,stackRasterList,
+ grfConditional,
+NNmat, gmrfPrecUncond,simLgcp,simPoissonPP,
+ lgm, excProb
+)
+
+export(GaussRF)
+S3method(GaussRF, Raster)
+S3method(GaussRF, SpatialPointsDataFrame)
+S3method(GaussRF, SpatialPoints)
+S3method(GaussRF, default)
+
+export(openmap)
+S3method(openmap, matrix)
+S3method(openmap, Extent)
+S3method(openmap, default)
+
+
+
+
+export( as.im )
+S3method(as.im, RasterLayer)
+S3method(as.im, default)
+
+export( GNcities)
+S3method(GNcities, matrix)
+S3method(GNcities, Extent)
+S3method(GNcities, default)
+
+export(likfit)
+S3method(likfit, SpatialPointsDataFrame)
+S3method(likfit, default)
+
+export(loglik.GRF)
+S3method(loglik.GRF, SpatialPointsDataFrame)
+S3method(loglik.GRF, default)
+
+export(maternGmrfPrec)
+S3method(maternGmrfPrec, dgCMatrix)
+S3method(maternGmrfPrec, matrix)
+S3method(maternGmrfPrec, default)
+
+export(variog)
+S3method(variog, SpatialPointsDataFrame)
+S3method(variog, default)
+
+export(variog.mc.env)
+S3method(variog.mc.env, SpatialPointsDataFrame)
+S3method(variog.mc.env, default)
+
+# Import all packages listed as Imports or Depends
+import(
+  sp,
+  raster,
+  Matrix
+)
+
+# used :: so don't need
+# importFrom(OpenStreetMap, openmap,openproj)
+# importFrom(RandomFields, GaussRF)
+# importFrom(geonames, GNcities)
+# importFrom(spatstat, as.im)
+# importFrom(pracma, trapz)
+
+importFrom(geoR, as.geodata, coords.aniso, varcov.spatial, 
+krige.control, krige.conv,
+	practicalRange, matern,pars.limits, output.control)
+
+import(spatstat)
