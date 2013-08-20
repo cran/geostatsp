@@ -1,15 +1,14 @@
 gmrfPrecUncond = function(x, 
 			N = attributes(x)$Nx, Ny=attributes(x)$Ny,
-			params = attributes(x)$model,
-			border=params["kappa"]+1){
-		if(!length(N) | !length(Ny) | !length(border) | !length(params))	
-			warning("border, N, Ny, or params were not supplied")
+			param = attributes(x)$model,
+			border=param["rough"]+1){
+		if(!length(N) | !length(Ny) | !length(border) | !length(param))	
+			warning("border, N, Ny, or param were not supplied")
 		if(border < 1) warning("border should be >1")
-
 		
-		if(!all(c("scale","prec","kappa","cellSize") %in% names(params))) {
-			warning("params needs scale, prec, kappa, cellSize")
-			print(params)
+		if(!all(c("scale","prec","rough","cellSize") %in% names(param))) {
+			warning("param needs scale, prec, rough, cellSize")
+			print(param)
 		}
 		
 	Nx=N
@@ -39,13 +38,13 @@ gmrfPrecUncond = function(x,
 			x=as.vector(distmat),#[lower.tri(distmat, diag=T)], 
 			uplo="L")
 	
-	cellSize = params["cellSize"]
-	scaleCell = params["scale"] * cellSize
+	cellSize = param["cellSize"]
+	scaleCell = param["scale"] * cellSize
 	distmat = distmat*scaleCell
 	covMat = distmat
-	covMat@x = (2^(1-params["kappa"])/(params["prec"]*gamma(params["kappa"]))) * 
-			covMat@x^params["kappa"] * besselK(covMat@x, nu=params["kappa"])
-	diag(covMat) = 1/params["prec"]
+	covMat@x = (2^(1-param["rough"])/(param["prec"]*gamma(param["rough"]))) * 
+			covMat@x^param["rough"] * besselK(covMat@x, nu=param["rough"])
+	diag(covMat) = 1/param["prec"]
 #	covChol = chol(covMat)
 #	covInvChol = solve(covChol)
 #	precOuter = solve(covMat)

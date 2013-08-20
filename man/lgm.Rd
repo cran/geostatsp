@@ -9,7 +9,7 @@
 Fits a   linear geostatistical model using Maximum Likelihood Estimation }
 \usage{
 lgm(data,  cells, covariates=NULL, formula=NULL,
-maternRoughness=1,fixMaternRoughness=TRUE, 
+rough=1,fixRough=TRUE, 
 aniso=FALSE, boxcox=1, fixBoxcox=TRUE,
  nugget = 0, fixNugget = FALSE,...)
 }
@@ -32,8 +32,8 @@ defaults to a linear combination of each of the layers in the \code{covariates} 
  the \code{data} object, and
  \code{formula} can be an integer or character string specifying the response variable. 
 }
-\item{maternRoughness}{Order of the Matern correlation}
-\item{fixMaternRoughness}{Set to \code{FALSE} to estimate the Matern order}
+\item{rough}{Order of the Matern correlation}
+\item{fixRough}{Set to \code{FALSE} to estimate the Matern order}
 \item{aniso}{Set to \code{TRUE} to use geometric anisotropy.}
 \item{boxcox}{Box-Cox transformation parameter, set to 1 for no transformation.}
 \item{fixBoxcox}{Set to \code{FALSE} to estimate the Box-Cox parameter.}

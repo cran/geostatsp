@@ -1,30 +1,18 @@
-GaussRF = function(x, ...) {
+GaussRF = function(x,param=c(variance=1, range=1, rough=1), ...) {
 	UseMethod("GaussRF")
 	
 }
 
-GaussRF.Raster = function(x, ...){
+GaussRF.Raster = function(x,param=c(variance=1, range=1, rough=1), ...){
 
 	xseq = seq(x@extent@xmin, x@extent@xmax, len=x@ncols)
 	yseq = seq(x@extent@ymin, x@extent@ymax, len=x@nrows)
 
-	thediffx = diff(range(diff(xseq)))
-	if(thediffx > 0) {
-		thediffx = signif(diff(xseq[1:2]), 10^-ceiling(log10(thediffx)+1))
-		xseq = seq(x@extent@xmin, by=thediffx, len=x@ncols )
-	}
-
-	thediffy = diff(range(diff(yseq)))
-	if(thediffy > 0) {
-		thediffy = signif(diff(yseq[1:2]), 10^-ceiling(log10(thediffy)+1))
-		yseq = seq(x@extent@ymin, by=thediffy, len=x@ncols )
-	}
+ 	
 	
 	
-	
-	res =RandomFields::GaussRF(
-			x=xseq, y=yseq,
-			grid=TRUE, 
+	res = GaussRF(x=xseq, param=param,
+			y=yseq,	grid=TRUE, 
 		...
 			)
 
@@ -36,33 +24,63 @@ GaussRF.Raster = function(x, ...){
 	return(resRast)
 }
 
-GaussRF.SpatialPointsDataFrame = function(x, ...){
+GaussRF.SpatialPointsDataFrame = function(x,param=c(variance=1, range=1, rough=1), ...){
 	
-	result =RandomFields::GaussRF(
-		x@coords,
-		...
-	)
-
-	return(result)
+	x=coordinates(x)
+	NextMethod("GaussRF")
 }
 
-GaussRF.SpatialPoints= function(x, ...){
+GaussRF.SpatialPoints= function(x,param=c(variance=1, range=1, rough=1), ...){
 	
-	result =RandomFields::GaussRF(
-			x@coords,
-			...
-	)
-	
-	return(result)
+	x=coordinates(x)
+	NextMethod("GaussRF")
 }
 
-GaussRF.default = function(x,  ...){
+GaussRF.default = function(x,param=c(variance=1, range=1, rough=1),  ...){
 	
+	
+ 	theArgs = list(...)
+	theArgs$x = x
+	
+	if(!any(names(theArgs)=="model")){
+		# param is for geostatsp, not RandomFields 
 
-	RandomFields::GaussRF(x,
-			...
-	)
+		requiredParams = c("variance","range","rough")
+		if(!all(requiredParams %in% names(param)))
+			warning("param has names", paste(names(param),collapse=","), 
+					" must have ", paste(requiredParams, collapse=","))
+
+		param["scale"] = 2*param["range"] 
+		
+		if(any(names(param)=="aniso.ratio")){
+			# geometric anisotropy
+			if(any(names(param)=="aniso.angle.degrees") & 
+					!any(names(param)=="aniso.angle.radians") ) {
+				param["aniso.angle.radians"] = param["aniso.angle.degrees"]*2*pi/360				
+		}
+			model=list("$", var=param["variance"],   
+					A=anisoMatrix(param["aniso.angle.radians"],
+							param["scale"]*c(param["aniso.ratio"],1)
+				),
+				list("matern", nu=param["rough"]))	
+		} else {
+		
+			model=list("$", var=param["variance"],   
+					s=param["scale"],
+					list("matern", nu=param["rough"]))	
+			
+		}	
+		theArgs$model = model	
+	} else {
+		if(!is.list(theArgs$model)) # if model is a list, it's the extended model definition which doesnt need the param argument
+			theArgs$param = param
+	}
 	
+	result = do.call( RandomFields::GaussRF, theArgs)
+	if(any(names(param)=="mean") )  {
+		result = result + param["mean"]
+	}
+	result	
 	
 }
 

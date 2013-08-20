@@ -7,7 +7,7 @@ openmap.matrix = function(upperLeft, ...){
 	if(!all(dim(upperLeft)==2)){
 		warning("wrong dimensions, is xlim a bounding box?")
 	}
-	OpenStreetMap::openproj(
+	openproj(
 	OpenStreetMap::openmap(
 			upperLeft=c(upperLeft[2,2],upperLeft[1,1]), 
 			lowerRight=c(upperLeft[2,1],upperLeft[1,2]),

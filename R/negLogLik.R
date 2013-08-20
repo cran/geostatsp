@@ -1,7 +1,11 @@
 
 ".negloglik.GRF" <-
 		function(pars, fp, ip, temp.list, likGRF.dists.vec)
-### pars : values for the parameters to be estimated
+	# this function is a modified version of the function of the same name 
+	# in the geoR package by Paulo Ribeiro and Peter Diggle
+	
+	
+	### pars : values for the parameters to be estimated
 ## sequence is c(phi, tausq, kappa, lambda, psiR, psiA, sigmasq)
 ### fixed pars: parameters considered fixed
 ### ind.pars : list indicating which are fixed and which are to be estimated
@@ -319,7 +323,7 @@
 		if(!is.null(v$crash.parms)) return(.Machine$double.xmax^0.5)
 		ivx <- solve(v$varcov,xmat)
 		xivx <- crossprod(ivx,xmat)
-		betahat <- try(geoR:::.solve.geoR(xivx,crossprod(ivx,z)), silent=TRUE)
+		betahat <- try(.solve.geoR(xivx,crossprod(ivx,z)), silent=TRUE)
 		if(inherits(betahat, "try-error")){
 			t.ei <- eigen(xivx, symmetric = TRUE)
 #      if(exists("trySilent"))
@@ -364,3 +368,119 @@
 		cat(paste("log-likelihood = ", -sumnegloglik, "\n"))
 	return(sumnegloglik) 
 }
+".solve.geoR" <-
+		function (a, b = NULL, ...) 
+{
+	# this function is a modified version of the function of the same name 
+	# in the geoR package by Paulo Ribeiro and Peter Diggle
+	
+	
+	a <- eval(a)
+	b <- eval(b)
+#  if(exists("trySilent")){
+	if (is.null(b)) res <- try(solve(a, ...), silent=TRUE)
+	else res <- try(solve(a, b, ...), silent=TRUE)
+#  }
+#  else{
+#    error.now <- options()$show.error.messages
+#    if (is.null(error.now) | error.now) 
+#      on.exit(options(show.error.messages = TRUE))
+#    options(show.error.messages = FALSE)
+#    if (is.null(b)) res <- try(solve(a, ...))
+#    else res <- try(solve(a, b, ...))
+#  }
+	if (inherits(res, "try-error")) {
+		test <- all.equal.numeric(a, t(a), 100 * .Machine$double.eps)
+		if(!(is.logical(test) && test)){
+			##      options(show.error.messages = TRUE)
+			stop("matrix `a' is not symmetric")
+		}
+		t.ei <- eigen(a, symmetric = TRUE)
+#    if(exists("trySilent")){
+		if (is.null(b))
+			res <- try(crossprod(t(t.ei$vec)/sqrt(t.ei$val)), silent=TRUE)
+		else
+			res <- try(crossprod(t(t.ei$vec)/sqrt(t.ei$val)) %*% b, silent=TRUE)
+#    }
+#    else{
+#      if (is.null(b)) res <- try(crossprod(t(t.ei$vec)/sqrt(t.ei$val)))
+#      else res <- try(crossprod(t(t.ei$vec)/sqrt(t.ei$val)) %*% b)
+#    }
+		if (any(is.na(res)) | any(is.nan(res)) | any(is.infinite(res))) 
+			oldClass(res) <- "try-error"
+	}
+	if (inherits(res, "try-error")) 
+		stop("Singular matrix. Covariates may have different orders of magnitude.")
+	return(res)
+}
+
+".geoR.cov.models" <-
+		c("matern", "exponential", "gaussian", "spherical",
+				"circular", "cubic", "wave", "linear", "power",
+				"powered.exponential", "stable", "cauchy", "gencauchy",
+				"gneiting", "gneiting.matern", "pure.nugget")
+
+"geoRCovModels" <- .geoR.cov.models
+
+".check.geoRparameters.values" <- function(list, messages = TRUE)
+{
+	if(!is.null(list$nugget))
+		if(list$nugget < 0) stop("value for nugget must be non-negative")
+	if(!is.null(list$psiA))
+		if(list$psiA < 0) stop("value for psiA must be non-negative")
+	if(!is.null(list$psiR))
+		if(list$psiR < 1) stop("value for psiA must be >= 1")
+	if(!is.null(list$kappa)){
+		if(is.null(list$cov.model)) stop("cov.model must be provided when checking values of kappa")
+		if(list$kappa[1] <= 0) stop("parameter kappa[1] must be greater than 0")
+		if(any(list$cov.model == c("powered.exponential", "matern", "gneiting.matern", "gencauchy","cauchy"))){
+			if(any(list$cov.model == c("gneiting.matern", "gencauchy"))){
+				if(length(list$kappa) != 2)
+					stop(paste("kappa must be of length 2 for the", list$cov.model, "correlation function"))
+				if(list$cov.model == "gencauchy" && (list$kappa[2] <=0 | list$kappa[2] >2))
+					stop("for the gencauchy model the kappa must be within (0,2]")          
+			}
+			else{
+				if(list$cov.model == "powered.exponential" && (list$kappa <=0 | list$kappa >2))
+					stop("for the powered.exponential model the kappa must be within (0,2]")          
+				if(list$cov.model == "stable" && (list$kappa <=0 | list$kappa >2))
+					stop("for the stable model the kappa must be within (0,2]")          
+			}
+		}
+		else{
+			if(messages && !is.null(list$kappa))
+				cat(paste("kappa not used for the",list$cov.model, "correlation function\n"))
+		}
+	}
+	return(invisible())
+}
+".negloglik.boxcox" <-
+		function(lambda.val, data, xmat, lik.method = "ML")
+{
+	if(length(lambda.val) == 2){
+		data <- data + lambda.val[2]
+		lambda <- lambda.val[1]
+	}
+	else lambda <- lambda.val
+	lambda <- unname(lambda)
+	n <- length(data)
+	beta.size <- ncol(xmat)
+	if(isTRUE(all.equal(unname(lambda), 0))) yt <- log(data)
+	else yt <- ((data^lambda) - 1)/lambda
+	beta <- solve(crossprod(xmat), crossprod(xmat, yt))
+	ss <- sum((drop(yt) - drop(xmat %*% beta))^2)
+	if(lik.method == "ML")
+		neglik <- (n/2) * log(ss) - ((lambda - 1) * sum(log(data)))
+	if(lik.method == "RML"){
+		xx <- crossprod(xmat)
+		if(length(as.vector(xx)) == 1)
+			choldet <- 0.5 * log(xx)
+		else
+			choldet <- sum(log(diag(chol(xx))))
+		neglik <- ((n-beta.size)/2) * log(ss) + choldet -
+				((lambda - 1) * sum(log(data)))
+	}
+	if(mode(neglik) != "numeric") neglik <- Inf
+	return(drop(neglik))
+}
+

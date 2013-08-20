@@ -1,19 +1,4 @@
-krigeNew = function(geodata, cells, covariates, 
-		parameters = c(sd=1, nuggetSd=0, range=1, 
-				angle=0,ratio=0,boxcox=0, "(Intercept)"=0),
-		exp.pred=FALSE, nugget.in.prediction=TRUE){
-	
 
-	# if some covariance parameters are missing, add them 
-	# as default values
-	optionalPars = c(nuggetSD=0, angel=0, ratio=0, boxcox=0)
-	for(D in names(optionalPars))
-		if(!any(names(parameters)==D))
-			parameters = c(parameters, optionalPars[D])
-			
-	
-	
-}
 
 krige = function(obj.model, geodata,  locations, covariates, 
 		locations.mean=locations,
@@ -56,16 +41,18 @@ if(class(covariates) == "list") {
 	themethod[thefactors] = "ngb"
 	
 	locations.mean = stackRasterList(covariates,locations.mean, themethod)	
-} else { # covariates must be a raster stack, use as-is
+} else if (class(covariates)=="RasterStack"){ # covariates must be a raster stack, use as-is
 	if(length(names(covariates))==1 & length(theCovs)==1) {
 		names(covariates) = theCovs
 	}
 	locations.mean = covariates
+} else {
+	# covariates must be null
 }
 
 
 if(!all(names(locations.mean)%in% theCovs))
-	warning("some covariates in the model formula weren't supplied")
+	warning("some covariates in the model formula weren't supplied\n they will be assumed to be zeros when making spatial predictions")
 
 # data frame of random field prediction locations 
 locationsDF = as.data.frame(locations, xy=TRUE)	
@@ -77,7 +64,7 @@ locationsDF = as.data.frame(locations, xy=TRUE)
 meanRaster = raster(locations.mean)
 meanRaster[] = obj.model$beta["(Intercept)"]
 
-for(D in theCovs){
+for(D in theCovs[theCovs %in% names(covariates)]){
 
 	if(varTypes[D] == "factor") {
 		if (D %in% names(factor.info)) {

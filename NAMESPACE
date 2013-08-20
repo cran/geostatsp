@@ -1,4 +1,4 @@
-# Export all names
+# functions that don't depend on other packages
 export(
  anisoMatrix,krige,stackRasterList,
  grfConditional,
@@ -6,28 +6,47 @@ NNmat, gmrfPrecUncond,simLgcp,simPoissonPP,
  lgm, excProb
 )
 
+export(matern)
+S3method(matern, Raster)
+S3method(matern, SpatialPointsDataFrame)
+S3method(matern, SpatialPoints)
+S3method(matern, dist)
+S3method(matern, default)
+
+# functions which depend on RandomFields
+importFrom(RandomFields, GaussRF)
 export(GaussRF)
 S3method(GaussRF, Raster)
 S3method(GaussRF, SpatialPointsDataFrame)
 S3method(GaussRF, SpatialPoints)
 S3method(GaussRF, default)
 
+# functions which depend on OpenStreetMap
+# OpenStreetMap is listed as Depends
+# since it doesn't seem to work well with Imports
+# importFrom(OpenStreetMap, openmap,openproj,plot.OpenStreetMap)
 export(openmap)
 S3method(openmap, matrix)
 S3method(openmap, Extent)
 S3method(openmap, default)
+#export(plot.OpenStreetMap)
+#S3method(plot, OpenStreetMap)
 
-
-
-
-export( as.im )
+# functions depending on spatstat
+importFrom(spatstat,as.im,as.im.matrix)
+export(as.im)
 S3method(as.im, RasterLayer)
-S3method(as.im, default)
 
+# functions depending on geonames
+importFrom(geonames, GNcities)
 export( GNcities)
 S3method(GNcities, matrix)
 S3method(GNcities, Extent)
 S3method(GNcities, default)
+
+importFrom(geoR, as.geodata, coords.aniso, varcov.spatial, 
+krige.control, krige.conv,
+	practicalRange, matern,pars.limits, output.control)
 
 export(likfit)
 S3method(likfit, SpatialPointsDataFrame)
@@ -50,22 +69,14 @@ export(variog.mc.env)
 S3method(variog.mc.env, SpatialPointsDataFrame)
 S3method(variog.mc.env, default)
 
+importFrom(Matrix,forceSymmetric,sparseMatrix)
+
 # Import all packages listed as Imports or Depends
 import(
   sp,
   raster,
-  Matrix
+  OpenStreetMap
 )
 
-# used :: so don't need
-# importFrom(OpenStreetMap, openmap,openproj)
-# importFrom(RandomFields, GaussRF)
-# importFrom(geonames, GNcities)
-# importFrom(spatstat, as.im)
-# importFrom(pracma, trapz)
+importFrom(pracma, trapz)
 
-importFrom(geoR, as.geodata, coords.aniso, varcov.spatial, 
-krige.control, krige.conv,
-	practicalRange, matern,pars.limits, output.control)
-
-import(spatstat)
