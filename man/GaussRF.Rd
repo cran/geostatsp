@@ -12,47 +12,71 @@ function in the \link[RandomFields]{RandomFields} package, where the arguments a
 are Raster or SpatialPoints objects.
 }
 \usage{
-	GaussRF(x,  ...)
-	\method{GaussRF}{Raster}(x,...)
-	\method{GaussRF}{SpatialPoints}(x,...)
-	\method{GaussRF}{SpatialPointsDataFrame}(x,...)
+	GaussRF(x, param=c(variance=1, range=1, rough=1), ...)
+	\method{GaussRF}{Raster}(x,param=c(variance=1, range=1, rough=1),...)
+	\method{GaussRF}{SpatialPoints}(x,param=c(variance=1, range=1, rough=1),...)
+	\method{GaussRF}{SpatialPointsDataFrame}(x,param=c(variance=1, range=1, rough=1),...)
 }
 
 \arguments{
 	\item{x}{An object of class \code{\link[raster]{raster}}, SpatialPoints, or SpatialPointsDataFrame,
 	or an object of a class acceptable to the  \code{\link[RandomFields]{GaussRF}} .}
-\item{...}{ additional arguments, see \code{\link[RandomFields]{GaussRF}} in the RandomFields package.}
+	\item{param}{A vector of named model parameters with, at a minimum names
+	\code{variance},  \code{range} and \code{rough}.  For Geometric Anisotropy add 
+	\code{aniso.ratio} and either \code{aniso.angle.degrees} or  
+		\code{aniso.angle.radians}
+	}
+	\item{...}{ additional arguments, see \code{\link[RandomFields]{GaussRF}} in the RandomFields package.}
 }
 
 \value{
 	If \code{x} is of class  \code{\link[raster]{raster}}, a random field is simulated on a grid and returned as a raster. 
 	 If \code{x} is of class Spatial
 	Points or SpatialPointsDataFrame, a random field is simulated at the points specified and a vector is returned.
+
+}
+\details{
+The formula for the Matern correlation function is
+\deqn{M(x) =  \frac{variance}{\Gamma(rough)} 2^{rough-1} 
+x (\sqrt{8 rough}/ range)^{rough}  
+besselK(x \sqrt{8 rough}/ range, rough) }{%
+             M(x) =   (variance / Gamma(rough)) 2^(rough-1) 
+x [sqrt(8 rough)/ range]^rough  
+besselK[x sqrt(8 rough)/ range, rough] 
+}
+
+The \code{range} parameter is sqrt(8*rough)*phi (for phi in the geoR package), 
+sqrt(8*rough)*scale (for 'scale' as in the whittle model in RandomFields), and
+2*scale (for 'scale' in the matern model in RandomFields).
+
+If an argument \code{model} is specified, parameters are passed directly to the RandomFields package and 
+	the parametrizations from that package are used.
 }
 
 \examples{
-mymodel = c(mean=0, variance=1, nugget=0, 
-				scale=2, alpha=2)
+mymodel = c(variance=1, range=2, rough=2, aniso.ratio=0.6, aniso.angle.degrees=30)
 
-myraster = raster(nrows=11,ncols=11,xmn=0,xmx=10,ymn=0,ymx=10)
+myraster = raster(nrows=40,ncols=40,xmn=-20,xmx=20,ymn=-15,ymx=15)
 
-myGRF=GaussRF(myraster, model="whittle", 
-		param=mymodel)
+myGRF=GaussRF(myraster, param=mymodel)
 
 plot(myGRF)
 
 mypoints = SpatialPointsDataFrame(cbind(runif(10), runif(10)),data=data.frame(id=1:10))
 
-mypoints$rf= GaussRF(mypoints, model="whittle", 
-		param=mymodel) 
+mypoints$rf= GaussRF(mypoints, param=mymodel) 
 
-spplot(mypoints, "rf")
+spplot(mypoints, "rf", col.regions=terrain.colors(5) )
 
 
-x = cbind(1:4, 1:4)
-temp=GaussRF(x, model="whittle", 
-		param=c(mean=0, variance=1, nugget=0, 
-				scale=2, alpha=2))
+x = cbind(sample(1:50), sample(1:50))
+temp=GaussRF(x,  
+		param=c(variance=1,	range=6, rough=2))
+quantile(temp)
 
+# passing parameters straight to RandomFields
+fromRF = GaussRF(myraster, param=c(mean=0.5, variance=1, nugget=0, 
+				scale=4, alpha=2), model="matern")
+plot(fromRF)
 
 }

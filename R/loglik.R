@@ -55,6 +55,10 @@ loglik.GRF.default =
 				trend="cte", method.lik="ML",
 				compute.dists = TRUE, realisations = NULL, ...)
 {
+	# this function is a modified version of the function loglik.GRF
+	# in the geoR package by Paulo Ribeiro and Peter Diggle
+	
+	
 	if(!is.null(obj.model)){
 		if(!is.null(obj.model$cov.model)) cov.model <- obj.model$cov.model
 		if(!is.null(obj.model$cov.pars)) cov.pars <- obj.model$cov.pars
@@ -149,7 +153,7 @@ loglik.GRF.default =
 		}
 		ivx <- solve(V$varcov,xmat[[i]])
 		xivx <- crossprod(ivx,xmat[[i]])
-		betahat <- geoR:::.solve.geoR(xivx, crossprod(ivx,data[[i]]))
+		betahat <- .solve.geoR(xivx, crossprod(ivx,data[[i]]))
 		res <- data[[i]] - xmat[[i]] %*% betahat
 		ssres <- drop(crossprod(res, solve(V$varcov,res)))
 		if(method.lik == "ML"){

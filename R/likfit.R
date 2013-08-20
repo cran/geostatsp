@@ -52,7 +52,9 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 				components = TRUE, nospatial = TRUE, limits = pars.limits(), 
 				print.pars = FALSE, messages, ...) 
 {
-
+	# this function is a modified version of the function `likfit' 
+	# in the geoR package by Paulo Ribeiro and Peter Diggle
+	
 	name.geodata <- deparse(substitute(geodata))
 	##
 	## Checking input
@@ -86,7 +88,7 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 
 	
 	if(missing(cov.model)) cov.model <- "matern"
-	cov.model <- match.arg(cov.model, choices = geoR:::.geoR.cov.models)
+	cov.model <- match.arg(cov.model, choices = .geoR.cov.models)
 	if(cov.model == "stable") cov.model <- "powered.exponential"
 	if(any(cov.model == c("power", "gneiting.matern", "gencauchy")))
 		stop(paste("parameter estimation for", cov.model, "is not yet implemented"))
@@ -101,7 +103,7 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 	if(fix.kappa) fixed.pars$kappa <- kappa
 	if(fix.psiA) fixed.pars$psiA <- psiA
 	if(fix.psiR) fixed.pars$psiR <- psiR
-	geoR:::.check.geoRparameters.values(list=fixed.pars, messages = messages.screen)
+	.check.geoRparameters.values(list=fixed.pars, messages = messages.screen)
 	if(cov.model == "matern" & all(kappa == 0.5)) cov.model <- "exponential"
 	temp.list$cov.model <- cov.model
 	if(cov.model == "powered.exponential")
@@ -145,7 +147,7 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 	xmat <- unclass(xmat)
 	if(nrow(xmat) != n)
 		stop("trend matrix has dimension incompatible with the data")
-	geoR:::.solve.geoR(crossprod(xmat))
+	 .solve.geoR(crossprod(xmat))
 	beta.size <- temp.list$beta.size <- dim(xmat)[2]
 	##
 	## setting a factor to indicate different realisations
@@ -676,7 +678,7 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 		xivy <- xivy + crossprod(ivyx[,-1],data.rep[[i]])
 		yivy <- yivy + crossprod(data.rep[[i]],ivyx[,1])
 	}
-	betahat <- geoR:::.solve.geoR(xivx, xivy)
+	betahat <-  .solve.geoR(xivx, xivy)
 	res <- as.vector(temp.list$z - xmat %*% betahat)
 	if(!fix.nugget | (nugget < 1e-12)){
 		ssres <- as.vector(yivy - 2*crossprod(betahat,xivy) +
@@ -691,7 +693,7 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 			tausq <- nugget
 	}
 	else tausq <- tausq * sigmasq
-	betahat.var <- geoR:::.solve.geoR(xivx)
+	betahat.var <-  .solve.geoR(xivx)
 	if(sigmasq > 1e-12) betahat.var <- sigmasq * betahat.var
 #  if(!fix.nugget & phi < 1e-16){
 #    tausq <- sigmasq + tausq
@@ -749,7 +751,7 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 	##
 	if(nospatial){
 		if(fix.lambda){
-			beta.ns <- geoR:::.solve.geoR(crossprod(xmat), crossprod(xmat, temp.list$z))
+			beta.ns <-  .solve.geoR(crossprod(xmat), crossprod(xmat, temp.list$z))
 			ss.ns <- sum((as.vector(temp.list$z - xmat %*% beta.ns))^2)
 			if(method.lik == "ML"){
 				nugget.ns <- ss.ns/n
@@ -764,24 +766,16 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 			lambda.ns <- lambda
 		}
 		else{
-			warning("this part hasn't been written in geostatsp, call geoR directly instead")
-			if(is.R())
-				lik.lambda.ns <- optim(par=1, fn = geoR:::.negloglik.boxcox,
+				lik.lambda.ns <- optim(par=1, fn =  .negloglik.boxcox,
 						method = "L-BFGS-B",
 						lower = limits$lambda["lower"],
 						upper = limits$lambda["upper"],
 						data = data, xmat = xmat,
 						lik.method = method.lik)
-			else
-				lik.lambda.ns <- nlminb(par=1, fn = geoR:::.negloglik.boxcox,
-						lower=limits$lambda["lower"],
-						upper=limits$lambda["upper"],
-						data = data, xmat = xmat,
-						lik.method = method.lik)
 			lambda.ns <- lik.lambda.ns$par
 			if(abs(lambda) < 0.0001) tdata.ns <- log(data)
 			else tdata.ns <- ((data^lambda.ns)-1)/lambda.ns
-			beta.ns <- geoR:::.solve.geoR(crossprod(xmat),crossprod(xmat,tdata.ns))
+			beta.ns <-  .solve.geoR(crossprod(xmat),crossprod(xmat,tdata.ns))
 			ss.ns <- sum((as.vector(tdata.ns - xmat %*% beta.ns))^2)
 			if(is.R())
 				value.min.ns <- lik.lambda.ns$value
@@ -798,6 +792,7 @@ likfit.SpatialPointsDataFrame <- function(geodata,
 			}      
 			npars.ns <- beta.size + 1 + !fix.lambda
 		}
+		
 		lik.results$nospatial <- list(beta.ns = beta.ns, variance.ns = nugget.ns,
 				loglik.ns = loglik.ns, npars.ns = npars.ns,
 				lambda.ns = lambda.ns, AIC.ns = -2 * (loglik.ns - npars.ns),

@@ -1,5 +1,5 @@
 lgm <- function(data,  cells, covariates=NULL, formula=NULL,
-		maternRoughness=1, fixMaternRoughness=TRUE,
+		rough=1, fixRough=TRUE,
 		aniso=FALSE, boxcox=1, fixBoxcox=TRUE,
 		nugget = 0, fixNugget = FALSE, ...){
 
@@ -45,17 +45,34 @@ lgm <- function(data,  cells, covariates=NULL, formula=NULL,
 	}
 	
 # extract covariates	
+	
+	# check for factors
+	allterms = rownames(attributes(terms(formula))$factors)
+	
+	allterms = gsub("^offset\\(", "", allterms)
+	alltermsWithF = gsub("\\)$", "", allterms)
+	theFactors = grep("^factor", alltermsWithF, value=T)
+	theFactors = gsub("^factor\\(", "", theFactors)
+	
+	notInData = allterms[! allterms %in% names(data)]
+	
 	# convert covariates to raster stack with same resolution of prediction raster.
+
 	if(!is.null(covariates)){
+		# extract covariate values and put in the dataset
+		
+		for(D in notInData) {
+			data[[D]] = extract(covariates[[D]], data)
+			# check for factors
+			
+			if(!is.null(levels(covariates[[D]]))){
+				data[[D]] = factor(data[[D]])
+			}
+		}	
+		
+		
 		method = rep("bilinear", length(covariates))
 		
-		# check for factors
-		allterms = rownames(attributes(terms(formula))$factors)
-		
-		allterms = gsub("^offset\\(", "", allterms)
-		alltermsWithF = gsub("\\)$", "", allterms)
-		theFactors = grep("^factor", alltermsWithF, value=T)
-		theFactors = gsub("^factor\\(", "", theFactors)
 		names(method)=names(covariates)
 		
 		if(!all(theFactors %in% c(names(covariates), names(data)))) {
@@ -66,25 +83,16 @@ lgm <- function(data,  cells, covariates=NULL, formula=NULL,
 		covariates = stackRasterList(covariates, cells, method=method)
 		
 	} 
-	notInData = allterms[! allterms %in% names(data)]
 	
 	if(! all(notInData %in% names(covariates)))
 		warning("some terms in the model are missing from both the data and the covariates")
-	for(D in notInData) {
-		data[[D]] = extract(covariates[[D]], data)
-		# check for factors
-		
-		if(!is.null(levels(covariates[[D]]))){
-			data[[D]] = factor(data[[D]])
-		}
-	}	
 	
 	dotdotnames = names(list(...))
-	# check for kappa and maternRoughness both specified
+	# check for kappa and rough both specified
 	if(length(grep("^kappa$", dotdotnames)) )
-		warning("specify `maternRoughness' instead of `kappa'")
+		warning("specify `rough' instead of `kappa'")
 	if(length(grep("^fix.kappa$", dotdotnames)) )
-		warning("specify `fixMaternRoughness' instead of `fix.kappa'")
+		warning("specify `fixRough' instead of `fix.kappa'")
 	if(length(grep("^cov.model$", dotdotnames)) )
 		warning("do not specify cov.model, `matern' will be used.")
 	if(length(grep("^(fix.psiA|fix.psiR)$", dotdotnames)) )
@@ -94,8 +102,8 @@ lgm <- function(data,  cells, covariates=NULL, formula=NULL,
 	# call likfit
 	
 	likRes =  likfit(geodata=data, formula=formula, 
-			cov.model="matern", kappa = maternRoughness, 
-		 	fix.kappa=fixMaternRoughness,
+			cov.model="matern", kappa = rough, 
+		 	fix.kappa=fixRough,
 			lambda=boxcox, fix.lambda=fixBoxcox,
 			fix.psiA=!aniso, fix.psiR=!aniso,
 			nugget=nugget, fix.nugget=fixNugget,
@@ -118,34 +126,45 @@ lgm <- function(data,  cells, covariates=NULL, formula=NULL,
 	}
 	
  	res$likfit = likRes
-	res$parameters = likRes$beta.table
+	res$parameters = as.data.frame(likRes$beta.table)
+	res$parameters$fixed=FALSE
 	
-	fill = rep(NA, dim(res$parameters)[2]-1)
+	fill = rep(NA, dim(res$parameters)[2]-2)
 	res$parameters = rbind(
 			res$parameters,
-			sd=c(sqrt(likRes$sigmasq), fill)
+			sd=c(sqrt(likRes$sigmasq), fill, 
+					FALSE)
 			)
-	if(!fixNugget) {
-		res$parameters = rbind(
+
+	res$parameters = rbind(
 				res$parameters,
-				nuggetSd=c(sqrt(likRes$nugget), fill)
-		)
-	}		
+				nuggetSd=c(sqrt(likRes$nugget), fill, fixNugget)
+	) 
 	
-	if(!fixMaternRoughness) {
-		res$parameters = rbind(
+	res$parameters = rbind(
 				res$parameters,
-				nuggetSd=c(likRes$kappa, fill)
-		)
-	}		
+				Matern=c(likRes$kappa, fill, fixRough)
+	)
 	
 	if(aniso) {
 		res$parameters = rbind(
 				res$parameters,
-				angle=c(likRes$aniso.pars["psiA"], fill),
-				ratio = c(likRes$aniso.pars["psiR"], fill)
+				angle=c(likRes$aniso.pars["psiA"], fill, FALSE),
+				ratio = c(likRes$aniso.pars["psiR"], fill, FALSE)
 		)
 	}		
+	
+	if(likRes$lambda != 1) {
+		res$parameters = rbind(
+				res$parameters,
+				BoxCox=c(likRes$lambda, fill, fixBoxcox)
+		)
+		
+	}
+		
+
+	res$parameters$fixed = as.logical(res$parameters$fixed)
+	
 	return(res)
 
 

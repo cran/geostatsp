@@ -20,25 +20,27 @@ maternGmrfPrec.matrix = function(N, ...) {
 }
 
 maternGmrfPrec.dgCMatrix = function(N, 	
-		params=c(var=1, range=1, kappa=1, cellSize=1),
+		param=c(variance=1, range=1, rough=1, cellSize=1),
 		adjust.edges=F,...) {
 
-	if(any(names(params)=="var") & !any(names(params)=="prec"))
-		params["prec"] = 1/params["var"]
-	if(any(names(params)=="range") & !any(names(params)=="scale"))
-		params["scale"] = 1/params["range"]
+	names(param) = gsub("^var$", "variance", names(param))
+	
+	if(any(names(param)=="variance") & !any(names(param)=="prec"))
+		param["prec"] = 1/param["variance"]
+	if(any(names(param)=="range") & !any(names(param)=="scale"))
+		param["scale"] = sqrt(8*param['rough'])/param["range"]
 
-	if(!all( c("prec","scale","kappa","cellSize")%in% names(params))) {
-		warning("params must have elements named kappa, cellSize, either prec or var, and either scale or range")
-	print(params)
+	if(!all( c("prec","scale","rough","cellSize")%in% names(param))) {
+		warning("param must have elements named rough, cellSize, either prec or variance, and either scale or range")
+	print(param)
 	}
 		
 	theNNmat = N
 	
-	scale=params["scale"]
-	prec=params["prec"]
-	kappa=params["kappa"]
-	cellSize=params["cellSize"]
+	scale=param["scale"]
+	prec=param["prec"]
+	kappa=param["rough"]
+	cellSize=param["cellSize"]
 	
 	scale = scale * cellSize
 	a = (scale^2 + 4) 
@@ -92,13 +94,13 @@ maternGmrfPrec.dgCMatrix = function(N,
 		Ny=attributes(theNNmat)$Ny 
 		
 		theNNmat = forceSymmetric(theNNmat)
-		attributes(theNNmat)$model =params
+		attributes(theNNmat)$model =param
 		attributes(theNNmat)$Nx =Nx 
 		attributes(theNNmat)$Ny =Ny
 		
 		if(adjust.edges){
 			theNNmat = gmrfPrecUncond(theNNmat)
-			attributes(theNNmat)$model =params
+			attributes(theNNmat)$model =param
 			attributes(theNNmat)$Nx =Nx 
 			attributes(theNNmat)$Ny =Ny
 		}

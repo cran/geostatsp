@@ -13,7 +13,7 @@ anisoMatrix(angle, range=NULL,scale=1/range)
 }
 \arguments{
   \item{angle}{
-	angle of rotaiton, in radians
+	angle of rotation, in radians
 }
   \item{range}{
 	range for x and y axes after rotation, ignored if scale is specified
@@ -39,11 +39,11 @@ Patrick Brown
 }
 \examples{
 
-myAnisoMat = anisoMatrix(-pi/8,c(0.5, 0.1))
+myAnisoMat = anisoMatrix(-pi/8, c(2, 0.5))
 
-mymodel=list("$", var=2,   
+mymodel=list("$", var=2,  
 		A=myAnisoMat,
-		list("whittle", 2))
+		list("matern", nu=2))
 		
 myraster = raster(nrows=41,ncols=41,xmn=0,xmx=10,ymn=0,ymx=10)
 

@@ -1,6 +1,5 @@
 \name{as.im}
 \alias{as.im}
-\alias{as.im.default}
 \alias{as.im.RasterLayer}
 
 
@@ -9,12 +8,12 @@
 Conversion between rasters and spatstat's im objects
 }
 \usage{
-	as.im(x,  ...)
-	\method{as.im}{RasterLayer}(x,...)
+	as.im(X, ...)
+	\method{as.im}{RasterLayer}(X,...)
 	}
 
 \arguments{
-	\item{x}{
+	\item{X}{
 A RasterLayer or an object acceptable to 
 \code{\link[spatstat]{as.im}}.}
 \item{...}{ additional arguments}

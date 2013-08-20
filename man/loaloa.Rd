@@ -3,6 +3,7 @@
 \alias{elevationLoa}
 \alias{eviLoa}
 \alias{ltLoa}
+\alias{tempLoa}
 \docType{data}
 \title{
 Loaloa prevalence data from 197 village surveys
@@ -17,6 +18,7 @@ of individuals tested and \code{y} being the number of positives.
 \code{elevationLoa} is a raster of elevation data.
 \code{eviLoa} is a raster of vegetation index for a specific date. \code{ltLoa} is land type.
 \code{ltLoa} is a raster of land types. 1     2     5     6     7     8     9    10    11    12    13    14    15
+\code{tempLoa} is a raster of average temperature in degrees C.
 }
 
 \source{
@@ -26,16 +28,44 @@ of individuals tested and \code{y} being the number of positives.
 }
 
 \examples{
+
+
 data(loaloa)
-plot(ltLoa, breaks = c(-0.5, levels(ltLoa)[[1]]$ID+0.5),
-col=levels(ltLoa)[[1]]$rgb, legend=FALSE)
+plot(loaloa)
 
-forLegend = as.numeric(names(sort(table(values(ltLoa)),decreasing=TRUE)))[1:4]
-forLegend = match(levels(ltLoa)[[1]]$ID , forLegend, nomatch = 0) > 0
+# elevation
+data(elevationLoa)
+plot(elevationLoa, col=terrain.colors(100))
+points(loaloa)
 
-legend("topright", fill=levels(ltLoa)[[1]][forLegend,"rgb"], 
-	legend=
-	substr(as.character(levels(ltLoa)[[1]][forLegend,"CLASSNAMES"]),1,24))
+# vegetation index
+data(eviLoa)
+plot(eviLoa)
+points(loaloa)
+
+data(tempLoa)
+plot(tempLoa)
+points(loaloa)
+
+data(ltLoa)
+# land type, a categorical variable
+commonValues  = sort(table(values(ltLoa)),decreasing=TRUE)[1:7]
+commonValues=commonValues[!names(commonValues)==0]
+
+thelevels = levels(ltLoa)[[1]]$ID
+thebreaks = c(-0.5, 0.5+thelevels)
+thecol = rep(NA, length(thelevels))
+names(thecol) = as.character(thelevels)
+
+thecol[names(commonValues)] = rainbow(length(commonValues))
+plot(ltLoa, breaks=thebreaks, col=thecol,legend=FALSE)
+legend("bottomleft",fill=thecol[names(commonValues)],
+		legend=levels(ltLoa)[[1]][
+						match(as.integer(names(commonValues)),
+								levels(ltLoa)[[1]]$ID),
+						"Category"],
+				bty='n'
+				)
 
 points(loaloa)
 

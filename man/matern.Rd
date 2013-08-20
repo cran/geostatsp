@@ -1,0 +1,136 @@
+\name{matern}
+\alias{matern}
+\alias{matern.default}
+\alias{matern.dist}
+\alias{matern.Raster}
+\alias{matern.SpatialPoints}
+\alias{matern.SpatialPointsDataFrame}
+
+\title{Evaluate the Matern correlation function}
+\description{
+Returns the Matern covariance for the distances supplied.
+}
+\usage{
+	matern( x, y=NULL, param=c(range=1, variance=1, rough=1))
+	\method{matern}{SpatialPoints}(x,  y=NULL, param)
+	\method{matern}{default}( x, y=NULL, param)
+	\method{matern}{dist}( x, y=NULL, param)
+	\method{matern}{Raster}( x, y=NULL, param)
+	\method{matern}{SpatialPointsDataFrame}(x, y=NULL, param)
+}
+
+\arguments{
+	\item{x}{A vector or matrix of distances, or \code{Raster} or
+	 \code{SpatialPoints} of locations, see Details below.}
+	 \item{y}{Covariance is calculated for the distance between locations in 
+	 \code{x} and \code{y}. If \code{y=NULL}, covariance 
+	 of \code{x} with itself is produced. 
+	 However, if \code{x} is a matrix or vector it is assumed to 
+	 be a set of distances and \code{y} is ignored.}
+	\item{param}{A vector of named model parameters with, at a minimum names
+ \code{range} and  \code{rough} (see Details), and optionally \code{variance} (defaults to 1).  
+	For Geometric Anisotropy add 
+	\code{aniso.ratio} and either \code{aniso.angle.degrees} or  
+		\code{aniso.angle.radians}
+	}
+}
+
+\value{
+	When \code{x} is a vector or matrix or object of class \code{dist}, a vector or matrix
+	of covariances is returned.  
+	With \code{x} being \code{SpatialPoints},  \code{y} must also be \code{SpatialPoints} and 
+	a matrix of correlations between \code{x} and \code{y}
+	is returned.	
+	When \code{x} is a Raster, and \code{y} is a single location 
+	a Raster of covariances between each pixel centre of \code{x} and \code{y} is returned.
+}
+
+\details{		
+The formula for the Matern correlation function is
+\deqn{M(x) =  \frac{variance}{\Gamma(rough)} 2^{rough-1} 
+x (\sqrt{8 rough}/ range)^{rough}  
+besselK(x \sqrt{8 rough}/ range, rough) }{%
+             M(x) =   (variance / Gamma(rough)) 2^(rough-1) 
+x [sqrt(8 rough)/ range]^rough  
+besselK[x sqrt(8 rough)/ range, rough] 
+}
+
+The \code{range} argument is sqrt(8*rough)*phi.geoR, sqrt(8*rough)*scale.whittle.RandomFields, and
+2*scale.matern.RandomFields.
+
+Geometric anisotropy is only avaliable when 
+\code{x} is a \code{Raster} or \code{SpatialPoints}.
+
+When \code{x} or \code{y} are rasters, cells are indexed row-wise starting at the top left.
+
+}
+
+\examples{
+# example with raster
+myraster = raster(nrows=20,ncols=30,xmn=-3,xmx=3,ymn=-2,ymx=2)
+param = c(range=2, rough=2,	aniso.ratio=0.6, aniso.angle.degrees=30)
+
+# plot correlation of each cell with the origin
+myMatern = matern(myraster, c(0,0), param)
+
+plot(myMatern)
+
+
+# correlation matrix for all cells with each other
+myraster = raster(nrows=4,ncols=6,xmn=-3,xmx=3,ymn=-2,ymx=2)
+myMatern = matern(myraster, param=c(range=2, rough=2))
+dim(myMatern)
+
+# plot the cell ID's
+values(myraster) = seq(1, ncell(myraster))
+mydf = as.data.frame(myraster, xy=TRUE)
+plot(mydf$x, mydf$y, type='n')
+text(mydf$x, mydf$y, mydf$layer)
+# correlation between bottom-right cell and top right cell is
+myMatern[6,24]
+
+# example with points
+mypoints = SpatialPointsDataFrame(cbind(runif(5), runif(5)),data=data.frame(id=1:5))
+matern(mypoints, param=param)
+#x=mypoints;y=NULL;param=param
+
+# example with vector of distances
+range=3
+distVec = seq(0, 2*range, len=100)
+roughSeq = c(0.5, 1, 2,20)
+theCov = NULL
+for(D in roughSeq) {
+	theCov = cbind(theCov, matern(distVec, param=c(range=range, rough=D)))
+}
+matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation')
+legend("topright", fill=1:length(roughSeq), legend=roughSeq,title='rough')
+# exponential
+
+distVec2 = seq(0, max(distVec), len=20)
+points(distVec2, exp(-2*(distVec2/range)),cex=0.5)
+# gaussian
+points(distVec2, exp(-2*(distVec2/range)^2), col='blue',cex=0.5)
+legend("right", pch=1, col=c('black','blue'), legend=c('exp','gau'))
+
+# comparing to geoR and RandomFields
+
+covGeoR = covRandomFields = NULL
+
+for(D in roughSeq) {
+	covGeoR = cbind(covGeoR, 
+		geoR::matern(distVec, phi=param["range"]/sqrt(8*D), kappa=D))
+	covRandomFields = cbind(covRandomFields,
+		RandomFields::CovarianceFct(distVec, model="matern", 
+			param = c(mean=0, variance=1, nugget=0, 
+			scale=param["range"]/2, nu=D) ))
+}
+
+matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation')
+matpoints(distVec, covGeoR, cex=0.5, pch=1)
+matpoints(distVec, covGeoR, cex=0.5, pch=2)
+
+
+ 
+}
+
+

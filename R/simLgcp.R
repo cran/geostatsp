@@ -23,19 +23,17 @@ simPoissonPP = function(intensity) {
 }
 
 simLgcp = function(param, covariates=NULL, betas=NULL, 
-		rasterTemplate=covariates[[1]], model="whittle", ...) {
+		rasterTemplate=covariates[[1]],  ...) {
 	
-	param["nugget"] = 0
-	param = param[c("mean","variance","nugget", 
-				"scale" ,"alpha")]
 	
 	if(!is.null(covariates))
 		covariates = stackRasterList(covariates, rasterTemplate)
 
-	randomEffect = GaussRF(rasterTemplate, model=model, 
-					param=param, ...)
+	randomEffect = GaussRF(rasterTemplate, param=param, ...)
+
 
 	linearPredictor = randomEffect
+	
 	if(is.null(names(betas)))
 		names(betas) = names(covariates)
 	
