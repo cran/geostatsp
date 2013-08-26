@@ -6,7 +6,7 @@ ltLoa
 murder: murder torontoBorder torontoNight
 nn32: nn128 nn32 nn64
 rongelapUTM
-swissRain: swissAltitude swissBorder swissRain
+swissRain: swissAltitude swissBorder swissLandType swissRain
 tempLoa
 torontoPop: torontoIncome torontoPdens
 wheat

@@ -6,32 +6,29 @@
  Linear Geostatistical Models
 }
 \description{
-Fits a   linear geostatistical model using Maximum Likelihood Estimation }
+Calculate MLE's of model parameters and perform spatial prediction. }
 \usage{
-lgm(data,  cells, covariates=NULL, formula=NULL,
-rough=1,fixRough=TRUE, 
-aniso=FALSE, boxcox=1, fixBoxcox=TRUE,
- nugget = 0, fixNugget = FALSE,...)
+lgm(data, locations, covariates = NULL, formula = NULL, rough = 1, 
+    fixRough = TRUE, aniso = FALSE, boxcox = 1, fixBoxcox = TRUE, 
+    nugget = 0, fixNugget = FALSE, expPred = FALSE, nugget.in.prediction = TRUE) 
+
 }
  
 \arguments{
-\item{data}{
-An object of class \code{ SpatialPointsDataFrame} containing the data.
+ \item{data}{
+A SpatialPointsDataFrame containing  the data to be interpolated, or a vector of observed data
 }
-\item{cells}{Either an integer giving the number of cells in the x direction, or a raster object which 
-will be used for the spatial random effect.  If the cells in the raster are not square, the resolution in the y direction 
-will be adjusted to make it so.}
-\item{covariates}{Either a single raster, a list of rasters or a raster stack containing covariate values used when 
-making spatial predictions.  Names of the raster layers or list elements correspond to names in the formula.  If
-a covariate is missing from the data object it will be extracted from the rasters.  Defaults to \code{NULL} for an 
-intercept-only model.
+
+
+\item{covariates}{
+The spatial covariates used in prediction, either a \code{\link[raster]{raster}} stack or list of rasters.
+Covariates in \code{formula} but not in \code{data} will be extracted from \code{covariates}.
 }
-\item{formula}{Fixed effects formula, 
-defaults to a linear combination of each of the layers in the \code{covariates} object.   
- The response variable defaults to the first variable in 
- the \code{data} object, and
- \code{formula} can be an integer or character string specifying the response variable. 
-}
+
+\item{locations}{Either a \code{\link[raster]{raster}}, or a single integer giving the
+number of cells in the X direction which predictions will be made on.  If the later
+the predictions will be a raster of square cells covering the bounding box of \code{locations}.}
+\item{formula}{A model formula for the fixed effects.}
 \item{rough}{Order of the Matern correlation}
 \item{fixRough}{Set to \code{FALSE} to estimate the Matern order}
 \item{aniso}{Set to \code{TRUE} to use geometric anisotropy.}
@@ -39,33 +36,30 @@ defaults to a linear combination of each of the layers in the \code{covariates} 
 \item{fixBoxcox}{Set to \code{FALSE} to estimate the Box-Cox parameter.}
 \item{nugget}{Value for the nugget effect (observation error}
 \item{fixNugget}{Set to \code{FALSE} to estimate the nugget effect parameter.}
-\item{...}{Additional options passed to  \code{\link{likfit}}}
+
+ \item{expPred}{
+Should the predictions be exponentiated, defaults to \code{FALSE}.
+}
+\item{nugget.in.prediction}{If \code{TRUE}, predict new observations by adding the 
+nugget effect.  The prediction variances will be adjusted accordingly, and the predictions 
+on the natural scale for logged or Box Cox transformed data will be affected. 
+Otherwise predict fitted values. 
+}
 }
 \details{
 Calls  \code{\link{likfit}} and  \code{\link{krige}}
 }
 \value{
-If the prediction locations are identical for the fixed effects and random effects, a single raster stack is 
+A raster stack is 
 returned with the following layers:
 \item{fixed}{Estimated means from the fixed effects portion of the model}
 \item{random}{Predicted random effect}
-\item{krige.var}{Conditional variance of predicted random effect (on the transformed scale if applicable)}
-\item{predict}{Prediction of the response, sum of fixed and random effects.  If exp.pred is TRUE, gives predictions
-on the exponentated scale, and half of krige.var is added prior to exponentiating}
-\item{predict.log}{If exp.pred=TRUE, the prediction of the logged process.}
-If the prediction locations are different for fixed and random effects (typically coarser for the random 
-effects), a list with two raster stacks is returned.
+\item{krigeSd}{Conditional standard deviation of predicted random effect (on the transformed scale if applicable)}
+\item{predict}{Prediction of the response, sum of predicted fixed and random effects.  
+For Box-Cox or log-transformed data on the natural (untransformed) scale.  
+}
+\item{predict.log}{If \code{exp.pred=TRUE}, the prediction of the logged process.}
 \item{predict.boxcox}{If a box cox transformation was used, the prediction of the process on the transformed scale.}
-If the prediction locations are different for fixed and random effects (typically coarser for the random 
-effects), a list with two raster stacks is returned.
-\item{prediction}{A raster stack as above, though the random effect prediction is resampled to the 
-same locations as the fixed effects.}
-\item{random}{the predictions and conditional variance of the random effects, on the same
-raster as \code{cells}}
-Additionally, returned are
-\item{parameters}{A data frame with parameter estimates, and standard errors of the fixed
-effects parameters}
-\item{likfit}{results from \code{\link{likfit}}}
 }
 
 \seealso{
@@ -75,22 +69,41 @@ effects parameters}
 
 data(swissRain)
  
-swissRes =  lgm(swissRain, cells=30, formula="rain",
+swissRes =  lgm(swissRain, locations=30, formula="rain",
 	covariates=swissAltitude, boxcox=0.5, fixBoxcox=TRUE, 
-	aniso=TRUE, 
-	# starting values, arguments as in geoR::likfit
-	ini.cov.pars=c(70, 20000), psiA=0.65, psiR=8
+	aniso=TRUE
 	)
+	
 
-swissRes$parameters
+swissRes$summary
 
 plot(swissRes$predict[["predict"]]) 
+plot(swissBorder, add=TRUE)
+
+
+swissRes2 =  lgm(swissRain, locations=30, formula=rain ~ elev + factor(land),
+	covariates=list(elev=swissAltitude,land=swissLandType), 
+	boxcox=0.5, fixBoxcox=TRUE, 
+	aniso=TRUE
+	)
+swissRes2$summary
+
 \dontrun{
 load(url("http://www.filefactory.com/file/frd1mhownd9/n/CHE_adm0_RData"))
-plot(spTransform(gadm, swissRain@proj4string), add=TRUE)
-}
+theMap = openmap(gadm@bbox,zoom=7, type="mapquest")#"osm-transport")
+library(RColorBrewer)
+par(mar=c(0,0,0,3))
+plot(gadm) 
+plot(theMap, add=TRUE)
+plot(mask(projectRaster(
+	swissRes2$predict[["predict"]],  crs=gadm@proj4string),gadm), 
+add=T,alpha=0.6, col=brewer.pal(9, "Blues"))
+plot(gadm, add=TRUE)
 
 }
 
 
- 	
+
+}
+
+ 

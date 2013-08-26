@@ -1,9 +1,9 @@
 # functions that don't depend on other packages
 export(
- anisoMatrix,krige,stackRasterList,
+ krige,stackRasterList,
  grfConditional,
 NNmat, gmrfPrecUncond,simLgcp,simPoissonPP,
- lgm, excProb
+ lgm, excProb, likfitLgm, loglikLgm
 )
 
 export(matern)
@@ -44,17 +44,9 @@ S3method(GNcities, matrix)
 S3method(GNcities, Extent)
 S3method(GNcities, default)
 
-importFrom(geoR, as.geodata, coords.aniso, varcov.spatial, 
-krige.control, krige.conv,
-	practicalRange, matern,pars.limits, output.control)
+importFrom(geoR, as.geodata)
 
-export(likfit)
-S3method(likfit, SpatialPointsDataFrame)
-S3method(likfit, default)
 
-export(loglik.GRF)
-S3method(loglik.GRF, SpatialPointsDataFrame)
-S3method(loglik.GRF, default)
 
 export(maternGmrfPrec)
 S3method(maternGmrfPrec, dgCMatrix)
@@ -69,13 +61,13 @@ export(variog.mc.env)
 S3method(variog.mc.env, SpatialPointsDataFrame)
 S3method(variog.mc.env, default)
 
-importFrom(Matrix,forceSymmetric,sparseMatrix)
 
 # Import all packages listed as Imports or Depends
 import(
   sp,
   raster,
-  OpenStreetMap
+  OpenStreetMap,
+  Matrix
 )
 
 importFrom(pracma, trapz)
