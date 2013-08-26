@@ -5,54 +5,43 @@
 Spatial prediction, or Kriging
 }
 \description{
-This function uses the  \code{\link[geoR]{krige.control}} and  \code{\link[geoR]{krige.conv}} functions
-in geoR to perform spatial prediction using a fitted model from \code{\link{likfit}}.
+Perform spatial prediction, producing a raster of predictions and conditional standard deviations.
 }
 \usage{
-krige(obj.model, geodata, locations, covariates, locations.mean = locations,
-   factor.info = NULL, 
-	exp.pred = FALSE, rasterMethod = c("ngb", "bilinear"),
-	nugget.in.prediction=TRUE, ...)
+krige(data, trend, coordinates = data, param, locations, 
+    covariates = list(), expPred = FALSE, nugget.in.prediction = TRUE,
+    conditionalVarianceMatrix=FALSE)
 }
  
 \arguments{
-  \item{obj.model}{
-A fitted model produced by \code{\link{likfit}}
+  \item{data}{
+A SpatialPointsDataFrame containing  the data to be interpolated, or a vector of observed data
 }
-  \item{geodata}{
-A SpatialPointsDataFrame containing  the data used with \code{\link{likfit}}.
-}
-  \item{locations}{
-A \code{\link[raster]{raster}} on which the spatial random effects will be predicted, or an integer specifying
-the number of cells in the x dimension for a raster with square cells covering \code{geodata}.
-}
-  \item{covariates}{
+\item{trend}{Either a model formula, or a data frame of linear covariates.}
+
+\item{coordinates}{A SpatialPoints object giving the locations of the observed data.  
+If \code{data} is a SpatialPointsDataFrame coordinates is not necessary.}
+\item{covariates}{
 The spatial covariates used in prediction, either a \code{\link[raster]{raster}} stack or list of rasters.
 }
-  \item{locations.mean}{
-A \code{\link[raster]{raster}} on which the fixed effects component of the model is predicted.  Defaults
-to the same raster as used for the random effects.  Ignored if \code{covariates} is a raster stack.
+\item{param}{A vector of named model parameters, as produced by \code{\link{likfitLgm}}
 }
-  \item{factor.info}{
-A list of data frames, with first column being levels and second column being labels for covariates which are 
-factors.  Useful if the rasters containing categorical covariates are integers corresponding to different 
-categories from those used in \code{geodata}.
+\item{locations}{Either a \code{\link[raster]{raster}}, or a single integer giving the
+number of cells in the X direction which predictions will be made on.  If the later
+the predictions will be a raster of square cells covering the bounding box of \code{locations}.}
+  \item{expPred}{
+Should the predictions be exponentiated, defaults to \code{FALSE}.
 }
-  \item{exp.pred}{
-Should the predictions be exponentiated, defaults to false.
+\item{nugget.in.prediction}{If \code{TRUE}, predict new observations by adding the 
+nugget effect.  The prediction variances will be adjusted accordingly, and the predictions 
+on the natural scale for logged or Box Cox transformed data will be affected. 
+Otherwise predict fitted values. 
 }
-  \item{rasterMethod}{
-Method for reprojecting or resampling rasters, either "bilinear" or "ngb". Any covariates which are factors
-will be reprojected with ngb even if bilinear is specified.
-}
-\item{nugget.in.prediction}{If TRUE, predict new observations by adding the nugget effect.  Otherwise
-predict fitted values.  Only relevant for Box-Cox or log transformed data.
-}
-\item{...}{Additional arguments, currently none
-}
+\item{conditionalVarianceMatrix}{Return the full conditional variance matrix.}
 }
 \details{
-This function is essentially a wrapper for \code{\link[geoR]{krige.conv}}.
+Given the model parameters and observed data, conditional means and variances of the spatial random field
+are computed.
 }
 \value{
 If the prediction locations are identical for the fixed effects and random effects, a single raster stack is 
@@ -78,33 +67,55 @@ raster as \code{locations}}
 
 
 \seealso{
-\code{\link[geoR]{krige.conv}}
+\code{\link{lgm}}
 }
 \examples{
 data(swissRain)
 swissRain$lograin = log(swissRain$rain)
 swissRain$elevation = extract(swissAltitude, swissRain)
-swissFit =  likfit(swissRain, lograin ~ elevation, 
-	cov.model="matern", kappa = 2, fix.kappa=TRUE)
-swissRaster = raster(extent(swissRain@bbox), ncols=61, nrows=91, 
-  crs=swissRain@proj4string)	
-swissKrige = krige(swissFit, swissRain, swissRaster, swissAltitude)
 
+swissFit = likfitLgm(data=swissRain, 
+			trend=lograin~ elevation,
+			param=c(range=46500, nugget=0.05,rough=1,  
+					aniso.angle.degrees=35, aniso.ratio=12),
+			paramToEstimate = c("range","nugget", 
+				"aniso.angle.degrees", "aniso.ratio"),
+			parscale = c(range=5000,nugget=0.01, 
+				aniso.ratio=1,aniso.angle.degrees=5)
+)
 
-swissFit =  likfit(swissRain, lograin ~ elevation, 
-	cov.model="matern", kappa = 2, fix.kappa=TRUE,
-	lambda=0.5, fix.lambda=TRUE,
-	ini.cov.pars= c(0.6, 7000))
-swissKrige = krige(obj.model=swissFit, geodata=swissRain, 
-	locations=swissRaster, covariates=swissAltitude)
-
+# make sure krige can cope with missing values!
+swissAltitude[1:50,1:50] = NA
+swissKrige = krige(data=swissRain, trend = swissFit$trend,
+	covariates = swissAltitude,  
+	param=swissFit$param,
+	locations = 40)
 
 plot(swissKrige[["predict"]])
 plot(swissBorder, add=TRUE)
 
- 
+# now with box cox and provide a raster for prediction
+
+swissFit2 = likfitLgm(data=swissRain, 
+			trend=rain~1,
+			param=c(range=52000, nugget=0.1,rough=1, boxcox=0.5,
+					aniso.angle.degrees=35, aniso.ratio=8),
+			paramToEstimate = c("range","nugget", 
+				"aniso.angle.degrees", "aniso.ratio"),
+			parscale = c(range=5000,nugget=0.01, 
+				aniso.ratio=1,aniso.angle.degrees=5)
+)
+swissRaster = raster(extent(swissBorder), nrows=25, ncols=40)
+
+
+swissKrige2 = krige(data=swissRain, trend = swissFit2$trend,
+	  param=swissFit2$param,
+	locations = swissRaster, expPred=TRUE)
+
+plot(swissKrige2[["predict"]])
+plot(swissBorder, add=TRUE)
+
+
+
 
 }
-
- 
-

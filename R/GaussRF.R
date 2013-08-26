@@ -21,6 +21,8 @@ GaussRF.Raster = function(x,param=c(variance=1, range=1, rough=1), ...){
 			x@extent@xmin, x@extent@xmax,
 			x@extent@ymin, x@extent@ymax, crs=x@crs)
 	
+	#attributes(resRast)$param = attributes(res)$param
+	
 	return(resRast)
 }
 
@@ -50,7 +52,7 @@ GaussRF.default = function(x,param=c(variance=1, range=1, rough=1),  ...){
 			warning("param has names", paste(names(param),collapse=","), 
 					" must have ", paste(requiredParams, collapse=","))
 
-		param["scale"] = 2*param["range"] 
+		param["scaleRandomFields"] = param["range"]/2 
 		
 		if(any(names(param)=="aniso.ratio")){
 			# geometric anisotropy
@@ -58,15 +60,22 @@ GaussRF.default = function(x,param=c(variance=1, range=1, rough=1),  ...){
 					!any(names(param)=="aniso.angle.radians") ) {
 				param["aniso.angle.radians"] = param["aniso.angle.degrees"]*2*pi/360				
 		}
+		
+		scaleTwoDirections = c(1/param["scaleRandomFields"],
+				1/(param["aniso.ratio"]*param["scaleRandomFields"]))
+		angle = param["aniso.angle.radians"]
+		anisoMat = diag(scaleTwoDirections) %*% 
+				matrix(c(cos(angle), sin(angle), 
+								-sin(angle), cos(angle)),2)
+		
+		
 			model=list("$", var=param["variance"],   
-					A=anisoMatrix(param["aniso.angle.radians"],
-							param["scale"]*c(param["aniso.ratio"],1)
-				),
+					A=anisoMat,
 				list("matern", nu=param["rough"]))	
 		} else {
 		
 			model=list("$", var=param["variance"],   
-					s=param["scale"],
+					s=param["scaleRandomFields"],
 					list("matern", nu=param["rough"]))	
 			
 		}	
@@ -77,9 +86,10 @@ GaussRF.default = function(x,param=c(variance=1, range=1, rough=1),  ...){
 	}
 	
 	result = do.call( RandomFields::GaussRF, theArgs)
-	if(any(names(param)=="mean") )  {
-		result = result + param["mean"]
-	}
+
+	# some things break (such as spplot) if I add this as an attribute
+	#attributes(result)$param = param
+	
 	result	
 	
 }

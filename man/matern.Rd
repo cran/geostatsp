@@ -58,17 +58,25 @@ besselK[x sqrt(8 rough)/ range, rough]
 The \code{range} argument is sqrt(8*rough)*phi.geoR, sqrt(8*rough)*scale.whittle.RandomFields, and
 2*scale.matern.RandomFields.
 
-Geometric anisotropy is only avaliable when 
-\code{x} is a \code{Raster} or \code{SpatialPoints}.
+Geometric anisotropy is only available when 
+\code{x} is a \code{Raster} or \code{SpatialPoints}.  The parameter 'aniso.angle' refers to 
+rotation of the coordinates anti-clockwise by the specified amount prior to 
+calculating distances, which has the effect that the contours of the correlation function
+are rotated clockwise by this amount. \code{aniso.ratio} is the amount the Y coordinates are 
+divided by
+by post rotation prior to calculating distances.  A large value of \code{aniso.ratio}
+makes the Y coordinates smaller and increases the correlation in the
+Y direction.
 
-When \code{x} or \code{y} are rasters, cells are indexed row-wise starting at the top left.
+When \code{x} or \code{y} are rasters, cells are indexed row-wise 
+starting at the top left.
 
 }
 
 \examples{
 # example with raster
-myraster = raster(nrows=20,ncols=30,xmn=-3,xmx=3,ymn=-2,ymx=2)
-param = c(range=2, rough=2,	aniso.ratio=0.6, aniso.angle.degrees=30)
+myraster = raster(nrows=40,ncols=60,xmn=-3,xmx=3,ymn=-2,ymx=2)
+param = c(range=2, rough=2,	aniso.ratio=2, aniso.angle.degrees=-25)
 
 # plot correlation of each cell with the origin
 myMatern = matern(myraster, c(0,0), param)
@@ -92,8 +100,8 @@ myMatern[6,24]
 # example with points
 mypoints = SpatialPointsDataFrame(cbind(runif(5), runif(5)),data=data.frame(id=1:5))
 matern(mypoints, param=param)
-#x=mypoints;y=NULL;param=param
 
+ 
 # example with vector of distances
 range=3
 distVec = seq(0, 2*range, len=100)
@@ -118,16 +126,16 @@ covGeoR = covRandomFields = NULL
 
 for(D in roughSeq) {
 	covGeoR = cbind(covGeoR, 
-		geoR::matern(distVec, phi=param["range"]/sqrt(8*D), kappa=D))
+		geoR::matern(distVec, phi=range/sqrt(8*D), kappa=D))
 	covRandomFields = cbind(covRandomFields,
 		RandomFields::CovarianceFct(distVec, model="matern", 
 			param = c(mean=0, variance=1, nugget=0, 
-			scale=param["range"]/2, nu=D) ))
+			scale=range/2, nu=D) ))
 }
 
 matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation')
 matpoints(distVec, covGeoR, cex=0.5, pch=1)
-matpoints(distVec, covGeoR, cex=0.5, pch=2)
+matpoints(distVec, covRandomFields, cex=0.5, pch=2)
 
 
  

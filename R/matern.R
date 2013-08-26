@@ -4,13 +4,23 @@ matern = function(x, y=NULL, param=c(range=1, variance=1, rough=1)) {
 }
 
 matern.dist = function( x, y=NULL, param=c(range=1, variance=1, rough=1)) {
-	x = as.matrix(x)
-	NextMethod("matern")
+
+	resultVec = matern(as.vector(x), param=param)
+	resultMat = matrix(0, attributes(x)$Size, 
+			attributes(x)$Size)
+	resultMat[lower.tri(resultMat)] = resultVec
+
+	result = new("dsyMatrix", 
+			Dim = dim(resultMat), uplo="L",
+			x=c(resultMat))
+	Matrix::diag(result) = attributes(resultVec)$param["variance"]
+	attributes(result)$param = attributes(resultVec)$param	
+	result
 }
 
 matern.SpatialPointsDataFrame = function( x, y=NULL, param=c(range=1, variance=1, rough=1)) {
 	x = SpatialPoints(x)
-	NextMethod("matern")
+	matern(x=x, y=y, param=param)
 }
 
 
@@ -43,13 +53,19 @@ matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, rough=1)
 		if(length(grep("SpatialPoints", class(y)))) {
 			y = y@coords[,1] + 1i*y@coords[,2]  
 		}
+		if(length(grep("^Raster", class(y)))) {
+			y = as.data.frame(y, xy=TRUE)
+			y = y[,"x"] + 1i*y[,"y"]  
+		}
+		
 		if(length(y)==2 & !is.complex(y)){
 			y = y[1] + 1i*y[2]
 		}
-		x = x@coords[,1] + 1i*x@coords[,2]
 
+		x = x@coords[,1] + 1i*x@coords[,2]
 		
 		if(any(names(param)=="aniso.ratio") ) { 
+			
 			# geometric anisotropy
 		# rotate coordinates
 			if(any(names(param)=="aniso.angle.degrees") & 
@@ -59,46 +75,28 @@ matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, rough=1)
 			if(!any(names(param)=="aniso.angle.radians") )
 				warning("anisotropy angle not supplied")
 			
-			x = x * exp(-1i*param["aniso.angle.radians"])
+			x = x * exp(1i*param["aniso.angle.radians"])
 			x = Re(x) +  (1i/ param["aniso.ratio"] )*Im(x)
 			if(!is.null(y)) {
-				y = y * exp(-1i*param["aniso.angle.radians"])
+				y = y * exp(1i*param["aniso.angle.radians"])
 				y = Re(y) +  (1i/ param["aniso.ratio"] )*Im(y)
 			}
-		}
+ 
+		} 
 
   		if(!is.null(y)) {
 			thedist = Mod(outer(x, y, FUN="-"))
-			result= matern(x=thedist, y=y, param=param)
+			result= matern(x=thedist, y=NULL, param=param)
+
 		} else {
-			x1 = rep(seq(1,length(x)-1), seq(length(x)-1,1))
-			x2 = unlist(mapply(seq, 
-							seq(1, length(x)-1), 
-							rep(length(x)-1, length(x)-1)) )
-			x2 = 1 + x2	
-			thedist = Mod(x[x1] - x[x2])	
-			
-			resultVec = matern(x=thedist, y=y, param=param)
- 			
-			result=matrix(0,length(x),length(x))
-			
- 		
- 			result[lower.tri(result)]=resultVec
+
 	
-			
-			result = new("dsyMatrix", 
-					Dim = rep(length(x), 2), uplo="L",
-					x=c(result))
-			
-			# put sigma squared on the diagonals
-			diag(result) = attributes(resultVec)$param["variance"]
-			
-			attributes(result)$param = attributes(resultVec)$param 
+			thedist = dist(cbind(Re(x), Im(x)))
 		
+			result = matern(x=thedist, y=NULL, param=param)
+ 		
 		}
-		
- 	
-		
+				
 		result
 }
 
@@ -106,6 +104,11 @@ matern.default = function( x, y=NULL,param=c(range=1, variance=1, rough=1))
 {
 	# x is distances, y is ignored	
 	names(param) = gsub("^var$", "variance", names(param))
+	
+	if(!any(names(param)=="variance") & any(names(param)=="sdSpatial"))
+		param["variance"]= param["sdSpatial"]^2
+	
+
 	
 	haveVariance = any(names(param)=="variance")
 
@@ -120,6 +123,8 @@ matern.default = function( x, y=NULL,param=c(range=1, variance=1, rough=1))
 
 	result[xscale==0] = 
 			param["variance"] 
+	
+	result[xscale==Inf] = 0
 	
 	attributes(result)$param = param
 	result

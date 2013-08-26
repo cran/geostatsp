@@ -44,14 +44,14 @@ gmrfPrecUncond = function(x,
 	covMat = distmat
 	covMat@x = (2^(1-param["rough"])/(param["prec"]*gamma(param["rough"]))) * 
 			covMat@x^param["rough"] * besselK(covMat@x, nu=param["rough"])
-	diag(covMat) = 1/param["prec"]
+	Matrix::diag(covMat) = 1/param["prec"]
 #	covChol = chol(covMat)
 #	covInvChol = solve(covChol)
 #	precOuter = solve(covMat)
 	
 	allCells = c(topCells, leftCells, rightCells, bottomCells)
 	InnerPrecision = x[-allCells, -allCells]
-	InnerPrecInvChol = solve(chol(InnerPrecision))
+	InnerPrecInvChol = Matrix::solve(Matrix::chol(InnerPrecision))
 	
 	
 	
@@ -60,7 +60,7 @@ gmrfPrecUncond = function(x,
 	AQinvA = Aic %*% t(Aic)
 	
 
-	precOuter = solve(covMat) + AQinvA
+	precOuter = Matrix::solve(covMat) + AQinvA
 
 	x[allCells,allCells] = precOuter
 	x
