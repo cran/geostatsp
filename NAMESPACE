@@ -1,11 +1,14 @@
 # functions that don't depend on other packages
 export(
  krige,stackRasterList,
- grfConditional,
 NNmat, gmrfPrecUncond,simLgcp,simPoissonPP,
  lgm, excProb, likfitLgm, loglikLgm
 )
 
+importFrom(RandomFields, CondSimu)
+export(grfConditional)
+
+useDynLib(geostatsp)
 export(matern)
 S3method(matern, Raster)
 S3method(matern, SpatialPointsDataFrame)
@@ -21,16 +24,7 @@ S3method(GaussRF, SpatialPointsDataFrame)
 S3method(GaussRF, SpatialPoints)
 S3method(GaussRF, default)
 
-# functions which depend on OpenStreetMap
-# OpenStreetMap is listed as Depends
-# since it doesn't seem to work well with Imports
-# importFrom(OpenStreetMap, openmap,openproj,plot.OpenStreetMap)
-export(openmap)
-S3method(openmap, matrix)
-S3method(openmap, Extent)
-S3method(openmap, default)
-#export(plot.OpenStreetMap)
-#S3method(plot, OpenStreetMap)
+export(openmap, getTiles)
 
 # functions depending on spatstat
 importFrom(spatstat,as.im,as.im.matrix)
@@ -40,13 +34,18 @@ S3method(as.im, RasterLayer)
 # functions depending on geonames
 importFrom(geonames, GNcities)
 export( GNcities)
-S3method(GNcities, matrix)
-S3method(GNcities, Extent)
-S3method(GNcities, default)
 
 importFrom(geoR, as.geodata)
 
-
+export(squareRaster)
+S3method(squareRaster, matrix) 
+S3method(squareRaster, Extent) 
+S3method(squareRaster, RasterLayer) 
+S3method(squareRaster, BasicRaster) 
+S3method(squareRaster, SpatialPoints) 
+S3method(squareRaster, SpatialPointsDataFrame) 
+S3method(squareRaster, SpatialPolygons) 
+S3method(squareRaster, SpatialPolygonsDataFrame) 
 
 export(maternGmrfPrec)
 S3method(maternGmrfPrec, dgCMatrix)
@@ -66,9 +65,8 @@ S3method(variog.mc.env, default)
 import(
   sp,
   raster,
-  OpenStreetMap,
   Matrix
 )
 
 importFrom(pracma, trapz)
-
+import(rgdal)

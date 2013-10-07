@@ -44,10 +44,10 @@ As \code{\link[geoR]{variog}} or \code{\link[geoR]{variog.mc.env}}
 \code{\link[geoR]{variog}} and  \code{\link[geoR]{variog.mc.env}}.
 }
 \examples{
-data(swissRain)
+data("swissRain")
 swissRain$lograin = log(swissRain$rain)
 swissv= variog(swissRain, formula=lograin ~ 1,option="bin")
 swissEnv = variog.mc.env(swissRain, lograin ~ 1, obj.var=swissv,nsim=9) 
-plot(swissv, env=swissEnv)
+plot(swissv, env=swissEnv, main = "Swiss variogram")
 }
 

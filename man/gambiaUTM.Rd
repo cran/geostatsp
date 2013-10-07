@@ -29,18 +29,17 @@ on the malaria data, see Thomson et al. (1999).
 }
 
 \examples{
-data(gambiaUTM)
+data("gambiaUTM")
 
-plot(gambiaUTM)
+plot(gambiaUTM, main="gambia data")
 
 \dontrun{
-download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS-0.3.zip", 
-  "borders.zip")
-unzip("borders.zip")
-worldBorders = readOGR(".", "TM_WORLD_BORDERS-0.3")
-africa = worldBorders[worldBorders$REGION ==2,]
-plot(spTransform(africa, gambiaUTM@proj4string), add=T)
-
+	download.file("http://thematicmapping.org/downloads/TM_WORLD_BORDERS-0.3.zip", 
+  		"borders.zip")
+	unzip("borders.zip")
+	worldBorders = readOGR(".", "TM_WORLD_BORDERS-0.3")
+	africa = worldBorders[worldBorders$REGION ==2,]
+	plot(spTransform(africa, gambiaUTM@proj4string), add=T)
 }
 
 

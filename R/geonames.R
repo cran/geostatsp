@@ -1,30 +1,43 @@
-GNcities = function(north, ...) {
-	UseMethod("GNcities")
+GNcities = function(north, east, south, west, lang = "en", maxRows = 10) {
 	
-}
+	
+	if(is.vector(north) ) {
+		theproj = NULL
+		
+	} else {
+		
+		theproj = try(proj4string(north),silent=TRUE)
+		if(class(theproj)=="try-error")
+			theproj = NULL
 
-GNcities.matrix = function(north, ...){
-	if(!all(dim(north)==2)){
-		warning("wrong dimensions, is north a bounding box?")
+		# do this because bbox(mybbox) != mybbox
+		# but bbox(extent(mybbox) = mybbox
+		north = bbox(extent(north))
+
+		
+		if(!is.null(theproj)) {
+			# transform to long-lat
+			north = SpatialPoints(t(north),
+					proj4string=CRS(theproj))
+			
+			north = bbox(spTransform(
+							north, CRS("+proj=longlat")
+					))			
+		}
+		
+		east = north[1,2]
+		west = north[1,1]
+		south = north[2,1]
+		north=north[2,2]
+		
 	}
-	result = 	geonames::GNcities(north[2,2], north[1,2], north[2,1], north[1,1], ...)
-	SpatialPointsDataFrame(result[,c("lng","lat")], data=result, 
-			proj4string=CRS("+proj=longlat +datum=WGS84 +ellps=WGS84"))
-}
 
-GNcities.Extent = function(north, ...){
-	result=geonames::GNcities(
-			north@ymax, north@xmax, 
-			north@ymin, north@xmin, 
-			...)
-	SpatialPointsDataFrame(result[,c("lng","lat")], data=result, 
-			proj4string=CRS("+proj=longlat +datum=WGS84 +ellps=WGS84"))
-	
-}
+	result = geonames::GNcities(north,east,south,west,lang,maxRows)
+	result = SpatialPointsDataFrame(result[,c("lng","lat")], data=result, 
+			proj4string=CRS("+proj=longlat"))
 
-GNcities.default = function(north, ...){
-	result=geonames::GNcities(north, ...)			
-	SpatialPointsDataFrame(result[,c("lng","lat")], data=result, 
-			proj4string=CRS("+proj=longlat +datum=WGS84 +ellps=WGS84"))
+	if(!is.null(theproj))
+		result = spTransform(result, CRS(theproj))
 	
+	result
 }

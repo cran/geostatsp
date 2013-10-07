@@ -14,7 +14,7 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 	if(is.integer(formula))
 		formula = names(data)[formula]
 	if(class(formula)!= "formula") {
-		if(!is.null(covariates)) {
+		if(length(covariates)) {
 			if(!length(names(covariates)))
 				names(covariates) = paste("c", 1:length(covariates),sep="")			
 			names(covariates) = gsub("[[:punct:]]|[[:space:]]","_", names(covariates))
@@ -24,10 +24,10 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 							paste(names(covariates),collapse="+")
 					)
 			)
-		} else {
+		} else { # end covariates not null
 			formula = as.formula(paste(formula, "~1"))	
 		}
-	}
+	} # end formula not a formula
 	
 # extract covariates	
 	
@@ -46,8 +46,12 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 	
 	# convert covariates to raster stack with same resolution of prediction raster.
 
-	if(!is.null(covariates)){
+	if(length(covariates)){
 		# extract covariate values and put in the dataset
+		
+		if(length(notInData)==1){
+			names(covariates) = notInData
+		}
 		
 		for(D in notInData) {
 			
@@ -76,7 +80,7 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 		warning("some terms in the model are missing from both the data and the covariates")
 
 	
-	param = c(range=sd(data@coords[,1])/40,
+	param = c(range=sd(data@coords[,1]),
 				rough=rough, nugget=nugget,boxcox=boxcox
 				)
 	paramToEstimate	= c("range", "rough","nugget","boxcox")[

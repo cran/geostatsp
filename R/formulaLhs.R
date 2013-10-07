@@ -1,21 +1,19 @@
 
 formulaLhs = function(formula) {
 
-
-	observations = gsub("~.*$", "", base::format(formula))
-	observations = gsub("^[[:space:]]+|[[:space:]]+$", "", observations)
+	observations = gsub("^~,[[:space:]]+", "", toString(formula))
+	observations = gsub(",[[:print:]]+$", "", observations)
 	
-#	observations = base::as.character(formula)
-#	observations = observations[-c(1,length(observations))]
 	observations
 }
 
-formulaRhs = function(formula) {
+formulaRhs = function(formula, char=FALSE) {
 
-	x = gsub("^.*~", "~", base::format(formula))
-#	x = base::as.character(formula)
-#	x=x[length(x)]
-#	x = paste("~", x)
-	
-	as.formula(x)
+	x = gsub("^.*~", "", toString(base::format(formula)))
+
+	if(!char)
+		x= as.formula(paste("~", x))
+	x
 }
+
+

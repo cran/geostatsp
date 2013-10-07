@@ -1,44 +1,58 @@
 \name{GNcities}
 \alias{GNcities}
-\alias{GNcities.default}
-\alias{GNcities.matrix}
-\alias{GNcities.Extent}
 
 \title{Retrieve city names and locations}
 \description{
-	This function is a wrapper for the 
-	\code{\link[geonames]{GNcities}} 
-function in the \link[geonames]{geonames} package, where
-the limits can be passed as a bounding box or an Extent.
-}
+ This function uses the geonames package to  provide city names and locations
+ from  www.geonames.org.
+  }
 \usage{
-	GNcities(north,  ...)
-	\method{GNcities}{matrix}(north,...)
-	\method{GNcities}{Extent}(north,...)
+	GNcities(north, east, south, west, lang = "en", maxRows = 10)
 	}
 
 \arguments{
 	\item{north}{
-	A bounding box from a  
-	SpatialPoints or SpatialPolygons object or an 
-	Extent from a Raster.}
-\item{...}{ additional arguments, 
-see \code{\link[geonames]{GNcities}} in the geonames package.}
+	A bounding box or  
+	SpatialPoints or SpatialPolygons or 
+	Extent or  Raster object, or a decimal degree of longitude.}
+	\item{east,south,west}{If \code{north} is numeric, decimal degree bounding box.}
+	\item{lang}{Language for internationalised returned text}
+	\item{maxRows}{Limit on returned rows}
 }
 
-\value{A SpatialPointsDataFrame}
+\seealso{\code{\link[geonames]{GNcities}} in the geonames package.}
+
+
+\value{A SpatialPointsDataFrame with the sampe projection  \code{north} if it exists, otherwise in 
+long-lat.}
 
 
 \examples{
 
-mybbox = rbind(c(5,10),c(45,50))
+myraster = raster(matrix(0,10,10),xmn=8,xmx=18,ymn=0,ymx=10, crs="+proj=longlat")
+values(myraster) = seq(0,1,len=ncell(myraster))
+myPoints = SpatialPoints(myraster, proj4string=CRS(proj4string(myraster)))[
+	seq(1,ncell(myraster),len=5)]
 
 \dontrun{
 
-cities=GNcities(mybbox, max=5)
+cities=GNcities(myPoints, max=5)
+mytiles = openmap(myraster,  type="bing")
+
+par(mar=c(0,0,0,0))
+plot(cities)
+plot(mytiles, add=TRUE)
+points(cities, col='red')
+text(cities, labels=cities$name, col='red',pos=4)
+
+
+cities=GNcities(myraster, max=5)
 
 plot(cities)
-text(cities, labels=cities$name, col='red')
+plot(mytiles, add=TRUE)
+points(cities, col='red')
+text(cities, labels=cities$name, col='red',pos=4)
+
 
 }
 

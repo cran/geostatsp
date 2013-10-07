@@ -10,7 +10,7 @@ Nearest neighbour matrices
 \description{
 Some large nearest neighbour matrices.
 }
-\usage{data(nn32)}
+\usage{data("nn32")}
 \format{
 Sparse matrices produced by \code{\link{NNmat}}, showing the neighbours of cells on a 64 by 64 grid 
 in \code{nn64},  a 128 by 128 grid in \code{nn128}, and 256 in \code{nn256}.
@@ -18,7 +18,7 @@ in \code{nn64},  a 128 by 128 grid in \code{nn128}, and 256 in \code{nn256}.
  
 
 \examples{
-data(nn32)
+data("nn32")
 dim(nn32)
 dim(nn64)
 dim(nn128)

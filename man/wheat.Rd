@@ -15,8 +15,8 @@ Mercer and Hall wheat yield data, based on version in Cressie (1993), p. 455.
  
 
 \examples{
-data(wheat)
-plot(wheat)
+data("wheat")
+plot(wheat, main="Mercer and Hall Data")
 
 
 

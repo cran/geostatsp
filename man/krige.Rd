@@ -9,8 +9,7 @@ Perform spatial prediction, producing a raster of predictions and conditional st
 }
 \usage{
 krige(data, trend, coordinates = data, param, locations, 
-    covariates = list(), expPred = FALSE, nugget.in.prediction = TRUE,
-    conditionalVarianceMatrix=FALSE)
+    covariates = NULL, expPred = FALSE, nugget.in.prediction = TRUE)
 }
  
 \arguments{
@@ -37,23 +36,20 @@ nugget effect.  The prediction variances will be adjusted accordingly, and the p
 on the natural scale for logged or Box Cox transformed data will be affected. 
 Otherwise predict fitted values. 
 }
-\item{conditionalVarianceMatrix}{Return the full conditional variance matrix.}
 }
 \details{
 Given the model parameters and observed data, conditional means and variances of the spatial random field
 are computed.
 }
 \value{
-If the prediction locations are identical for the fixed effects and random effects, a single raster stack is 
+A raster stack is 
 returned with the following layers:
 \item{fixed}{Estimated means from the fixed effects portion of the model}
 \item{random}{Predicted random effect}
 \item{krige.var}{Conditional variance of predicted random effect (on the transformed scale if applicable)}
 \item{predict}{Prediction of the response, sum of fixed and random effects.  If exp.pred is TRUE, gives predictions
-on the exponentated scale, and half of krige.var is added prior to exponentiating}
+on the exponentiated scale, and half of krige.var is added prior to exponentiating}
 \item{predict.log}{If exp.pred=TRUE, the prediction of the logged process.}
-If the prediction locations are different for fixed and random effects (typically coarser for the random 
-effects), a list with two raster stacks is returned.
 \item{predict.boxcox}{If a box cox transformation was used, the prediction of the process on the transformed scale.}
 If the prediction locations are different for fixed and random effects (typically coarser for the random 
 effects), a list with two raster stacks is returned.
@@ -61,7 +57,6 @@ effects), a list with two raster stacks is returned.
 same locations as the fixed effects.}
 \item{random}{the predictions and conditional variance of the random effects, on the same
 raster as \code{locations}}
-
 
 }
 
@@ -74,6 +69,7 @@ data(swissRain)
 swissRain$lograin = log(swissRain$rain)
 swissRain$elevation = extract(swissAltitude, swissRain)
 
+\dontrun{
 swissFit = likfitLgm(data=swissRain, 
 			trend=lograin~ elevation,
 			param=c(range=46500, nugget=0.05,rough=1,  
@@ -83,19 +79,32 @@ swissFit = likfitLgm(data=swissRain,
 			parscale = c(range=5000,nugget=0.01, 
 				aniso.ratio=1,aniso.angle.degrees=5)
 )
+myTrend = swissFit$trend
+myParams = swissFit$param
+dput(myParams)
+# will give the following
+}
+myParams=structure(c(4.49732366951939, 0.000216147764497527, 46575.4897705083, 
+0.0918626121620231, 37.3640527963592, 11.9247798102433, 1, 0.686396444665454
+), .Names = c("(Intercept)", "elevation", "range", "nugget", 
+"aniso.angle.degrees", "aniso.ratio", "rough", "variance"))
+myTrend =lograin~ elevation
+
 
 # make sure krige can cope with missing values!
 swissAltitude[1:50,1:50] = NA
-swissKrige = krige(data=swissRain, trend = swissFit$trend,
+swissKrige = krige(data=swissRain, trend = myTrend,
 	covariates = swissAltitude,  
-	param=swissFit$param,
-	locations = 40)
+	param=myParams,
+	locations = 40, expPred=TRUE)
 
-plot(swissKrige[["predict"]])
+
+
+plot(swissKrige[["predict"]], main="predicted rain")
 plot(swissBorder, add=TRUE)
 
-# now with box cox and provide a raster for prediction
-
+# now with box cox and provide a raster for prediction, no covariates
+\dontrun{
 swissFit2 = likfitLgm(data=swissRain, 
 			trend=rain~1,
 			param=c(range=52000, nugget=0.1,rough=1, boxcox=0.5,
@@ -105,14 +114,28 @@ swissFit2 = likfitLgm(data=swissRain,
 			parscale = c(range=5000,nugget=0.01, 
 				aniso.ratio=1,aniso.angle.degrees=5)
 )
+myTrend2 = swissFit2$trend
+myParams2 = swissFit2$param
+dput(myParams2)
+}
+myParams2=structure(c(20.7805835664033, 51161.049007108, 8.64565931800056, 
+37.0906650998427, 7.34077366178755, 1, 0.5, 79.3696192640485), .Names = c("(Intercept)", 
+"range", "nugget", "aniso.angle.degrees", "aniso.ratio", "rough", 
+"boxcox", "variance"))
+myTrend2=rain~1
+
 swissRaster = raster(extent(swissBorder), nrows=25, ncols=40)
 
 
-swissKrige2 = krige(data=swissRain, trend = swissFit2$trend,
-	  param=swissFit2$param,
-	locations = swissRaster, expPred=TRUE)
+swissKrige2 = krige(data=swissRain, trend = myTrend2,
+	  param=myParams2,
+	locations = swissRaster)
 
-plot(swissKrige2[["predict"]])
+
+
+
+
+plot(swissKrige2[["predict"]], main="predicted rain with box-cox")
 plot(swissBorder, add=TRUE)
 
 

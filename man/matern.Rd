@@ -79,9 +79,10 @@ myraster = raster(nrows=40,ncols=60,xmn=-3,xmx=3,ymn=-2,ymx=2)
 param = c(range=2, rough=2,	aniso.ratio=2, aniso.angle.degrees=-25)
 
 # plot correlation of each cell with the origin
-myMatern = matern(myraster, c(0,0), param)
+myMatern = matern(myraster, c(0,0), param=param)
 
-plot(myMatern)
+
+plot(myMatern, main="anisortopic matern")
 
 
 # correlation matrix for all cells with each other
@@ -92,7 +93,7 @@ dim(myMatern)
 # plot the cell ID's
 values(myraster) = seq(1, ncell(myraster))
 mydf = as.data.frame(myraster, xy=TRUE)
-plot(mydf$x, mydf$y, type='n')
+plot(mydf$x, mydf$y, type='n', main="cell ID's")
 text(mydf$x, mydf$y, mydf$layer)
 # correlation between bottom-right cell and top right cell is
 myMatern[6,24]
@@ -110,7 +111,8 @@ theCov = NULL
 for(D in roughSeq) {
 	theCov = cbind(theCov, matern(distVec, param=c(range=range, rough=D)))
 }
-matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation')
+matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation',
+	main="matern correlations")
 legend("topright", fill=1:length(roughSeq), legend=roughSeq,title='rough')
 # exponential
 
@@ -133,10 +135,13 @@ for(D in roughSeq) {
 			scale=range/2, nu=D) ))
 }
 
-matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation')
+matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation',
+	main="geoR, RandF, and geostatsp")
 matpoints(distVec, covGeoR, cex=0.5, pch=1)
 matpoints(distVec, covRandomFields, cex=0.5, pch=2)
 
+legend("topright", lty=c(1,NA,NA), pch=c(NA, 1, 2), 
+	legend=c("geostatsp","geoR","RandomFields"))
 
  
 }
