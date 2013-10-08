@@ -73,7 +73,7 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 	rough=2,
 	variance=5^2)
 	
-	data(nn32)
+	data("nn32")
 	# precision matrix without adjusting for edge effects
 	precMat =maternGmrfPrec(nn32, param=params) 
 	# and with the adjustment
@@ -86,15 +86,16 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 	precMid=matrix(precMat[,midcell], 32, 32, byrow=TRUE)
 	precMid[seq(16-4, 16+4), seq(16-4, 16+4)]
 
+\dontrun{
 # variance matrices
-	varMat = solve(precMat)
-	varMatCorr = solve(precMatCorr)
-
+	varMat = Matrix::solve(precMat)
+	varMatCorr = Matrix::solve(precMatCorr)
 
 # compare covariance matrix to the matern
 	xseq = seq(-20*params["cellSize"], 20*params["cellSize"], len=1000)
 	plot(xseq, matern(xseq, param=params),
-	 type = 'l',ylab='cov', xlab='dist',ylim=c(0, params["variance"]))
+	 type = 'l',ylab='cov', xlab='dist',ylim=c(0, params["variance"]),
+	 main="matern v gmrf")
 
 
 
@@ -137,10 +138,8 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
  	
  	quantile(prodUncor[lower.tri(prodUncor,diag=FALSE)],na.rm=TRUE)	
  	quantile(prodCor[lower.tri(prodCor,diag=FALSE)],na.rm=TRUE)	
+}
  	
- 	
-	
-
 
 
 }

@@ -51,6 +51,7 @@ mylist = list(a=raster(matrix(1:9, 3, 3), 0,1000,0,1000,
 mystack = stackRasterList(mylist)
 mystack
 
+plot(mystack[["a"]], main="stack a")
 
 }
 

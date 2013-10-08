@@ -76,7 +76,8 @@ Used for passing fixed parameters to \code{loglikLgm} from within \code{\link[st
 of the model matrix, depending on \code{trend} supplied.}
 \item{summary}{a table of parameter estimates, standard errors,  confidence intervals, p values, and 
   	a logical value indicating whether each parameter was estimated as opposed to fixed.}
-
+\item{resid}{residuals, being the observations minus the fixed effects, on the
+transformed scale.}
 \code{loglikLgm} returns a scalar value, either the log likelihood or -2 times the
 log likelihood.  Attributes of this result include the vector of
 parameters (including the MLE's computed for the variance and coefficients),
@@ -102,8 +103,11 @@ mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 +
 	mydat$U + rnorm(length(mydat), 0, sd=sqrt(trueParam["nugget"]))
 
 
-spplot(mydat, "U", col.regions=rainbow(10))
-spplot(mydat, "Y", col.regions=rainbow(10))
+par(mfrow=c(1,2))
+spplot(mydat, "U", col.regions=rainbow(10), main="U")
+spplot(mydat, "Y", col.regions=rainbow(10), main="Y")
+par(mfrow=c(1,1))
+
 
 myres = likfitLgm(mydat, Y ~ cov1 + cov2, 
 	param=c(range=0.1,nugget=0.1,rough=2), 
@@ -122,7 +126,8 @@ myresNoN$summary
 
 # plot variograms of data, true model, and estimated model
 myv = variog(mydat, formula=Y ~ cov1 + cov2,option="bin", max.dist=0.5)
-plot(myv, ylim=c(0, max(c(1.2*sum(trueParam[c("variance", "nugget")]),myv$v))))
+plot(myv, ylim=c(0, max(c(1.2*sum(trueParam[c("variance", "nugget")]),myv$v))),
+	main="variograms")
 distseq = seq(0, 0.5, len=50)
 lines(distseq, 
 	sum(myres$param[c("variance", "nugget")]) - matern(distseq, param=myres$param),
@@ -141,15 +146,15 @@ legend("bottomright", fill=c("black","red","blue","green"),
 
 	
 # calculate likelihood
-loglikLgm(param=myres$param, 
-					data=mydat, 
-					trend = Y ~ cov1 + cov2,
-					reml=FALSE, minustwotimes=FALSE)
+temp=loglikLgm(param=myres$param, 
+		data=mydat, 
+		trend = Y ~ cov1 + cov2,
+		reml=FALSE, minustwotimes=FALSE)
 
 
 
 # an anisotropic example
- 
+\dontrun{ 
 
 trueParamAniso = param=c(variance=2^2, range=0.2, rough=2,
 	 nugget=0,aniso.ratio=4,aniso.angle.degrees=10, nugget=0)
@@ -189,6 +194,6 @@ plot(covEst, main="estimate")
 plot(covTrue, main="true")
 
 par(mfrow=c(1,1))
-
+}
 }
 

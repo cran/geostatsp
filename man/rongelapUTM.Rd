@@ -22,8 +22,8 @@ the measurement was taken for.  A UTM coordinate reference system is used, where
 }
 
 \examples{
-data(rongelapUTM)
-plot(rongelapUTM)
+data("rongelapUTM")
+plot(rongelapUTM, main="Rongelap island")
 \dontrun{
 load(url("http://www.filefactory.com/file/54e8egxfddul/n/MHL_adm0_RData"))
 

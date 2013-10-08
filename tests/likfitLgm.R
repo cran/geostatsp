@@ -27,6 +27,7 @@ myres = likfitLgm(mydat, Ybc ~ cov1 + cov2,
 
 myres$summary
 
+pdf("ligfitLgm.pdf")
 par(mfrow=c(1,2))
 
 myraster = raster(nrows=30,ncols=30,xmn=0,xmx=1,ymn=0,ymx=1)
@@ -36,6 +37,17 @@ covTrue = matern(myraster, c(0.5, 0.5), par=trueParamAniso)
 plot(covEst, main="estimate")
 plot(covTrue, main="true")
 
-par(mfrow=c(1,1))
+dev.off()
+
+library("geostatsp")
+data("swissRain")
 
 
+sr2 = swissRain
+sr2$elev = raster::extract(swissAltitude, sr2)
+swissFitAgain = likfitLgm(data=sr2, 
+		trend=rain~ elev,
+		param=c(range=1000,rough=1,nugget=0,boxcox=0.5),
+		paramToEstimate = c("range","nugget")
+)
+swissFitAgain$par		

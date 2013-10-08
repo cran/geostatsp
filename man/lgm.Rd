@@ -67,36 +67,32 @@ For Box-Cox or log-transformed data on the natural (untransformed) scale.
 }
 \examples{
 
-data(swissRain)
+data("swissRain")
  
-swissRes =  lgm(swissRain, locations=30, formula="rain",
+swissRes =  lgm(swissRain, locations=20, formula="rain",
 	covariates=swissAltitude, boxcox=0.5, fixBoxcox=TRUE, 
-	aniso=TRUE
+	rough=1, fixRough=TRUE,
+	aniso=TRUE, nugget=0, fixNugget=TRUE,
+	nugget.in.prediction=FALSE
 	)
 	
 
 swissRes$summary
 
-plot(swissRes$predict[["predict"]]) 
+plot(swissRes$predict[["predict"]], main="predicted rain") 
 plot(swissBorder, add=TRUE)
 
 
-swissRes2 =  lgm(swissRain, locations=30, formula=rain ~ elev + factor(land),
-	covariates=list(elev=swissAltitude,land=swissLandType), 
-	boxcox=0.5, fixBoxcox=TRUE, 
-	aniso=TRUE
-	)
-swissRes2$summary
 
 \dontrun{
 load(url("http://www.filefactory.com/file/frd1mhownd9/n/CHE_adm0_RData"))
-theMap = openmap(gadm@bbox,zoom=7, type="mapquest")#"osm-transport")
+theMap = openmap(gadm,zoom=7, type="mapquest")#"osm-transport")
 library(RColorBrewer)
 par(mar=c(0,0,0,3))
 plot(gadm) 
 plot(theMap, add=TRUE)
 plot(mask(projectRaster(
-	swissRes2$predict[["predict"]],  crs=gadm@proj4string),gadm), 
+	swissRes$predict[["predict"]],  crs=gadm@proj4string),gadm), 
 add=T,alpha=0.6, col=brewer.pal(9, "Blues"))
 plot(gadm, add=TRUE)
 

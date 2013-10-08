@@ -11,7 +11,7 @@ Loaloa prevalence data from 197 village surveys
 \description{
 Location and prevalence data from villages, elevation an vegetation index for the study region.
 }
-\usage{data(loaloa)}
+\usage{data("loaloa")}
 \format{
 \code{loaloa} is a SpatialPolygonsDataFrame of the data, with columns \code{N} being the number 
 of individuals tested and \code{y} being the number of positives.
@@ -30,24 +30,24 @@ of individuals tested and \code{y} being the number of positives.
 \examples{
 
 
-data(loaloa)
-plot(loaloa)
+data("loaloa")
+plot(loaloa, main="loaloa villages")
 
 # elevation
-data(elevationLoa)
-plot(elevationLoa, col=terrain.colors(100))
+data("elevationLoa")
+plot(elevationLoa, col=terrain.colors(100), main="elevation")
 points(loaloa)
 
 # vegetation index
-data(eviLoa)
-plot(eviLoa)
+data("eviLoa")
+plot(eviLoa, main="evi")
 points(loaloa)
 
-data(tempLoa)
-plot(tempLoa)
+data("tempLoa")
+plot(tempLoa, main="temperature")
 points(loaloa)
 
-data(ltLoa)
+data("ltLoa")
 # land type, a categorical variable
 commonValues  = sort(table(values(ltLoa)),decreasing=TRUE)[1:7]
 commonValues=commonValues[!names(commonValues)==0]
@@ -58,7 +58,7 @@ thecol = rep(NA, length(thelevels))
 names(thecol) = as.character(thelevels)
 
 thecol[names(commonValues)] = rainbow(length(commonValues))
-plot(ltLoa, breaks=thebreaks, col=thecol,legend=FALSE)
+plot(ltLoa, breaks=thebreaks, col=thecol,legend=FALSE, main="land type")
 legend("bottomleft",fill=thecol[names(commonValues)],
 		legend=levels(ltLoa)[[1]][
 						match(as.integer(names(commonValues)),

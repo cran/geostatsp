@@ -5,7 +5,7 @@ loglikLgm = function(param,
 		stored=NULL, moreParams=NULL) {
 
 	# create 'covariates', and 'observations'
-	
+ 	
 	if(class(trend)=="formula") {
 		covariates = model.matrix(trend, as.data.frame(data))
 		observations = formulaLhs(trend)
@@ -15,7 +15,7 @@ loglikLgm = function(param,
 	} else {
 		# observations must be a vector and covariates a matrix
 		observations=data
-		covariates=trend
+		covariates=as.matrix(trend)
 	}
 	
 		if(!length(grep("SpatialPoints", class(coordinates))) &
@@ -63,11 +63,7 @@ loglikLgm = function(param,
 			 # boxcox close to 1, don't transform
 				twoLogJacobian=0
 				
-			} else {loglikLgm = function(param, 
-						data, trend, coordinates=data,
-						reml=TRUE, 
-						minustwotimes=TRUE,
-						stored=NULL, moreParams=NULL)
+			} else { # box cox is not one.
 				twoLogJacobian = 2*(param["boxcox"]-1)* 
 					sum(log(observations))	
 			
@@ -176,6 +172,7 @@ loglikLgm = function(param,
 #	attributes(result)$reml=reml
 #		attributes(result)$twoLogJacobian = twoLogJacobian
 #		attributes(result)$choldet = as.vector(choldet)
+	attributes(result)$resid = resids
 	result
 }
 
@@ -189,7 +186,9 @@ likfitLgm = function(
 		upper=NULL,lower=NULL, parscale=NULL,
 		paramToEstimate = c("range","nugget"),
 		reml=TRUE) {
-	
+
+	# for some reason thing break if I remove this next line...
+	stuff = (class(coordinates))
 	
 	# check for the variance parameter
 	estimateVariance = TRUE
@@ -203,7 +202,7 @@ likfitLgm = function(
 			warning("variance is fixed and not estimated. If this isn't what you wanted remove variance from param")
 		}		
 	}
-	
+	 
 	# limits
 	lowerDefaults = c(nugget=0,range=0,aniso.ratio=0.0001,
 			aniso.angle.radians=-pi/2,aniso.angle.degrees=-90,
@@ -226,10 +225,55 @@ likfitLgm = function(
 			aniso.angle.radians=2,
 			aniso.ratio=1,
 			variance=1)
-		
 
+#	if(length(grep("^SpatialPoints", class(coordinates))))
+#		print("wah")
+ 	
+	# convert input data to a model matrix
+	if(class(trend)=="formula") {
+ 
+		data = as.data.frame(data)
+		theNA = apply(
+				data[,all.vars(formulaRhs(trend)),drop=FALSE],
+				1, function(qq) any(is.na(qq)))
+		noNA = !theNA
+		
+		covariates = model.matrix(trend, data[noNA,])
+		observations = formulaLhs(trend)
+		
+		if(!any(names(data)==observations))
+			warning("can't find observations ", observations, "in data")
+		observations = data[noNA,observations]
+ 
+		
+	} else {
+		# observations must be a vector and covariates a matrix
+		trend = as.matrix(trend)
+		theNA = is.na(data) | apply(trend, 1, 
+					function(qq) any(is.na(qq))
+				)
+		noNA = !theNA
+				
+		observations=data[noNA]
+		covariates=trend[noNA,,drop=FALSE]
+	}
+
+	if(any(theNA)) {
+		if(length(grep("^SpatialPoints", class(coordinates)))) {
+			coordinates = SpatialPoints(coordinates)[noNA]	
+		} else if(class(coordinates)=="dist"){
+			coordinates = as.matrix(coordinates)
+			coordinates = coordinates[noNA,noNA]
+			coordinates = as.dist(coordinates)
+			
+		} else {
+			warning("missing vlaues in data but unclear how to remove them from coordinates")
+		}
+	}
 	
 	# if the model's isotropic, calculate distance matrix
+
+ 
 	if(!length(grep("^aniso", paramToEstimate)) &
 			length(grep("^SpatialPoints", class(coordinates)))) {
 
@@ -254,26 +298,13 @@ likfitLgm = function(
 		coordinates = dist(coordinates@coords)		
 		parscaleDefaults["range"] = sd(coordinates)/20
 	} else {
-		# doing geometric anisotropy
+ 		# doing geometric anisotropy
 		parscaleDefaults["range"] = dist(t(bbox(coordinates)))/100
 	}
 	
 	parscaleDefaults[names(parscale)] = parscale
 	
 	
-	# convert input data to a model matrix
-	if(class(trend)=="formula") {
-		covariates = model.matrix(trend, as.data.frame(data))
-		observations = formulaLhs(trend)
-		
-		if(!any(names(data)==observations))
-			warning("can't find observations ", observations, "in data")
-		observations = data[[observations]]
-	} else {
-		# observations must be a vector and covariates a matrix
-		observations=data
-		covariates=trend
-	}
 
 	
 	
@@ -337,7 +368,8 @@ likfitLgm = function(
 			param=c(attributes(fromLogLik)$betaHat,
 					attributes(fromLogLik)$param),
 			varBetaHat = attributes(fromLogLik)$varBetaHat,
-			optim=fromOptim
+			optim=fromOptim, 
+			resid = as.vector(attributes(fromLogLik)$resid)
 	)
 	if(class(trend)=="formula") {
 		result$trend = trend
@@ -348,10 +380,14 @@ likfitLgm = function(
 	
 	parameterTable = data.frame(estimate=result$param)
 	rownames(parameterTable) =  names(result$param)
+
 	parameterTable$stdErr = NA
-	parameterTable[colnames(result$varBetaHat), "stdErr"] = 
-			sqrt(diag(result$varBetaHat))
 	
+	stdErr = sqrt(diag(attributes(fromLogLik)$varBetaHat))
+	# sometimes varBetaHat doesn't have names
+	parameterTable[names(attributes(fromLogLik)$betaHat), "stdErr"] =
+			stdErr
+
 	thelims = c(0.01, 0.99, 0.025, 0.975, 0.1, 0.9)
 	for(D in thelims) {
 		theQ = qchisq(D, 1, lower.tail=FALSE)
@@ -365,7 +401,7 @@ likfitLgm = function(
 	
 	parameterTable[,"Estimated"] = FALSE
 	parameterTable[paramToEstimate,"Estimated"] = TRUE
-	parameterTable[rownames(result$varBetaHat),"Estimated"] = TRUE
+	parameterTable[names(attributes(fromLogLik)$betaHat),"Estimated"] = TRUE
 	if(estimateVariance)
 		parameterTable["variance","Estimated"] = TRUE
 	

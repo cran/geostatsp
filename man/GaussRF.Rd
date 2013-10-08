@@ -60,13 +60,13 @@ myraster = raster(nrows=40,ncols=40,xmn=-20,xmx=20,ymn=-15,ymx=15)
 
 myGRF=GaussRF(myraster, param=mymodel)
 
-plot(myGRF)
+plot(myGRF, main="a GRF")
 
 mypoints = SpatialPointsDataFrame(cbind(runif(10), runif(10)),data=data.frame(id=1:10))
 
 mypoints$rf= GaussRF(mypoints, param=mymodel) 
 
-spplot(mypoints, "rf", col.regions=terrain.colors(5) )
+spplot(mypoints, "rf", col.regions=terrain.colors(5), main="GRF at points")
 
 
 x = cbind(sample(1:50), sample(1:50))
@@ -77,6 +77,6 @@ quantile(temp)
 # passing parameters straight to RandomFields
 fromRF = GaussRF(myraster, param=c(mean=0.5, variance=1, nugget=0, 
 				scale=4, alpha=2), model="matern")
-plot(fromRF)
+plot(fromRF, main="from RandomFields")
 
 }
