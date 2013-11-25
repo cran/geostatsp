@@ -1,14 +1,14 @@
 options(CBoundsCheck=TRUE)
 library("geostatsp")
 
-param = c(range=1, rough=1.5,	aniso.ratio=2, aniso.angle.degrees=-25)
+param = c(range=1, shape=1.5,	anisoRatio=2, anisoAngleDegrees=-25)
 
 matern(c(0, 0.001, 100000), param=param)
 
 #x=c(0, 0.001, 100000);param=c(param, variance=1)
 
 #resultFull = .C("matern", as.double(x), as.integer(length(x)),
-#		as.double(param["range"]), as.double(param["rough"]),
+#		as.double(param["range"]), as.double(param["shape"]),
 #		as.double(param["variance"]))
 
 
@@ -36,22 +36,22 @@ bob(myMatern)
 
 
 bob(matern(myraster, c(1,-0.5), 
-				param =	c(range=1, rough=1.5,	aniso.ratio=2, aniso.angle.degrees=25)			
+				param =	c(range=1, shape=1.5,	anisoRatio=2, anisoAngleDegrees=25)			
 						)
 )
 
 bob(matern(myraster, c(0,0), 
-				param =	c(range=1, rough=25.1,	aniso.ratio=2, aniso.angle.degrees=-25)			
+				param =	c(range=1, shape=25.1,	anisoRatio=2, anisoAngleDegrees=-25)			
 		)
 )
 
 bob(matern(myraster, c(0,0), 
-				param =	c(range=0, rough=1.5,	aniso.ratio=2, aniso.angle.degrees=-25)			
+				param =	c(range=0, shape=1.5,	anisoRatio=2, anisoAngleDegrees=-25)			
 		)
 )
 
 bob(matern(myraster, c(0,0), 
-				param =	c(range=100000, rough=1.5,	aniso.ratio=2, aniso.angle.degrees=-25)			
+				param =	c(range=100000, shape=1.5,	anisoRatio=2, anisoAngleDegrees=-25)			
 		)
 )
 
@@ -61,7 +61,7 @@ bob(matern(myraster, c(0,0),
 
 # correlation matrix for all cells with each other
 myraster = raster(nrows=4,ncols=6,xmn=-3,xmx=3,ymn=-2,ymx=2)
-myMatern = matern(myraster, param=c(range=0, rough=2))
+myMatern = matern(myraster, param=c(range=0, shape=2))
 
 dim(myMatern)
 myMatern[1:3,1:3]

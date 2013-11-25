@@ -13,7 +13,7 @@ Produces the precision matrix for a Gaussian random field on a regular square la
 \usage{ 
 maternGmrfPrec(N, ...)
 \method{maternGmrfPrec}{dgCMatrix}(N, 
-	param=c(variance=1, range=1, rough=1, cellSize=1),
+	param=c(variance=1, range=1, shape=1, cellSize=1),
   adjust.edges=F,...) 
 \method{maternGmrfPrec}{matrix}(N, ...)
 \method{maternGmrfPrec}{default}(N, Ny=N, ...)
@@ -21,14 +21,14 @@ NNmat(N, Ny=N)
 gmrfPrecUncond(x, 
 			N = attributes(x)$Nx, Ny=attributes(x)$Ny,
 			param = attributes(x)$model,
-			border=param["rough"]+1)
+			border=param["shape"]+1)
 }
 
 \arguments{
 \item{N}{Number of grid cells in the x direction, or a matrix denoting nearest neighbours.}
 \item{Ny}{Grid cells in the y direction, defaults to \code{N} for a square grid}
 \item{param}{Vector of model parameters, with named elements: \code{scale},
-scale parameter for the correlation function; \code{prec}, precision parameter; \code{rough}, 
+scale parameter for the correlation function; \code{prec}, precision parameter; \code{shape}, 
 Matern differentiability parameter (0, 1, or 2); and \code{cellSize}, the size of the grid cells.  Optionally, 
 \code{variance} and \code{range} can be given in place of \code{prec} and \code{scale}, when the former 
 are present and the latter are missing the reciprocal of the former are taken.}
@@ -70,7 +70,7 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 
 	params=c(range = 3,
 	cellSize=0.5,
-	rough=2,
+	shape=2,
 	variance=5^2)
 	
 	data("nn32")

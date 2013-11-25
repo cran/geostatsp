@@ -25,7 +25,7 @@ squareRaster.BasicRaster = squareRaster.RasterLayer = function(x, cells=NULL) {
 	} else {
 		ncol(x) = as.integer(cells[1])
 	}
-	Ny = ceiling((ymax(x) - ymin(x))/xres(x))
+	Ny = ceiling(signif( (ymax(x) - ymin(x))/xres(x), 10) )
 	ymax(x) = ymin(x) + Ny*xres(x)
 	nrow(x) = Ny
 	x

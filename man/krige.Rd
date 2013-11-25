@@ -9,7 +9,7 @@ Perform spatial prediction, producing a raster of predictions and conditional st
 }
 \usage{
 krige(data, trend, coordinates = data, param, locations, 
-    covariates = NULL, expPred = FALSE, nugget.in.prediction = TRUE)
+    covariates = NULL, expPred = FALSE, nuggetInPrediction = TRUE)
 }
  
 \arguments{
@@ -31,7 +31,7 @@ the predictions will be a raster of square cells covering the bounding box of \c
   \item{expPred}{
 Should the predictions be exponentiated, defaults to \code{FALSE}.
 }
-\item{nugget.in.prediction}{If \code{TRUE}, predict new observations by adding the 
+\item{nuggetInPrediction}{If \code{TRUE}, predict new observations by adding the 
 nugget effect.  The prediction variances will be adjusted accordingly, and the predictions 
 on the natural scale for logged or Box Cox transformed data will be affected. 
 Otherwise predict fitted values. 
@@ -72,12 +72,12 @@ swissRain$elevation = extract(swissAltitude, swissRain)
 \dontrun{
 swissFit = likfitLgm(data=swissRain, 
 			trend=lograin~ elevation,
-			param=c(range=46500, nugget=0.05,rough=1,  
-					aniso.angle.degrees=35, aniso.ratio=12),
+			param=c(range=46500, nugget=0.05,shape=1,  
+					anisoAngleDegrees=35, anisoRatio=12),
 			paramToEstimate = c("range","nugget", 
-				"aniso.angle.degrees", "aniso.ratio"),
+				"anisoAngleDegrees", "anisoRatio"),
 			parscale = c(range=5000,nugget=0.01, 
-				aniso.ratio=1,aniso.angle.degrees=5)
+				anisoRatio=1,anisoAngleDegrees=5)
 )
 myTrend = swissFit$trend
 myParams = swissFit$param
@@ -87,7 +87,7 @@ dput(myParams)
 myParams=structure(c(4.49732366951939, 0.000216147764497527, 46575.4897705083, 
 0.0918626121620231, 37.3640527963592, 11.9247798102433, 1, 0.686396444665454
 ), .Names = c("(Intercept)", "elevation", "range", "nugget", 
-"aniso.angle.degrees", "aniso.ratio", "rough", "variance"))
+"anisoAngleDegrees", "anisoRatio", "shape", "variance"))
 myTrend =lograin~ elevation
 
 
@@ -107,12 +107,12 @@ plot(swissBorder, add=TRUE)
 \dontrun{
 swissFit2 = likfitLgm(data=swissRain, 
 			trend=rain~1,
-			param=c(range=52000, nugget=0.1,rough=1, boxcox=0.5,
-					aniso.angle.degrees=35, aniso.ratio=8),
+			param=c(range=52000, nugget=0.1,shape=1, boxcox=0.5,
+					anisoAngleDegrees=35, anisoRatio=8),
 			paramToEstimate = c("range","nugget", 
-				"aniso.angle.degrees", "aniso.ratio"),
+				"anisoAngleDegrees", "anisoRatio"),
 			parscale = c(range=5000,nugget=0.01, 
-				aniso.ratio=1,aniso.angle.degrees=5)
+				anisoRatio=1,anisoAngleDegrees=5)
 )
 myTrend2 = swissFit2$trend
 myParams2 = swissFit2$param
@@ -120,7 +120,7 @@ dput(myParams2)
 }
 myParams2=structure(c(20.7805835664033, 51161.049007108, 8.64565931800056, 
 37.0906650998427, 7.34077366178755, 1, 0.5, 79.3696192640485), .Names = c("(Intercept)", 
-"range", "nugget", "aniso.angle.degrees", "aniso.ratio", "rough", 
+"range", "nugget", "anisoAngleDegrees", "anisoRatio", "shape", 
 "boxcox", "variance"))
 myTrend2=rain~1
 

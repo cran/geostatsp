@@ -15,10 +15,10 @@ Give covariates and model parameters, simulates a log-Gaussian Cox process
 
 \arguments{
 \item{param}{A vector of named model parameters with, at a minimum names
- \code{range} and  \code{rough} (see Details), and optionally \code{variance} (defaults to 1).  
+ \code{range} and  \code{shape} (see Details), and optionally \code{variance} (defaults to 1).  
 	For Geometric Anisotropy add 
-	\code{aniso.ratio} and either \code{aniso.angle.degrees} or  
-		\code{aniso.angle.radians}
+	\code{anisoRatio} and either \code{anisoAngleDegrees} or  
+		\code{anisoAngleRadians}
 	}
 	\item{covariates}{Either a raster stack or list of rasters and SpatialPolygonsDataFrames (with the latter having only a single data column).}
 \item{betas}{Coefficients for the covariates}
@@ -35,7 +35,7 @@ containing a raster stack of the covariates, spatial random effect, and intensit
 
 \examples{
 mymodel = c(mean=-0.5, variance=1, 
-				range=2, rough=2)
+				range=2, shape=2)
 
 myraster = raster(nrows=15,ncols=20,xmn=0,xmx=10,ymn=0,ymx=7.5)
 

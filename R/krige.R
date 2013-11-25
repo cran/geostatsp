@@ -2,7 +2,7 @@ krige = function(data, trend,
 		coordinates=data,
 		param,  locations, covariates=NULL, 
 		expPred=FALSE,
-		nugget.in.prediction=TRUE) {
+		nuggetInPrediction=TRUE) {
 	
 	haveBoxCox = any(names(param)=="boxcox")
 	if(haveBoxCox)
@@ -302,7 +302,7 @@ krige = function(data, trend,
 		haveNugget = param["nugget"] > 0
 	} 
 	if(!haveNugget) {
-		nugget.in.prediction=FALSE
+		nuggetInPrediction=FALSE
 	}	
 	
 	varData = matern(coordinates, param=param)
@@ -328,10 +328,10 @@ krige = function(data, trend,
 				N=as.integer(Ny), 
 				result=as.double(matrix(0, ncol(locations), length(coordinates))),
 				as.double(param["range"]),
-				as.double(param["rough"]),
+				as.double(param["shape"]),
 				as.double(param["variance"]),
-				as.double(param["aniso.ratio"]),
-				as.double(param["aniso.angle.radians"])
+				as.double(param["anisoRatio"]),
+				as.double(param["anisoAngleRadians"])
 		) 
 		covDataPred = matrix(resC$result, nrow=ncol(locations), ncol=Ny)
 		
@@ -349,7 +349,7 @@ krige = function(data, trend,
 		
 	}
 
-	sums = mapply(krigeOneRow,1:nrow(locations))
+	sums = mcmapply(krigeOneRow,1:nrow(locations))
 
 	# row sums of cholVarDataInvCovDataPred
 	forExpected = sums[1:ncol(locations),]
@@ -376,7 +376,7 @@ krige = function(data, trend,
 	krigeSd = raster(meanRaster)
 	names(krigeSd) = "krigeSd"
 
-	if(nugget.in.prediction) {
+	if(nuggetInPrediction) {
 		values(krigeSd) = sqrt(sum(param[c("nugget","variance")]) - 
 						forVar)
 	} else {
@@ -445,7 +445,7 @@ krigeOld = function(data, trend,
 		coordinates=data,
 		param,  locations, covariates=NULL, 
 		expPred=FALSE,
-		nugget.in.prediction=TRUE) {
+		nuggetInPrediction=TRUE) {
 
 	haveBoxCox = any(names(param)=="boxcox")
 	if(haveBoxCox)
@@ -745,7 +745,7 @@ if(haveNugget) {
 	haveNugget = param["nugget"] > 0
 } 
 if(!haveNugget) {
-	nugget.in.prediction=FALSE
+	nuggetInPrediction=FALSE
 }	
 	
 varData = matern(coordinates, param=param)
@@ -780,7 +780,7 @@ values(krigeSd) = thesd
  # krigeSd is now a variance
 # transform to Standard Deviation
 
-if(nugget.in.prediction) {
+if(nuggetInPrediction) {
 	values(krigeSd) = sqrt(sum(param[c("nugget","variance")]) - 
 					values(krigeSd))
 } else {

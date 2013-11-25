@@ -8,9 +8,9 @@
 \description{
 Calculate MLE's of model parameters and perform spatial prediction. }
 \usage{
-lgm(data, locations, covariates = NULL, formula = NULL, rough = 1, 
-    fixRough = TRUE, aniso = FALSE, boxcox = 1, fixBoxcox = TRUE, 
-    nugget = 0, fixNugget = FALSE, expPred = FALSE, nugget.in.prediction = TRUE) 
+lgm(data, locations, covariates = NULL, formula = NULL, shape = 1, 
+    fixShape = TRUE, aniso = FALSE, boxcox = 1, fixBoxcox = TRUE, 
+    nugget = 0, fixNugget = FALSE, expPred = FALSE, nuggetInPrediction = TRUE) 
 
 }
  
@@ -29,8 +29,8 @@ Covariates in \code{formula} but not in \code{data} will be extracted from \code
 number of cells in the X direction which predictions will be made on.  If the later
 the predictions will be a raster of square cells covering the bounding box of \code{locations}.}
 \item{formula}{A model formula for the fixed effects.}
-\item{rough}{Order of the Matern correlation}
-\item{fixRough}{Set to \code{FALSE} to estimate the Matern order}
+\item{shape}{Order of the Matern correlation}
+\item{fixShape}{Set to \code{FALSE} to estimate the Matern order}
 \item{aniso}{Set to \code{TRUE} to use geometric anisotropy.}
 \item{boxcox}{Box-Cox transformation parameter, set to 1 for no transformation.}
 \item{fixBoxcox}{Set to \code{FALSE} to estimate the Box-Cox parameter.}
@@ -40,14 +40,14 @@ the predictions will be a raster of square cells covering the bounding box of \c
  \item{expPred}{
 Should the predictions be exponentiated, defaults to \code{FALSE}.
 }
-\item{nugget.in.prediction}{If \code{TRUE}, predict new observations by adding the 
+\item{nuggetInPrediction}{If \code{TRUE}, predict new observations by adding the 
 nugget effect.  The prediction variances will be adjusted accordingly, and the predictions 
 on the natural scale for logged or Box Cox transformed data will be affected. 
 Otherwise predict fitted values. 
 }
 }
 \details{
-Calls  \code{\link{likfit}} and  \code{\link{krige}}
+Calls  \code{\link{likfitLgm}} and  \code{\link{krige}}
 }
 \value{
 A raster stack is 
@@ -63,7 +63,7 @@ For Box-Cox or log-transformed data on the natural (untransformed) scale.
 }
 
 \seealso{
-\code{\link{likfit}}, \code{\link{krige}}
+\code{\link{likfitLgm}}, \code{\link{krige}}
 }
 \examples{
 
@@ -71,9 +71,9 @@ data("swissRain")
  
 swissRes =  lgm(swissRain, locations=20, formula="rain",
 	covariates=swissAltitude, boxcox=0.5, fixBoxcox=TRUE, 
-	rough=1, fixRough=TRUE,
-	aniso=TRUE, nugget=0, fixNugget=TRUE,
-	nugget.in.prediction=FALSE
+	shape=1, fixShape=TRUE,
+	aniso=FALSE, nugget=0, fixNugget=TRUE,
+	nuggetInPrediction=FALSE
 	)
 	
 
@@ -86,11 +86,10 @@ plot(swissBorder, add=TRUE)
 
 \dontrun{
 load(url("http://www.filefactory.com/file/frd1mhownd9/n/CHE_adm0_RData"))
-theMap = openmap(gadm,zoom=7, type="mapquest")#"osm-transport")
+
 library(RColorBrewer)
 par(mar=c(0,0,0,3))
 plot(gadm) 
-plot(theMap, add=TRUE)
 plot(mask(projectRaster(
 	swissRes$predict[["predict"]],  crs=gadm@proj4string),gadm), 
 add=T,alpha=0.6, col=brewer.pal(9, "Blues"))

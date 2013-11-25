@@ -34,14 +34,15 @@ plot(torontoNight, main="Toronto ambient light")
 plot(torontoBorder, add=TRUE)
 points(murder, col="#0000FF40", cex=0.5)
 
+murder2 = murder[!duplicated(coordinates(murder)),]
 
 
 data("torontoPop")
 plot(torontoIncome, main="Toronto Income")
-points(murder, col="#0000FF40", cex=0.5)
+points(murder2, col="#0000FF40", cex=0.5)
 
 plot(torontoPdens, main="Toronto pop dens")
-points(murder, col="#0000FF40", cex=0.5)
+points(murder2, col="#0000FF40", cex=0.5)
 
 
 }

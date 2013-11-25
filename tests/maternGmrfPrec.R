@@ -4,7 +4,7 @@ matrix(NNmat(7, 7)[,25], 7, 7)
 
 params=c(range = 3,
 		cellSize=0.5,
-		rough=2,
+		shape=2,
 		variance=5^2)
 
 data("nn32")

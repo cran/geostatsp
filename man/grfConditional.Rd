@@ -10,7 +10,7 @@ Simulates a Gaussian random field conditional on observed values.
 \usage{
 grfConditional(data, ycol=1, 
 			param, locations, Nsim,
-		 	fun=NULL, nugget.in.prediction=TRUE) 
+		 	fun=NULL, nuggetInPrediction=TRUE) 
 }
 \arguments{
 \item{data}{ Either a SpatialPoints object of observation locations, or a 
@@ -27,7 +27,7 @@ number of cells in the X direction which the field  will simulated on.  If the l
 the predictions will be a raster of square cells covering the bounding box of \code{locations}.}
 \item{Nsim}{Number of samples to simulate.}
  \item{fun}{A function applied to each realised surface and only the result saved.}
-\item{nugget.in.prediction}{If TRUE, predict new observations by adding the nugget effect.  Otherwise
+\item{nuggetInPrediction}{If TRUE, predict new observations by adding the nugget effect.  Otherwise
 predict fitted values.  Only relevant for Box-Cox or log transformed data.}
 }
 
@@ -49,10 +49,10 @@ swissRain$sqrtrain = sqrt(swissRain$rain)
 
 # estimate parameters
 swissFit =  likfitLgm(swissRain, trend=sqrtrain ~ elevation, 
-		param=c(range=51700, nugget=0.11,rough=1,  
-				aniso.angle.degrees=37, aniso.ratio=7.6),
+		param=c(range=51700, nugget=0.11,shape=1,  
+				anisoAngleDegrees=37, anisoRatio=7.6),
 		paramToEstimate = c("range","nugget", 
-				"aniso.angle.degrees", "aniso.ratio"))
+				"anisoAngleDegrees", "anisoRatio"))
 
 # simulate from the random effect conditional on
 #   the observed data

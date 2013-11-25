@@ -1,13 +1,13 @@
 gmrfPrecUncond = function(x, 
 			N = attributes(x)$Nx, Ny=attributes(x)$Ny,
 			param = attributes(x)$model,
-			border=param["rough"]+1){
+			border=param["shape"]+1){
 		if(!length(N) | !length(Ny) | !length(border) | !length(param))	
 			warning("border, N, Ny, or param were not supplied")
 		if(border < 1) warning("border should be >1")
 		
-		if(!all(c("scale","prec","rough","cellSize") %in% names(param))) {
-			warning("param needs scale, prec, rough, cellSize")
+		if(!all(c("scale","prec","shape","cellSize") %in% names(param))) {
+			warning("param needs scale, prec, shape, cellSize")
 			print(param)
 		}
 		
@@ -42,8 +42,8 @@ gmrfPrecUncond = function(x,
 	scaleCell = param["scale"] * cellSize
 	distmat = distmat*scaleCell
 	covMat = distmat
-	covMat@x = (2^(1-param["rough"])/(param["prec"]*gamma(param["rough"]))) * 
-			covMat@x^param["rough"] * besselK(covMat@x, nu=param["rough"])
+	covMat@x = (2^(1-param["shape"])/(param["prec"]*gamma(param["shape"]))) * 
+			covMat@x^param["shape"] * besselK(covMat@x, nu=param["shape"])
 	Matrix::diag(covMat) = 1/param["prec"]
 #	covChol = chol(covMat)
 #	covInvChol = solve(covChol)

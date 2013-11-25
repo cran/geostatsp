@@ -11,7 +11,7 @@
 Returns the Matern covariance for the distances supplied.
 }
 \usage{
-	matern( x, y=NULL, param=c(range=1, variance=1, rough=1))
+	matern( x, y=NULL, param=c(range=1, variance=1, shape=1))
 	\method{matern}{SpatialPoints}(x,  y=NULL, param)
 	\method{matern}{default}( x, y=NULL, param)
 	\method{matern}{dist}( x, y=NULL, param)
@@ -28,10 +28,10 @@ Returns the Matern covariance for the distances supplied.
 	 However, if \code{x} is a matrix or vector it is assumed to 
 	 be a set of distances and \code{y} is ignored.}
 	\item{param}{A vector of named model parameters with, at a minimum names
- \code{range} and  \code{rough} (see Details), and optionally \code{variance} (defaults to 1).  
+ \code{range} and  \code{shape} (see Details), and optionally \code{variance} (defaults to 1).  
 	For Geometric Anisotropy add 
-	\code{aniso.ratio} and either \code{aniso.angle.degrees} or  
-		\code{aniso.angle.radians}
+	\code{anisoRatio} and either \code{anisoAngleDegrees} or  
+		\code{anisoAngleRadians}
 	}
 }
 
@@ -47,24 +47,24 @@ Returns the Matern covariance for the distances supplied.
 
 \details{		
 The formula for the Matern correlation function is
-\deqn{M(x) =  \frac{variance}{\Gamma(rough)} 2^{rough-1} 
-x (\sqrt{8 rough}/ range)^{rough}  
-besselK(x \sqrt{8 rough}/ range, rough) }{%
-             M(x) =   (variance / Gamma(rough)) 2^(rough-1) 
-x [sqrt(8 rough)/ range]^rough  
-besselK[x sqrt(8 rough)/ range, rough] 
+\deqn{M(x) =  \frac{variance}{\Gamma(shape)} 2^{shape-1} 
+x (\sqrt{8 shape}/ range)^{shape}  
+besselK(x \sqrt{8 shape}/ range, shape) }{%
+             M(x) =   (variance / Gamma(shape)) 2^(shape-1) 
+x [sqrt(8 shape)/ range]^shape  
+besselK[x sqrt(8 shape)/ range, shape] 
 }
 
-The \code{range} argument is sqrt(8*rough)*phi.geoR, sqrt(8*rough)*scale.whittle.RandomFields, and
+The \code{range} argument is sqrt(8*shape)*phi.geoR, sqrt(8*shape)*scale.whittle.RandomFields, and
 2*scale.matern.RandomFields.
 
 Geometric anisotropy is only available when 
-\code{x} is a \code{Raster} or \code{SpatialPoints}.  The parameter 'aniso.angle' refers to 
+\code{x} is a \code{Raster} or \code{SpatialPoints}.  The parameter 'anisoAngle' refers to 
 rotation of the coordinates anti-clockwise by the specified amount prior to 
 calculating distances, which has the effect that the contours of the correlation function
-are rotated clockwise by this amount. \code{aniso.ratio} is the amount the Y coordinates are 
+are rotated clockwise by this amount. \code{anisoRatio} is the amount the Y coordinates are 
 divided by
-by post rotation prior to calculating distances.  A large value of \code{aniso.ratio}
+by post rotation prior to calculating distances.  A large value of \code{anisoRatio}
 makes the Y coordinates smaller and increases the correlation in the
 Y direction.
 
@@ -76,7 +76,7 @@ starting at the top left.
 \examples{
 # example with raster
 myraster = raster(nrows=40,ncols=60,xmn=-3,xmx=3,ymn=-2,ymx=2)
-param = c(range=2, rough=2,	aniso.ratio=2, aniso.angle.degrees=-25)
+param = c(range=2, shape=2,	anisoRatio=2, anisoAngleDegrees=-25)
 
 # plot correlation of each cell with the origin
 myMatern = matern(myraster, c(0,0), param=param)
@@ -87,7 +87,7 @@ plot(myMatern, main="anisortopic matern")
 
 # correlation matrix for all cells with each other
 myraster = raster(nrows=4,ncols=6,xmn=-3,xmx=3,ymn=-2,ymx=2)
-myMatern = matern(myraster, param=c(range=2, rough=2))
+myMatern = matern(myraster, param=c(range=2, shape=2))
 dim(myMatern)
 
 # plot the cell ID's
@@ -106,14 +106,14 @@ matern(mypoints, param=param)
 # example with vector of distances
 range=3
 distVec = seq(0, 2*range, len=100)
-roughSeq = c(0.5, 1, 2,20)
+shapeSeq = c(0.5, 1, 2,20)
 theCov = NULL
-for(D in roughSeq) {
-	theCov = cbind(theCov, matern(distVec, param=c(range=range, rough=D)))
+for(D in shapeSeq) {
+	theCov = cbind(theCov, matern(distVec, param=c(range=range, shape=D)))
 }
 matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation',
 	main="matern correlations")
-legend("topright", fill=1:length(roughSeq), legend=roughSeq,title='rough')
+legend("topright", fill=1:length(shapeSeq), legend=shapeSeq,title='shape')
 # exponential
 
 distVec2 = seq(0, max(distVec), len=20)
@@ -126,7 +126,7 @@ legend("right", pch=1, col=c('black','blue'), legend=c('exp','gau'))
 
 covGeoR = covRandomFields = NULL
 
-for(D in roughSeq) {
+for(D in shapeSeq) {
 	covGeoR = cbind(covGeoR, 
 		geoR::matern(distVec, phi=range/sqrt(8*D), kappa=D))
 	covRandomFields = cbind(covRandomFields,
