@@ -12,19 +12,19 @@ function in the \link[RandomFields]{RandomFields} package, where the arguments a
 are Raster or SpatialPoints objects.
 }
 \usage{
-	GaussRF(x, param=c(variance=1, range=1, rough=1), ...)
-	\method{GaussRF}{Raster}(x,param=c(variance=1, range=1, rough=1),...)
-	\method{GaussRF}{SpatialPoints}(x,param=c(variance=1, range=1, rough=1),...)
-	\method{GaussRF}{SpatialPointsDataFrame}(x,param=c(variance=1, range=1, rough=1),...)
+	GaussRF(x, param=c(variance=1, range=1, shape=1), ...)
+	\method{GaussRF}{Raster}(x,param=c(variance=1, range=1, shape=1),...)
+	\method{GaussRF}{SpatialPoints}(x,param=c(variance=1, range=1, shape=1),...)
+	\method{GaussRF}{SpatialPointsDataFrame}(x,param=c(variance=1, range=1, shape=1),...)
 }
 
 \arguments{
 	\item{x}{An object of class \code{\link[raster]{raster}}, SpatialPoints, or SpatialPointsDataFrame,
 	or an object of a class acceptable to the  \code{\link[RandomFields]{GaussRF}} .}
 	\item{param}{A vector of named model parameters with, at a minimum names
-	\code{variance},  \code{range} and \code{rough}.  For Geometric Anisotropy add 
-	\code{aniso.ratio} and either \code{aniso.angle.degrees} or  
-		\code{aniso.angle.radians}
+	\code{variance},  \code{range} and \code{shape}.  For Geometric Anisotropy add 
+	\code{anisoRatio} and either \code{anisoAngleDegrees} or  
+		\code{anisoAngleRadians}
 	}
 	\item{...}{ additional arguments, see \code{\link[RandomFields]{GaussRF}} in the RandomFields package.}
 }
@@ -37,16 +37,16 @@ are Raster or SpatialPoints objects.
 }
 \details{
 The formula for the Matern correlation function is
-\deqn{M(x) =  \frac{variance}{\Gamma(rough)} 2^{rough-1} 
-x (\sqrt{8 rough}/ range)^{rough}  
-besselK(x \sqrt{8 rough}/ range, rough) }{%
-             M(x) =   (variance / Gamma(rough)) 2^(rough-1) 
-x [sqrt(8 rough)/ range]^rough  
-besselK[x sqrt(8 rough)/ range, rough] 
+\deqn{M(x) =  \frac{variance}{\Gamma(shape)} 2^{shape-1} 
+x (\sqrt{8 shape}/ range)^{shape}  
+besselK(x \sqrt{8 shape}/ range, shape) }{%
+             M(x) =   (variance / Gamma(shape)) 2^(shape-1) 
+x [sqrt(8 shape)/ range]^shape  
+besselK[x sqrt(8 shape)/ range, shape] 
 }
 
-The \code{range} parameter is sqrt(8*rough)*phi (for phi in the geoR package), 
-sqrt(8*rough)*scale (for 'scale' as in the whittle model in RandomFields), and
+The \code{range} parameter is sqrt(8*shape)*phi (for phi in the geoR package), 
+sqrt(8*shape)*scale (for 'scale' as in the whittle model in RandomFields), and
 2*scale (for 'scale' in the matern model in RandomFields).
 
 If an argument \code{model} is specified, parameters are passed directly to the RandomFields package and 
@@ -54,7 +54,7 @@ If an argument \code{model} is specified, parameters are passed directly to the 
 }
 
 \examples{
-mymodel = c(variance=1, range=2, rough=2, aniso.ratio=0.6, aniso.angle.degrees=30)
+mymodel = c(variance=1, range=2, shape=2, anisoRatio=0.6, anisoAngleDegrees=30)
 
 myraster = raster(nrows=40,ncols=40,xmn=-20,xmx=20,ymn=-15,ymx=15)
 
@@ -71,7 +71,7 @@ spplot(mypoints, "rf", col.regions=terrain.colors(5), main="GRF at points")
 
 x = cbind(sample(1:50), sample(1:50))
 temp=GaussRF(x,  
-		param=c(variance=1,	range=6, rough=2))
+		param=c(variance=1,	range=6, shape=2))
 quantile(temp)
 
 # passing parameters straight to RandomFields

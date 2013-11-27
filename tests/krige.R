@@ -17,12 +17,12 @@ swissRain2 = swissRain [swissRain$land %in% landTable, ]
 
 swissFit3 = likfitLgm(data=swissRain2, 
 		trend=lograin~ elevation + factor(land),
-		param=c(range=46500, nugget=0.05,rough=1,  
-				aniso.angle.degrees=35, aniso.ratio=12),
+		param=c(range=46500, nugget=0.05,shape=1,  
+				anisoAngleDegrees=35, anisoRatio=12),
 		paramToEstimate = c("range","nugget", 
-				"aniso.angle.degrees", "aniso.ratio"),
+				"anisoAngleDegrees", "anisoRatio"),
 		parscale = c(range=5000,nugget=0.01, 
-				aniso.ratio=1,aniso.angle.degrees=5)
+				anisoRatio=1,anisoAngleDegrees=5)
 )
 
 swissKrige3 = krige(data=swissRain2, trend = swissFit3$trend,
@@ -46,12 +46,12 @@ swissRain2$landFac = factor(swissRain2$land,
 
 swissFit4 = likfitLgm(data=swissRain2, 
 		trend=lograin~ elevation + landFac,
-		param=c(range=46500, nugget=0.05,rough=1,  
-				aniso.angle.degrees=35, aniso.ratio=12),
+		param=c(range=46500, nugget=0.05,shape=1,  
+				anisoAngleDegrees=35, anisoRatio=12),
 		paramToEstimate = c("range","nugget", 
-				"aniso.angle.degrees", "aniso.ratio"),
+				"anisoAngleDegrees", "anisoRatio"),
 		parscale = c(range=5000,nugget=0.01, 
-				aniso.ratio=1,aniso.angle.degrees=5)
+				anisoRatio=1,anisoAngleDegrees=5)
 )
 swissKrige4 = krige(data=swissRain2, trend = swissFit4$trend,
 		param=swissFit4$param, 
@@ -69,12 +69,12 @@ swissRain2$landFac2 = as.character(swissRain2$landFac)
 
 swissFit5= likfitLgm(data=swissRain2, 
 		trend=lograin~ elevation + factor(landFac2),
-		param=c(range=46500, nugget=0.05,rough=1,  
-				aniso.angle.degrees=35, aniso.ratio=12),
+		param=c(range=46500, nugget=0.05,shape=1,  
+				anisoAngleDegrees=35, anisoRatio=12),
 		paramToEstimate = c("range","nugget", 
-				"aniso.angle.degrees", "aniso.ratio"),
+				"anisoAngleDegrees", "anisoRatio"),
 		parscale = c(range=5000,nugget=0.01, 
-				aniso.ratio=1,aniso.angle.degrees=5)
+				anisoRatio=1,anisoAngleDegrees=5)
 )
 
 
@@ -86,3 +86,27 @@ pdf("krige5.pdf")
 plot(swissKrige5[["predict"]])	
 plot(swissBorder, add=TRUE)
 dev.off()
+
+
+# test parallel
+bigRaster = raster(extent(swissBorder), ncols=600, nrows=400, 
+		crs=swissRain@proj4string)	
+
+
+options(mc.cores = 1)
+unix.time(
+		krige(data=swissRain2, trend = swissFit3$trend,
+				param=swissFit3$param, 
+				covariates = list(elevation = swissAltitude,land=swissLandType),
+				locations = bigRaster, expPred=TRUE)
+
+)
+
+
+options(mc.cores = 4)
+
+unix.time(krige(data=swissRain2, trend = swissFit3$trend,
+				param=swissFit3$param, 
+				covariates = list(elevation = swissAltitude,land=swissLandType),
+				locations = bigRaster, expPred=TRUE)
+)

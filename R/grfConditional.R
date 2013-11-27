@@ -1,6 +1,6 @@
 grfConditional = function(data, ycol=1, 
 			param, locations, Nsim,
-		 	fun=NULL, nugget.in.prediction=TRUE){
+		 	fun=NULL, nuggetInPrediction=TRUE){
 		
 if(is.numeric(locations)){
 	# locations is number of cells in the x direction
@@ -24,7 +24,7 @@ if(nrow(locations) * ncol(locations) > 10^7) warning("there are lots of cells in
 
 
 	# the model
-	requiredParams = c("variance","range","rough")
+	requiredParams = c("variance","range","shape")
 	if(!all(requiredParams %in% names(param)))
 		warning("param has names", paste(names(param),collapse=","), 
 				" must have ", paste(requiredParams, collapse=","))
@@ -42,12 +42,12 @@ if(nrow(locations) * ncol(locations) > 10^7) warning("there are lots of cells in
 		nuggetSd = sqrt(param["nugget"])
 	} else {
 		err.model = err.param = NULL
-		nugget.in.prediction=FALSE
+		nuggetInPrediction=FALSE
 	}
 
 	
 simFun = function(D) {
-	res = CondSimu(krige.method="O",
+	res = RandomFields::CondSimu(krige.method="O",
 			x=xseq, y = yseq, grid=TRUE, gridtriple=TRUE,
 			param=NULL, model=model,
 			given=data@coords,
@@ -55,7 +55,7 @@ simFun = function(D) {
 			err.model=err.model,
 			err.param=err.param, method="direct decomp."
 	)		
-	if(nugget.in.prediction){
+	if(nuggetInPrediction){
 		res= res + rnorm(length(res), sd=nuggetSd)
 	}		
 	values(locations) = as.vector((res[,seq(dim(res)[2], 1)]))
@@ -65,7 +65,7 @@ simFun = function(D) {
 	locations
 }		
 
-	result = mapply(simFun, 1:Nsim)
+	result = mcmapply(simFun, 1:Nsim)
 
 	if(is.null(fun)) {
 		resultRaster = result[[1]]

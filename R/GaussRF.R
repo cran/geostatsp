@@ -1,11 +1,11 @@
 
 
-GaussRF = function(x,param=c(variance=1, range=1, rough=1), ...) {
+GaussRF = function(x,param=c(variance=1, range=1, shape=1), ...) {
 	UseMethod("GaussRF")
 	
 }
 
-GaussRF.Raster = function(x,param=c(variance=1, range=1, rough=1), ...){
+GaussRF.Raster = function(x,param=c(variance=1, range=1, shape=1), ...){
 
 	xseq = c(xmin(x)+xres(x)/2, xmax(x)-xres(x)/2, xres(x))
 	yseq = c(ymin(x)+yres(x)/2, ymax(x)-yres(x)/2, yres(x))
@@ -28,19 +28,19 @@ GaussRF.Raster = function(x,param=c(variance=1, range=1, rough=1), ...){
 	return(resRast)
 }
 
-GaussRF.SpatialPointsDataFrame = function(x,param=c(variance=1, range=1, rough=1), ...){
+GaussRF.SpatialPointsDataFrame = function(x,param=c(variance=1, range=1, shape=1), ...){
 	
 	x=coordinates(x)
 	NextMethod("GaussRF")
 }
 
-GaussRF.SpatialPoints= function(x,param=c(variance=1, range=1, rough=1), ...){
+GaussRF.SpatialPoints= function(x,param=c(variance=1, range=1, shape=1), ...){
 	
 	x=coordinates(x)
 	NextMethod("GaussRF")
 }
 
-GaussRF.default = function(x,param=c(variance=1, range=1, rough=1),  ...){
+GaussRF.default = function(x,param=c(variance=1, range=1, shape=1),  ...){
 	
 	
  	theArgs = list(...)
@@ -49,7 +49,7 @@ GaussRF.default = function(x,param=c(variance=1, range=1, rough=1),  ...){
 	if(!any(names(theArgs)=="model")){
 		# param is for geostatsp, not RandomFields 
 
-		requiredParams = c("variance","range","rough")
+		requiredParams = c("variance","range","shape")
 		if(!all(requiredParams %in% names(param)))
 			warning("param has names", paste(names(param),collapse=","), 
 					" must have ", paste(requiredParams, collapse=","))

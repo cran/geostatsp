@@ -1,12 +1,8 @@
-elevationLoa
-eviLoa
 gambiaUTM
-loaloa
-ltLoa
+loaloa: elevationLoa eviLoa loaloa ltLoa tempLoa
 murder: murder torontoBorder torontoNight
 nn32: nn128 nn32 nn64
 rongelapUTM
 swissRain: swissAltitude swissBorder swissLandType swissRain
-tempLoa
 torontoPop: torontoIncome torontoPdens
 wheat

@@ -5,7 +5,7 @@ void maternArasterBpoints(double *Axmin, double *Axres, int *AxN,
 		double *Aymax, double *Ayres, int *AyN,
 		double *Bx, double *By, int *BN,
 		double *result,
-		double  *range, double*rough, double *variance,
+		double  *range, double*shape, double *variance,
 		double *anisoRatio, double *anisoAngleRadians) {
 
 int DB, DAx, DAy, AyN2, AxN2, BN2;
@@ -37,13 +37,13 @@ distCellDown[0] =  sintheta * (*Ayres);
 distCellDown[1] =  - costheta * (*Ayres);
 
 
-xscale = sqrt(8 * (*rough)) / *range;
-varscale =  log(*variance)  - lgammafn(*rough ) -  (*rough -1)*M_LN2;
+xscale = sqrt(8 * (*shape)) / *range;
+varscale =  log(*variance)  - lgammafn(*shape ) -  (*shape -1)*M_LN2;
 
 truncate = *variance*1e-06; // count a zero if var < truncate
 
 ize = 1L;
-alpha = *rough;
+alpha = *shape;
 // code stolen from R's src/nmath/bessel_k.c
 	nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
 	bk = (double *) calloc(nb, sizeof(double));
@@ -85,7 +85,7 @@ for(DB=0;DB<BN2;++DB){ // loop through points
 					result[Dindex] = 0;
 				}
 			} else {
-			result[Dindex] = exp(varscale + *rough * log(thisx) )*
+			result[Dindex] = exp(varscale + *shape * log(thisx) )*
     				bessel_k_ex(thisx, alpha, 1.0, bk);
 			}
 
@@ -114,7 +114,7 @@ for(DB=0;DB<BN2;++DB){ // loop through points
 }
 *BN = Nzeros;
 *range = xscale;
-*rough=varscale;
+*shape=varscale;
 *anisoRatio = anisoRatioSq;
 free(bk);
 
@@ -122,7 +122,7 @@ free(bk);
 
 void maternAniso(double *x, double *y, int *N,
 		double *result,
-		double  *range, double*rough, double *variance,
+		double  *range, double*shape, double *variance,
 		double *anisoRatio, double *anisoAngleRadians) {
 
 	int Drow, Dcol, Nm1, Dcolp1, N2;
@@ -140,13 +140,13 @@ void maternAniso(double *x, double *y, int *N,
 
     anisoRatioSq = (*anisoRatio)*(*anisoRatio);
 
-	xscale = sqrt(8 * (*rough)) / *range;
-	varscale =  log(*variance)  - lgammafn(*rough ) -  (*rough -1)*M_LN2;
+	xscale = sqrt(8 * (*shape)) / *range;
+	varscale =  log(*variance)  - lgammafn(*shape ) -  (*shape -1)*M_LN2;
 
     truncate = *variance*1e-06; // count a zero if var < truncate
 
 	ize = 1L;
-	alpha = *rough;
+	alpha = *shape;
 	// code stolen from R's src/nmath/bessel_k.c
 		nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
 		bk = (double *) calloc(nb, sizeof(double));
@@ -189,7 +189,7 @@ void maternAniso(double *x, double *y, int *N,
 						result[Dindex] = 0;
 				}
 			} else { // thisx not nan
-    		result[Dindex] = exp(varscale + *rough * log(thisx) )*
+    		result[Dindex] = exp(varscale + *shape * log(thisx) )*
     				bessel_k_ex(thisx, alpha, 1.0, bk);
 			}
 
@@ -215,7 +215,7 @@ void maternAniso(double *x, double *y, int *N,
 
 
 void matern(double *distance, int *N,
-		double *range, double *rough, double *variance) {
+		double *range, double *shape, double *variance) {
 
 	int D, N2;
 	double xscale, varscale,  thisx;
@@ -227,7 +227,7 @@ void matern(double *distance, int *N,
     Nzeros = 0;
 
 	ize = 1L;
-	alpha = *rough;
+	alpha = *shape;
 
 // code stolen from R's src/nmath/bessel_k.c
 	nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
@@ -238,14 +238,14 @@ void matern(double *distance, int *N,
 // evaluate the matern!
 
 	/*
-	xscale = abs(x)*(sqrt(8*param["rough"])/ param["range"])
-	result = ( param["variance"]/(gamma(param["rough"])* 2^(param["rough"]-1)  ) ) *
-			( xscale^param["rough"] *
-				besselK(xscale , param["rough"]) )
+	xscale = abs(x)*(sqrt(8*param["shape"])/ param["range"])
+	result = ( param["variance"]/(gamma(param["shape"])* 2^(param["shape"]-1)  ) ) *
+			( xscale^param["shape"] *
+				besselK(xscale , param["shape"]) )
 */
 
-	xscale = sqrt(8 * (*rough)) / *range;
-	varscale =  log(*variance)  - lgammafn(*rough ) -  (*rough -1)*M_LN2;
+	xscale = sqrt(8 * (*shape)) / *range;
+	varscale =  log(*variance)  - lgammafn(*shape ) -  (*shape -1)*M_LN2;
 // #ifdef SUPPORT_OPENMP
 // #pragma omp parallel for private(thisx)
 // #endif
@@ -265,7 +265,7 @@ void matern(double *distance, int *N,
 				distance[D] = 0;
 			}
 		} else { // thisx not nan
-			distance[D] = exp(varscale + *rough * log(thisx) )*
+			distance[D] = exp(varscale + *shape * log(thisx) )*
 					bessel_k_ex(thisx, alpha, 1.0, bk);
 		}
 		if(isnan(distance[D])) {
@@ -281,7 +281,7 @@ void matern(double *distance, int *N,
 		if(distance[D] <  truncate) ++Nzeros;
 	}
 	*range = xscale;
-	*rough=varscale;
+	*shape=varscale;
 	*N = Nzeros;
 
     free(bk);

@@ -36,6 +36,9 @@ stackRasterList = function(x, template=x[[1]],method='ngb') {
 		if(class(x[[D]])=="SpatialPolygonsDataFrame"){
 			if(length(names(x[[D]]))!=1)
 				warning("polygon ", D, "has more than one data column, using the first" )
+			
+			require(rgdal, quietly=TRUE ) 
+			
 			toAdd =  
 					rasterize(
 							spTransform(x[[D]], template@crs), 
@@ -55,7 +58,8 @@ stackRasterList = function(x, template=x[[1]],method='ngb') {
 				thelevels = levels(x[[D]])
 				
 				# same projection, different resolution
-				testcrs =CRS(template@crs@projargs)@projargs == CRS(x[[D]]@crs@projargs)@projargs
+				testcrs =compareRaster(template, x[[D]],
+					extent=FALSE,rowcol=FALSE,crs=TRUE,stopiffalse=FALSE)				
 				if(is.na(testcrs)) testcrs = TRUE
 				if(testcrs) { # same resolution
 					# should we aggregate?

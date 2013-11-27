@@ -1,10 +1,10 @@
 
-matern = function(x, y=NULL, param=c(range=1, variance=1, rough=1)) {
+matern = function(x, y=NULL, param=c(range=1, variance=1, shape=1)) {
 	UseMethod("matern")
 	
 }
 
-matern.dist = function( x, y=NULL, param=c(range=1, variance=1, rough=1)) {
+matern.dist = function( x, y=NULL, param=c(range=1, variance=1, shape=1)) {
 
 	param=fillParam(param)
 	resultVec = matern(as.vector(x), param=param)
@@ -27,13 +27,13 @@ matern.dist = function( x, y=NULL, param=c(range=1, variance=1, rough=1)) {
 	result
 }
 
-matern.SpatialPointsDataFrame = function( x, y=NULL, param=c(range=1, variance=1, rough=1)) {
+matern.SpatialPointsDataFrame = function( x, y=NULL, param=c(range=1, variance=1, shape=1)) {
 	x = SpatialPoints(x)
 	matern(x=x, y=y, param=param)
 }
 
 
-matern.Raster = function( x, y=NULL, param=c(range=1, variance=1, rough=1))
+matern.Raster = function( x, y=NULL, param=c(range=1, variance=1, shape=1))
  {
 	param = fillParam(param)
 	 if(is.null(y)) {
@@ -56,10 +56,10 @@ matern.Raster = function( x, y=NULL, param=c(range=1, variance=1, rough=1))
 			 N=as.integer(Ny), 
 			 result=as.double(array(0, c(nrow(x),ncol(x),Ny))),
 			 xscale=as.double(param["range"]),
-			 varscale=as.double(param["rough"]),
+			 varscale=as.double(param["shape"]),
 			 as.double(param["variance"]),
-			 as.double(param["aniso.ratio"]),
-			 as.double(param["aniso.angle.radians"])
+			 as.double(param["anisoRatio"]),
+			 as.double(param["anisoAngleRadians"])
 	 )
 	
 	if(Ny ==1) {
@@ -88,7 +88,7 @@ matern.Raster = function( x, y=NULL, param=c(range=1, variance=1, rough=1))
 
 
 
-matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, rough=1)
+matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, shape=1)
 		){
 
 	param = fillParam(param)		
@@ -110,10 +110,10 @@ matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, rough=1)
 		x = x@coords[,1] + 1i*x@coords[,2]
 		
 			
-		x = x * exp(1i*param["aniso.angle.radians"])
-		x = Re(x) +  (1i/ param["aniso.ratio"] )*Im(x)
-		y = y * exp(1i*param["aniso.angle.radians"])
-		y = Re(y) +  (1i/ param["aniso.ratio"] )*Im(y)
+		x = x * exp(1i*param["anisoAngleRadians"])
+		x = Re(x) +  (1i/ param["anisoRatio"] )*Im(x)
+		y = y * exp(1i*param["anisoAngleRadians"])
+		y = Re(y) +  (1i/ param["anisoRatio"] )*Im(y)
 				
 		thedist = Mod(outer(x, y, FUN="-"))
 		result= matern(x=thedist, y=NULL, param=param)
@@ -122,7 +122,7 @@ matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, rough=1)
 	} else { # y is null
 #	void maternAniso(double *x, double *y, long *N,
 #					double *result,
-#					double  *range, double*rough, 
+#					double  *range, double*shape, 
 #	double *variance,
 #				double *anisoRatio, double *anisoAngleRadians) {
 					
@@ -132,10 +132,10 @@ matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, rough=1)
 				N= as.integer(length(x)),
 				result=as.double(rep(-99.9, length(x)^2)),
 				as.double(param["range"]),
-				as.double(param["rough"]),
+				as.double(param["shape"]),
 				as.double(param["variance"]),
-				as.double(param["aniso.ratio"]),
-				as.double(param["aniso.angle.radians"])
+				as.double(param["anisoRatio"]),
+				as.double(param["anisoAngleRadians"])
 			)
 	result = new("dsyMatrix", 
 				Dim = c(length(x), length(x)), uplo="L",
@@ -154,7 +154,7 @@ matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, rough=1)
 	result
 }
 
-matern.default = function( x, y=NULL,param=c(range=1, variance=1, rough=1))
+matern.default = function( x, y=NULL,param=c(range=1, variance=1, shape=1))
 {
 	# x is distances (matrix or vector), y is ignored	
 	names(param) = gsub("^var$", "variance", names(param))
@@ -169,9 +169,9 @@ matern.default = function( x, y=NULL,param=c(range=1, variance=1, rough=1))
 	if(is.data.frame(x))
 		x = as.matrix(x)	
 #	void matern(double *distance, long *N,
-#					double *range, double *rough, double *variance) {
+#					double *range, double *shape, double *variance) {
 	resultFull = .C("matern", as.double(x), as.integer(length(x)),
-			as.double(param["range"]), as.double(param["rough"]),
+			as.double(param["range"]), as.double(param["shape"]),
 			as.double(param["variance"]))
 	result = resultFull[[1]]
 	if(is.matrix(x)) 
@@ -186,7 +186,7 @@ matern.default = function( x, y=NULL,param=c(range=1, variance=1, rough=1))
 
 
 
-oldmatern = function( x, param=c(range=1, variance=1, rough=1))
+oldmatern = function( x, param=c(range=1, variance=1, shape=1))
 {
 	# R code instead of C
 	# x is distances (matrix or vector), y is ignored, assume isotropic	
@@ -195,10 +195,10 @@ oldmatern = function( x, param=c(range=1, variance=1, rough=1))
 	if(is.data.frame(x))
 		x = as.matrix(x)	
 	# do this bit in C?
-	xscale = abs(x)*(sqrt(8*param["rough"])/ param["range"])
-	result = ( param["variance"]/(gamma(param["rough"])* 2^(param["rough"]-1)  ) ) * 
-			( xscale^param["rough"] *
-				besselK(xscale , param["rough"]) )
+	xscale = abs(x)*(sqrt(8*param["shape"])/ param["range"])
+	result = ( param["variance"]/(gamma(param["shape"])* 2^(param["shape"]-1)  ) ) * 
+			( xscale^param["shape"] *
+				besselK(xscale , param["shape"]) )
 	result[xscale==0] = 
 			param["variance"] 
 	result[xscale==Inf] = 0
@@ -206,9 +206,9 @@ oldmatern = function( x, param=c(range=1, variance=1, rough=1))
 	
 	
 	attributes(result)$param = param
-	attributes(result)$xscale = (sqrt(8*param["rough"])/ param["range"])
-	attributes(result)$varscale =  param["variance"]/(gamma(param["rough"])* 
-					2^(param["rough"]-1)  )
+	attributes(result)$xscale = (sqrt(8*param["shape"])/ param["range"])
+	attributes(result)$varscale =  param["variance"]/(gamma(param["shape"])* 
+					2^(param["shape"]-1)  )
 	result
 	
 }

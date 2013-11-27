@@ -1,8 +1,8 @@
 lgm <- function(data,  locations, covariates=NULL, formula=NULL,
-		rough=1, fixRough=TRUE,
+		shape=1, fixShape=TRUE,
 		aniso=FALSE, boxcox=1, fixBoxcox=TRUE,
 		nugget = 0, fixNugget = FALSE,
-		expPred=FALSE, nugget.in.prediction=TRUE){
+		expPred=FALSE, nuggetInPrediction=TRUE){
 	
 	
 # the formula
@@ -55,10 +55,12 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 		
 		for(D in notInData) {
 			
-			if(proj4string(covariates[[D]])!= "NA" & 
-					!is.na(proj4string(data)) ) {
+			if(!.compareCRS(covariates[[D]], data,unknown=TRUE) ) {
+				
+				require(rgdal, quietly=TRUE ) 
+				
 				data[[D]] = extract(covariates[[D]], 
-					spTransform(data, CRS(proj4string(covariates[[D]])))) 
+					spTransform(data, CRSobj=CRS(projection(covariates[[D]])))) 
 			} else {
 				data[[D]] = extract(covariates[[D]], 
 						 data) 
@@ -81,13 +83,13 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 
 	
 	param = c(range=sd(data@coords[,1]),
-				rough=rough, nugget=nugget,boxcox=boxcox
+				shape=shape, nugget=nugget,boxcox=boxcox
 				)
-	paramToEstimate	= c("range", "rough","nugget","boxcox")[
-			!c(FALSE,fixRough,fixNugget,fixBoxcox)]		
+	paramToEstimate	= c("range", "shape","nugget","boxcox")[
+			!c(FALSE,fixShape,fixNugget,fixBoxcox)]		
 	if(aniso) {
-		param = c(param, aniso.angle.degrees=0,aniso.ratio=1)
-		paramToEstimate = c(paramToEstimate,c("aniso.angle.degrees","aniso.ratio"))		
+		param = c(param, anisoAngleDegrees=0,anisoRatio=1)
+		paramToEstimate = c(paramToEstimate,c("anisoAngleDegrees","anisoRatio"))		
 	}
 				
 	
@@ -109,7 +111,7 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 	krigeRes =  krige(data=data,trend=formula,
 			param=likRes$param, locations=locations,
 			covariates=covariates, expPred=expPred,
-			nugget.in.prediction=nugget.in.prediction
+			nuggetInPrediction=nuggetInPrediction
 			)
 	 
 	res = c(predict=krigeRes, likRes)

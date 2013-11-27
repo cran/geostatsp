@@ -8,8 +8,14 @@ formulaLhs = function(formula) {
 }
 
 formulaRhs = function(formula, char=FALSE) {
+	formula = base::format(formula)
+	# if there is a line break in the formula, 
+	# format(formula) will create a vector
+	formula = paste(formula, collapse="")
+	
+	
+	x = gsub("^.*~", "", toString(formula))
 
-	x = gsub("^.*~", "", toString(base::format(formula)))
 
 	if(!char)
 		x= as.formula(paste("~", x))

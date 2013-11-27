@@ -1,0 +1,6 @@
+Makefile
+doc/*.toc$
+doc/*.aux$
+doc/*.log$
+src/*.so$
+src/*.o$

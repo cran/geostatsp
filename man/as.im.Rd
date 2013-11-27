@@ -1,6 +1,7 @@
 \name{as.im}
 \alias{as.im}
 \alias{as.im.RasterLayer}
+\alias{as.im.default}
 
 
 \title{Convert a raster to an im object}
@@ -10,6 +11,7 @@ Conversion between rasters and spatstat's im objects
 \usage{
 	as.im(X, ...)
 	\method{as.im}{RasterLayer}(X,...)
+	\method{as.im}{default}(X,...)
 	}
 
 \arguments{
@@ -25,8 +27,9 @@ A RasterLayer or an object acceptable to
 
 myraster = raster(matrix(1:100,10,10),
 	xmn=0,xmx=10,ymn=0,ymx=10)
+\dontrun{
 myIm = as.im(myraster)
-
+}
 }
 
 

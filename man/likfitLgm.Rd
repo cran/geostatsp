@@ -16,7 +16,7 @@
 
 likfitLgm(data, trend, 
 		coordinates=data,
-		param=c(range=1,nugget=0,rough=1),
+		param=c(range=1,nugget=0,shape=1),
 		upper=NULL,lower=NULL, parscale=NULL,
 		paramToEstimate = c("range","nugget"),
 		reml=TRUE)
@@ -44,8 +44,8 @@ reflecting the distance matrix of these coordinates (though this is only permitt
 model is isotropic).
 }
 \item{param}{A vector of model parameters, with named elements being amongst 
-\code{range, nugget, boxcox, rough, aniso.angle.degrees, aniso.angle.radians,
-aniso.ratio}, and possibly \code{variance} (see \code{link{matern}}). 
+\code{range, nugget, boxcox, shape, anisoAngleDegrees, anisoAngleRadians,
+anisoRatio}, and possibly \code{variance} (see \code{link{matern}}). 
  When calling \code{likfitLgm} this vector is a 
 combination of starting values for parameters to be estiamated and fixed values of parameters
 which will not be estimated.  For \code{loglikLgm}, it is the covariance parameters 
@@ -89,36 +89,55 @@ and the variance matrix of the coefficient MLE's.
 \code{\link{lgm}}
 }
 \examples{
-n=100
+n=180
 mydat = SpatialPointsDataFrame(cbind(runif(n), runif(n)), 
 	data=data.frame(cov1 = rnorm(n), cov2 = rpois(n, 0.5))
 	)
 
 # simulate a random field
-trueParam = c(variance=2^2, range=0.15, rough=2, nugget=0.5^2)
+trueParam = c(variance=2^2, range=0.15, shape=2, nugget=0.5^2)
 mydat$U = GaussRF(mydat, param=trueParam)
 
 # add fixed effects
 mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 
 	mydat$U + rnorm(length(mydat), 0, sd=sqrt(trueParam["nugget"]))
 
-
+\dontrun{
 par(mfrow=c(1,2))
 spplot(mydat, "U", col.regions=rainbow(10), main="U")
 spplot(mydat, "Y", col.regions=rainbow(10), main="Y")
 par(mfrow=c(1,1))
-
+}
 
 myres = likfitLgm(mydat, Y ~ cov1 + cov2, 
-	param=c(range=0.1,nugget=0.1,rough=2), 
+	param=c(range=0.1,nugget=0.1,shape=2), 
 	paramToEstimate = c("range","nugget")
 	)
 
+
+
 myres$summary
 
+
+# plot variograms of data, true model, and estimated model
+myv = variog(mydat, formula=Y ~ cov1 + cov2,option="bin", max.dist=0.5)
+plot(myv, ylim=c(0, max(c(1.2*sum(trueParam[c("variance", "nugget")]),myv$v))),
+	main="variograms")
+distseq = seq(0, 0.5, len=50)
+lines(distseq, 
+	sum(myres$param[c("variance", "nugget")]) - matern(distseq, param=myres$param),
+	col='blue', lwd=3)
+lines(distseq, 
+	sum(trueParam[c("variance", "nugget")]) - matern(distseq, param=trueParam),
+	col='red')	
+
+legend("bottomright", fill=c("black","red","blue"), 
+	legend=c("data","true","MLE"))
+
+\dontrun{ 	
 # without a nugget
 myresNoN = likfitLgm(mydat, Y ~ cov1 + cov2, 
-	param=c(range=0.1,nugget=0,rough=1), paramToEstimate = c("range")	
+	param=c(range=0.1,nugget=0,shape=1), paramToEstimate = c("range")	
 	)
 
 myresNoN$summary
@@ -144,7 +163,7 @@ legend("bottomright", fill=c("black","red","blue","green"),
 	legend=c("data","true","MLE","no N"))
 
 
-	
+
 # calculate likelihood
 temp=loglikLgm(param=myres$param, 
 		data=mydat, 
@@ -154,10 +173,10 @@ temp=loglikLgm(param=myres$param,
 
 
 # an anisotropic example
-\dontrun{ 
 
-trueParamAniso = param=c(variance=2^2, range=0.2, rough=2,
-	 nugget=0,aniso.ratio=4,aniso.angle.degrees=10, nugget=0)
+
+trueParamAniso = param=c(variance=2^2, range=0.2, shape=2,
+	 nugget=0,anisoRatio=4,anisoAngleDegrees=10, nugget=0)
 
 mydat$U = GaussRF(mydat, par=trueParamAniso)
 mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 
@@ -178,8 +197,8 @@ par(mar=oldmar)
 
 
 myres = likfitLgm(mydat, Y ~ cov1 + cov2, 
-	param=c(range=0.1,nugget=0,rough=2, aniso.angle.degrees=0, aniso.ratio=2), 
-	paramToEstimate = c("range","nugget","aniso.ratio","aniso.angle.degrees") 
+	param=c(range=0.1,nugget=0,shape=2, anisoAngleDegrees=0, anisoRatio=2), 
+	paramToEstimate = c("range","nugget","anisoRatio","anisoAngleDegrees") 
 	)
 
 myres$summary

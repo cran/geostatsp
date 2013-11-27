@@ -4,9 +4,17 @@ mydat = SpatialPointsDataFrame(cbind(runif(n), runif(n)),
 		data=data.frame(cov1 = rnorm(n), cov2 = rpois(n, 0.5))
 )
 
+# get rid of points too close together
+thedist =spDists(mydat)
+thedist[lower.tri(thedist, diag=TRUE)] = NA
+thedist = thedist < 0.01
+thedist = apply(thedist, 1, any, na.rm=T)
+mydat = mydat[!thedist,]
 
- trueParamAniso = param=c(variance=2^2, range=0.2, rough=2,
-		nugget=0,aniso.ratio=4,aniso.angle.degrees=10, nugget=0)
+	
+
+ trueParamAniso = param=c(variance=2^2, range=0.2, shape=2,
+		nugget=0,anisoRatio=4,anisoAngleDegrees=10, nugget=0)
 
 mydat$U = GaussRF(mydat, par=trueParamAniso)
 mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 
@@ -17,11 +25,11 @@ mydat$Ybc = (mydat$Y*0.5+1)^2
  
 
 myres = likfitLgm(mydat, Ybc ~ cov1 + cov2, 
-		param=c(range=0.1,nugget=0,rough=2, 
-				aniso.angle.degrees=0, aniso.ratio=2,
+		param=c(range=0.1,nugget=0,shape=2, 
+				anisoAngleDegrees=0, anisoRatio=2,
 				boxcox=0.4), 
 		paramToEstimate = c("range","nugget",
-				"aniso.ratio","aniso.angle.degrees",
+				"anisoRatio","anisoAngleDegrees",
 				"boxcox") 
 )
 
@@ -47,7 +55,48 @@ sr2 = swissRain
 sr2$elev = raster::extract(swissAltitude, sr2)
 swissFitAgain = likfitLgm(data=sr2, 
 		trend=rain~ elev,
-		param=c(range=1000,rough=1,nugget=0,boxcox=0.5),
+		param=c(range=1000,shape=1,nugget=0,boxcox=0.5),
 		paramToEstimate = c("range","nugget")
 )
 swissFitAgain$par		
+
+
+# test parallel
+
+n=500
+mydat = SpatialPointsDataFrame(cbind(runif(n), runif(n)), 
+		data=data.frame(cov1 = rnorm(n), cov2 = rpois(n, 0.5))
+)
+
+# simulate a random field
+trueParam = c(variance=2^2, range=0.15, shape=2, nugget=0.5^2)
+mydat$U = GaussRF(mydat, param=trueParam)
+
+# add fixed effects
+mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 
+		mydat$U + rnorm(length(mydat), 0, sd=sqrt(trueParam["nugget"]))
+
+
+unix.time( likfitLgm(mydat, Y ~ cov1 + cov2, 
+				param=c(range=0.1,nugget=0.1,shape=2), 
+				paramToEstimate = c("range","nugget")
+		)
+)
+
+if(FALSE) { 
+options(mc.cores = 1)
+
+unix.time( likfitLgmG(mydat, Y ~ cov1 + cov2, 
+				param=c(range=0.1,nugget=0.1,shape=2), 
+				paramToEstimate = c("range","nugget")
+		)
+)
+
+options(mc.cores = 4)
+
+unix.time( likfitLgmG(mydat, Y ~ cov1 + cov2, 
+				param=c(range=0.1,nugget=0.1,shape=2), 
+				paramToEstimate = c("range","nugget")
+		)
+)
+}
