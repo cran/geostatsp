@@ -21,7 +21,7 @@ maternGmrfPrec.matrix = function(N, ...) {
 
 maternGmrfPrec.dgCMatrix = function(N, 	
 		param=c(variance=1, range=1, shape=1, cellSize=1),
-		adjust.edges=F,...) {
+		adjust.edges=FALSE,...) {
 
 	names(param) = gsub("^var$", "variance", names(param))
 	

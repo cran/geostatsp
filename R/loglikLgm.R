@@ -189,6 +189,7 @@ likfitLgm = function(
 
 	# for some reason thing break if I remove this next line...
 	stuff = (class(coordinates))
+	theproj = raster::projection(coordinates)
 	
 	# check for the variance parameter
 	estimateVariance = TRUE
@@ -204,13 +205,13 @@ likfitLgm = function(
 	}
 	 
 	# limits
-	lowerDefaults = c(nugget=0,range=0,anisoRatioratio=0.0001,
+	lowerDefaults = c(nugget=0,range=0,anisoRatio=0.0001,
 			anisoAngleRadians=-pi/2,anisoAngleDegrees=-90,
 			shape=0.01,boxcox=-3,variance=0)
 	
 	upperDefaults= c(nugget=Inf,range=Inf,anisoRatio=Inf,
 			anisoAngleRadians=pi/2,anisoAngleDegrees=90,
-			shape=0,boxcox=3,variance=Inf)
+			shape=100,boxcox=3,variance=Inf)
 	
 
 	lowerDefaults[names(lower)]=lower
@@ -224,7 +225,8 @@ likfitLgm = function(
 			anisoAngleDegrees=10,
 			anisoAngleRadians=2,
 			anisoRatio=1,
-			variance=1)
+			variance=1,
+			shape=0.25)
 
 #	if(length(grep("^SpatialPoints", class(coordinates))))
 #		print("wah")
@@ -273,14 +275,15 @@ likfitLgm = function(
 	
 	# if the model's isotropic, calculate distance matrix
 
- 
-	if(!length(grep("^aniso", paramToEstimate)) &
+ 	coordinatesOrig = coordinates
+	  # not estimating aniso params and coordinates is SpatialPoints
+	if( (!length(grep("^aniso", paramToEstimate))) &
 			length(grep("^SpatialPoints", class(coordinates)))) {
 
 		# see if there's anisotropy which is fixed, not estimated
 	# which would be odd but we'll test nonetheless
 		if(length(grep("^anisoRatio", names(param)))){
-			if(abs(param["anosi.ratio"]- 1) > 0.0001){
+			if(abs(param["anisoRatio"]- 1) > 0.0001){
 				# it is indeed anisotropic
 			
 				if(any(names(param)=="anisoAngleDegrees") & 
@@ -371,6 +374,16 @@ likfitLgm = function(
 			optim=fromOptim, 
 			resid = as.vector(attributes(fromLogLik)$resid)
 	)
+
+	if(class(coordinatesOrig)!= "dist"){
+		# coordinates is not a distance matrix 
+	result$resid = SpatialPointsDataFrame(
+			coordinatesOrig, 
+			data.frame(resid=as.vector(attributes(fromLogLik)$resid))
+		)
+		projection(result$resid) = theproj
+	}
+	
 	if(class(trend)=="formula") {
 		result$trend = trend
 	} else {
@@ -389,13 +402,14 @@ likfitLgm = function(
 			stdErr
 
 	thelims = c(0.01, 0.99, 0.025, 0.975, 0.1, 0.9)
-	for(D in thelims) {
-		theQ = qchisq(D, 1, lower.tail=FALSE)
-		parameterTable[[paste("ci",D,sep="")]] =
-			parameterTable$estimate - sqrt(theQ) * parameterTable$stdErr
-	}
+	theQ = qnorm(thelims)
+	toadd = outer(parameterTable$stdErr, theQ)
+	toadd = toadd + matrix(parameterTable$estimate, 
+			ncol=length(thelims), nrow=dim(parameterTable)[1])
+	colnames(toadd)= paste("ci", thelims, sep="")
+	parameterTable = cbind(parameterTable, toadd)
 	
-	parameterTable[,"pr(est|par=0)"] = pchisq(
+	parameterTable[,"pval"] = pchisq(
 			parameterTable$estimate^2  / parameterTable$stdErr^2,
 			df=1,lower.tail=FALSE)
 	

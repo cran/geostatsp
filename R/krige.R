@@ -118,41 +118,58 @@ krige = function(data, trend,
 		if(length(paramWithFactor)) {
 			# formula will convert to factor, don't 
 			# create factor beforehand
-			covariates[[D]]@data@isfactor = FALSE
 			theLevels = gsub(
 					paste("^factor\\(",D,"\\)",sep=""),
 					"",paramWithFactor)
 			theLevels = as.integer(theLevels)
-			haveParams = values(covariates[[D]]) %in% theLevels
-			# any value we don't have a parameter for
-			# gets assigned to the baseline
-			# give it -999 so it's made baseline by factor() 
-			thevalues = values(covariates[[D]])
-			thevalues[!haveParams] = -999
-			values(covariates[[D]]) = thevalues
+			allValues = raster::unique(covariates[[D]])
+			dontHave = allValues[!allValues %in% theLevels]
+			# make values with no data all equal to the lowest value
+		# so it's the baseline when turning into a factor.
+			forRecla = cbind(dontHave, min(allValues)-1)
+			
+			covariates[[D]] = 
+					raster::reclassify(covariates[[D]], forRecla)
+	
 		} else if( length(paramStartWithD) ) {
 			# not a bunch of digits, 
 			# stuff like xTrees and xGrassland for covariate x and levels Trees and Grassland
 			# see if these line up with 
 			theLevels = gsub(paste("^", D, sep=""),"",paramStartWithD)
 			levelsTable = covariates[[D]]@data@attributes[[1]]
-			levelsInTable = levelsTable[,2]%in% theLevels
-			if(mean(theLevels %in% levelsTable[,2]) < 0.4)
+			
+			inId = theLevels %in% as.character(levelsTable[,1])
+			inLabel = theLevels %in% levelsTable[,2]
+
+			if(mean(inId) > mean(inLabel)){
+				levelsTable$levelsInParams =  
+						as.character(levelsTable[,1])
+				labelCol = ncol(levelsTable)
+				levelsInTable = levelsTable[,1] %in% 
+						theLevels
+			} else {
+				levelsInTable = levelsTable[,2]%in% theLevels
+				labelCol=2
+			}
+			
+			if(mean(theLevels %in% levelsTable[,labelCol]) < 0.4)
 				warning("many levels appear missing in covariate", D)
 			valuesInParams = levelsTable[levelsInTable,1]
-			# assign baseline to values with no params
-			# give them -999 with label of "0" (zero)
-			haveParams = values(covariates[[D]]) %in% valuesInParams
-			thevalues = values(covariates[[D]])
-			thevalues[!haveParams] = -999
-			values(covariates[[D]]) = thevalues
+
+			allValues = raster::unique(covariates[[D]])
+			dontHave = allValues[!allValues %in% valuesInParams]
+			forRecla = cbind(dontHave, min(allValues)-1)
+			covariates[[D]] = 
+					raster::reclassify(covariates[[D]], forRecla)
+			
+
 			
 			levelsTable = 
-					levelsTable[c(1, 1:nrow(levelsTable)),]
-			levelsTable[1,1]= -999
-			levelsTable[1,2] = "0"
-			colnames(levelsTable)[2] = ""
-			covariates[[D]]@data@attributes[[1]] =  levelsTable			
+					levelsTable[c(1, 1:nrow(levelsTable)),c(1,labelCol)]
+			levelsTable[1,1]= min(allValues)-1
+			levelsTable[1,2] = as.character(levelsTable[1,1])
+			colnames(levelsTable)[2] = "levels"
+			levels(covariates[[D]]) = levelsTable
 			covariates[[D]]@data@isfactor = TRUE
 			
 		} else if (length(paramFactorCharacter)) {
@@ -164,18 +181,19 @@ krige = function(data, trend,
 			if(mean(theLevels %in% levelsTable[,2]) < 0.4)
 				warning("many levels appear missing in covariate", D)
 			valuesInParams = as.numeric(levelsTable[levelsInTable,1])
-			# assign baseline to values with no params
-			# give them -999 with label of "0" (zero)
-			thevalues = values(covariates[[D]])
-			haveParams = thevalues %in% valuesInParams
-			thevalues[!haveParams] = -999
-			values(covariates[[D]]) = thevalues
+
+			allValues = raster::unique(covariates[[D]])
+			dontHave = allValues[!allValues %in% valuesInParams]
+			forRecla = cbind(dontHave, min(allValues)-1)
+			covariates[[D]] = 
+					raster::reclassify(covariates[[D]], forRecla)
+			
 			
 			levelsTable = 
 					levelsTable[c(1, 1:nrow(levelsTable)),]
-			levelsTable[1,1]= -999
+			levelsTable[1,1]= min(allValues)-1
 			levelsTable[1,2] = "0"
-			colnames(levelsTable)[2]=""
+			colnames(levelsTable)[2]="levels"
 			covariates[[D]]@data@attributes[[1]] =  levelsTable			
 			
 			
@@ -204,9 +222,9 @@ krige = function(data, trend,
 		
 		# construct the fixed effects component
 		covariatesDF = as.data.frame(covariates, xy=TRUE)
-		# convert to factors
+
 		# get rid of trailing _ created by as.data.frame
-		names(covariatesDF) = gsub("_$", "", names(covariatesDF))
+		names(covariatesDF) = gsub("_levels$", "", names(covariatesDF))
 	} else {
 		covariatesDF = as.data.frame(matrix(NA, ncol=0, nrow=ncell(locations)))
 	}

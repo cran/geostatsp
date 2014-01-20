@@ -29,6 +29,7 @@ excProb = function(x, threshold=0, random=FALSE, template=NULL,
 	
 elementsColumnwise = FALSE # default is indexes for x[[index]] refer to 
 # cells numbered columnwise
+	lowertail=FALSE	
 	
 if(is.list(x))	{
  # model is from lgm

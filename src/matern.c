@@ -14,7 +14,7 @@ double distCellRight[2], distCellDown[2], distTopLeft[2], distRowHead[2];
 double distTopLeftR[2], distHere[2];
 double costheta, sintheta, anisoRatioSq;
 double xscale, varscale,  thisx;
-int nb,  ize, Nzeros;
+int nb, Nzeros;
 double *bk, alpha,truncate;
 
 
@@ -42,7 +42,6 @@ varscale =  log(*variance)  - lgammafn(*shape ) -  (*shape -1)*M_LN2;
 
 truncate = *variance*1e-06; // count a zero if var < truncate
 
-ize = 1L;
 alpha = *shape;
 // code stolen from R's src/nmath/bessel_k.c
 	nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
@@ -131,7 +130,7 @@ void maternAniso(double *x, double *y, int *N,
 	double xscale, varscale,  thisx;
 	double anisoRatioSq, dist[2], distRotate[2], costheta, sintheta;
 
-    int nb,  ize, Nzeros;
+    int nb, Nzeros;
     double *bk, alpha,truncate;
 
     costheta = cos(*anisoAngleRadians);
@@ -145,7 +144,6 @@ void maternAniso(double *x, double *y, int *N,
 
     truncate = *variance*1e-06; // count a zero if var < truncate
 
-	ize = 1L;
 	alpha = *shape;
 	// code stolen from R's src/nmath/bessel_k.c
 		nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
@@ -220,13 +218,12 @@ void matern(double *distance, int *N,
 	int D, N2;
 	double xscale, varscale,  thisx;
 
-    int nb,  ize, Nzeros;
+    int nb,  Nzeros;
     double *bk, alpha,truncate;
 
     truncate = *variance*1e-06; // count a zero if var < truncate
     Nzeros = 0;
 
-	ize = 1L;
 	alpha = *shape;
 
 // code stolen from R's src/nmath/bessel_k.c

@@ -14,7 +14,7 @@ Produces the precision matrix for a Gaussian random field on a regular square la
 maternGmrfPrec(N, ...)
 \method{maternGmrfPrec}{dgCMatrix}(N, 
 	param=c(variance=1, range=1, shape=1, cellSize=1),
-  adjust.edges=F,...) 
+  adjust.edges=FALSE,...) 
 \method{maternGmrfPrec}{matrix}(N, ...)
 \method{maternGmrfPrec}{default}(N, Ny=N, ...)
 NNmat(N, Ny=N)
@@ -76,6 +76,7 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 	data("nn32")
 	# precision matrix without adjusting for edge effects
 	precMat =maternGmrfPrec(nn32, param=params) 
+\dontrun{
 	# and with the adjustment
 	precMatCorr =maternGmrfPrec(nn32, param=params, adjust.edges=TRUE) 
 	
@@ -86,7 +87,6 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 	precMid=matrix(precMat[,midcell], 32, 32, byrow=TRUE)
 	precMid[seq(16-4, 16+4), seq(16-4, 16+4)]
 
-\dontrun{
 # variance matrices
 	varMat = Matrix::solve(precMat)
 	varMatCorr = Matrix::solve(precMatCorr)

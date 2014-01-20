@@ -51,7 +51,7 @@ The formula for the Matern correlation function is
 x (\sqrt{8 shape}/ range)^{shape}  
 besselK(x \sqrt{8 shape}/ range, shape) }{%
              M(x) =   (variance / Gamma(shape)) 2^(shape-1) 
-x [sqrt(8 shape)/ range]^shape  
+ [x sqrt(8 shape)/ range]^shape  
 besselK[x sqrt(8 shape)/ range, shape] 
 }
 
@@ -135,12 +135,12 @@ for(D in shapeSeq) {
 			scale=range/2, nu=D) ))
 }
 
-matplot(distVec, theCov, type='l', lty=1, xlab='distance', ylab='correlation',
-	main="geoR, RandF, and geostatsp")
+
+
 matpoints(distVec, covGeoR, cex=0.5, pch=1)
 matpoints(distVec, covRandomFields, cex=0.5, pch=2)
 
-legend("topright", lty=c(1,NA,NA), pch=c(NA, 1, 2), 
+legend("top", lty=c(1,NA,NA), pch=c(NA, 1, 2), 
 	legend=c("geostatsp","geoR","RandomFields"))
 
  

@@ -41,12 +41,12 @@ Either a vector of exceedance probabilities or an object of the same class as \c
 }
 
 \examples{
-	data(swissRain)
-	swissFit =  lgm(swissRain, locations=40, formula="rain",
+	data('swissRain')
+	swissFit =  lgm(swissRain, locations=30, formula="rain",
 	boxcox=0.5,fixBoxcox=TRUE,	covariates=swissAltitude)
-	swissExc = excProb(swissFit, 300)
+	swissExc = excProb(swissFit, 20)
 	mycol = c("green","yellow","orange","red")
-	mybreaks = c(0, 0.2, 0.8, 0.95, 1)
+	mybreaks = c(0, 0.2, 0.8, 0.9, 1)
 	plot(swissBorder)
 	plot(swissExc, breaks=mybreaks, col=mycol,add=TRUE,legend=FALSE)
 	plot(swissBorder, add=TRUE)
@@ -55,7 +55,7 @@ Either a vector of exceedance probabilities or an object of the same class as \c
 	swissRain$sqrtrain = sqrt(swissRain$rain)
 	swissFit2 =  glgm(swissRain, cells=40, formula="sqrtrain",
 	covariates=swissAltitude,family="gaussian")
-	swissExc = excProb(swissFit2, threshold=sqrt(300))
+	swissExc = excProb(swissFit2, threshold=sqrt(30))
 	swissExc = excProb(swissFit2$inla$marginals.random$space, 0,
 		template=swissFit2$raster)
 }

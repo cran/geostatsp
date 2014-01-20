@@ -7,7 +7,13 @@ simPoissonPP = function(intensity) {
 	NperCell = intensity
 	values(NperCell) = rpois(ncell(intensity), ivec)
 	
+	if(maxValue(NperCell)>1000)
+		warning("A large number of events are being simulated, more than", maxValue(NperCell))
+	
 	events = rep(1:ncell(NperCell), values(NperCell))
+	
+	if(length(events)>1e6)
+		warning("more than 1,000,000 events being simulated")
 	
 	events = as.data.frame(NperCell,xy=TRUE)[events, c("x","y")]
 	
@@ -17,9 +23,7 @@ simPoissonPP = function(intensity) {
 	)
 	
 	events = SpatialPoints(events)
-	
-	if(!is.na(intensity@crs@projargs))
-		events@proj4string = intensity@crs
+	projection(events) = projection(intensity)
 	
 	events
 	
@@ -28,16 +32,28 @@ simPoissonPP = function(intensity) {
 simLgcp = function(param, covariates=NULL, betas=NULL, 
 		rasterTemplate=covariates[[1]],  ...) {
 	
-	randomEffect = GaussRF(rasterTemplate, param=param, ...)
+	randomEffect = geostatsp::RFsimulate(model=param, x=rasterTemplate,  ...)
 	
 	if(!is.null(covariates))
 		covariates = stackRasterList(covariates, randomEffect)
 
-	linearPredictor = randomEffect
-	
 	if(is.null(names(betas)))
 		names(betas) = names(covariates)
+	
+	
+	themean = 0
+	if('mean' %in% names(param))
+		themean = themean + param['mean']
+	if('intercept' %in% names(betas))
+		themean = themean + betas['intercept']
+	betas['intercept'] = themean
+	param = param[! names(param) %in% "mean"]
 
+	
+	
+	
+	linearPredictor = themean +randomEffect
+	
 	for(D in names(covariates)) {
 		linearPredictor = linearPredictor + betas[D]* covariates[[D]]		
 	}
