@@ -57,12 +57,12 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 			
 			if(!.compareCRS(covariates[[D]], data,unknown=TRUE) ) {
 				
-				require(rgdal, quietly=TRUE ) 
+				require('rgdal', quietly=TRUE ) 
 				
-				data[[D]] = extract(covariates[[D]], 
+				data[[D]] = raster::extract(covariates[[D]], 
 					spTransform(data, CRSobj=CRS(projection(covariates[[D]])))) 
 			} else {
-				data[[D]] = extract(covariates[[D]], 
+				data[[D]] = raster::extract(covariates[[D]], 
 						 data) 
 			}
 			# check for factors
@@ -82,7 +82,7 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 		warning("some terms in the model are missing from both the data and the covariates")
 
 	
-	param = c(range=sd(data@coords[,1]),
+	param = c(range=sd(coordinates(data)[,1]),
 				shape=shape, nugget=nugget,boxcox=boxcox
 				)
 	paramToEstimate	= c("range", "shape","nugget","boxcox")[
@@ -117,9 +117,18 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 	res = c(predict=krigeRes, likRes)
 	
 	
+	for(Dvar in names(covariates)) {
+		theLevels =levels(covariates[[Dvar]])[[1]]
+		if(!is.null(nrow(theLevels))){
+			for(D in 1:nrow(theLevels)) {
+				rownames(res$summary) = gsub(
+						paste("(factor)?(\\()?", Dvar, "(\\))?:?", 
+								theLevels[D,1],"$",sep=""),
+						paste(Dvar, ":",theLevels[D,2],sep=""), 
+						rownames(res$summary))
+			}
+		}
+	}
 	return(res)
-
-
-	
 }
 

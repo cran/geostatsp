@@ -14,14 +14,12 @@ S3method(matern, SpatialPoints)
 S3method(matern, dist)
 S3method(matern, default)
 
-export(GaussRF)
-S3method(GaussRF, Raster)
-S3method(GaussRF, SpatialPointsDataFrame)
-S3method(GaussRF, SpatialPoints)
-S3method(GaussRF, default)
-export(grfConditional)
+export(RFsimulate)
+S3method(RFsimulate, numeric)
+S3method(RFsimulate, matrix)
+S3method(RFsimulate, data.frame)
+S3method(RFsimulate, RMmodel)
 
-#export(as.im)
 S3method(as.im, RasterLayer)
 
 importFrom(parallel, mcmapply)
@@ -55,7 +53,7 @@ S3method(variog.mc.env, default)
 import(
   sp,
   raster,
-  Matrix
+  Matrix, methods
 )
 
 # the following lines aren't needed because 
@@ -63,8 +61,5 @@ import(
 # they're listed here for completeness
 #importFrom(geoR, variog, variog.mc.env)
 #importFrom(pracma, trapz)
-# functions which depend on RandomFields
-#importFrom(RandomFields, CondSimu)
-#importFrom(RandomFields, GaussRF)
 #importFrom(spatstat,as.im,as.im.matrix)
 

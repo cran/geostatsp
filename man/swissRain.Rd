@@ -144,7 +144,47 @@ names(labelVec) = as.character(labels[,classCol])
 levels(swissLandType)[[1]]$Category = 
 		labelVec[as.character(levels(swissLandType)[[1]]$ID)]
 
+levels(swissLandType)[[1]]$col = NA
 
+theForests = grep("forest", levels(swissLandType)[[1]]$Category, 
+	ignore.case=TRUE)
+	
+library(RColorBrewer)	
+levels(swissLandType)[[1]][theForests,"col"] = 
+	brewer.pal(length(theForests)+1, "Greens")[-1]
+	
+levels(swissLandType)[[1]][
+	grep("snow", levels(swissLandType)[[1]]$Category,ignore.case=TRUE),
+	"col"] = "#FFFFFF"
+
+levels(swissLandType)[[1]][
+	grep("water", levels(swissLandType)[[1]]$Category,ignore.case=TRUE),
+	"col"] = "#0000FF"
+
+levels(swissLandType)[[1]][
+	grep("grass", levels(swissLandType)[[1]]$Category,ignore.case=TRUE),
+	"col"] = "#CCBB00"
+
+	
+stillNA = is.na(levels(swissLandType)[[1]]$col)
+levels(swissLandType)[[1]][stillNA, "col"] =
+	brewer.pal(sum(stillNA), "Set3")
+	
+	
+
+swissLandType@legend@colortable = levels(swissLandType)[[1]]$col
+
+levels(swissLandType)[[1]]$n = table(values(swissLandType))
+
+plot(swissLandType)
+mostCommon = levels(swissLandType)[[1]]$n >= 700
+legend("topright", 	
+	fill=levels(swissLandType)[[1]][mostCommon,"col"],
+	legend = substr(
+		levels(swissLandType)[[1]][mostCommon,"Category"],
+		1, 12)
+	)
+	
 table(extract(swissLandType, swissRain), exclude=NULL)
 
 

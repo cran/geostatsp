@@ -58,6 +58,17 @@ swissKrige4 = krige(data=swissRain2, trend = swissFit4$trend,
 		covariates = list(elevation = swissAltitude,landFac=swissLandType),
 		locations = swissRaster,expPred=TRUE )
 
+if(FALSE){
+	# for debugging
+	data=swissRain2
+trend = swissFit4$trend
+param=swissFit4$param
+covariates = list(elevation = swissAltitude,landFac=swissLandType)
+locations = swissRaster
+expPred=TRUE
+coordinates=data
+}
+
 pdf("krige4.pdf")
 plot(swissKrige4[["predict"]])	
 plot(swissBorder, add=TRUE)
