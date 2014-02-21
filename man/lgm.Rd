@@ -10,7 +10,8 @@ Calculate MLE's of model parameters and perform spatial prediction. }
 \usage{
 lgm(data, locations, covariates = NULL, formula = NULL, shape = 1, 
     fixShape = TRUE, aniso = FALSE, boxcox = 1, fixBoxcox = TRUE, 
-    nugget = 0, fixNugget = FALSE, expPred = FALSE, nuggetInPrediction = TRUE) 
+    nugget = 0, fixNugget = FALSE, expPred = FALSE, nuggetInPrediction = TRUE,
+    ...) 
 
 }
  
@@ -45,6 +46,8 @@ nugget effect.  The prediction variances will be adjusted accordingly, and the p
 on the natural scale for logged or Box Cox transformed data will be affected. 
 Otherwise predict fitted values. 
 }
+\item{...}{Additional arguments passed to \code{\link{likfitLgm}}.  Starting values can be
+specified with a vector \code{param} of named elements}
 }
 \details{
 Calls  \code{\link{likfitLgm}} and  \code{\link{krige}}

@@ -25,7 +25,8 @@ swissFit3 = likfitLgm(data=swissRain2,
 				anisoRatio=1,anisoAngleDegrees=5)
 )
 
-swissKrige3 = krige(data=swissRain2, trend = swissFit3$trend,
+swissKrige3 = krige(data=swissRain2, 
+		trend = swissFit3$model$trend,
 		param=swissFit3$param, 
 		covariates = list(elevation = swissAltitude,land=swissLandType),
 		locations = swissRaster, expPred=TRUE)
@@ -53,7 +54,7 @@ swissFit4 = likfitLgm(data=swissRain2,
 		parscale = c(range=5000,nugget=0.01, 
 				anisoRatio=1,anisoAngleDegrees=5)
 )
-swissKrige4 = krige(data=swissRain2, trend = swissFit4$trend,
+swissKrige4 = krige(data=swissRain2, trend = swissFit4$model$trend,
 		param=swissFit4$param, 
 		covariates = list(elevation = swissAltitude,landFac=swissLandType),
 		locations = swissRaster,expPred=TRUE )
@@ -61,7 +62,7 @@ swissKrige4 = krige(data=swissRain2, trend = swissFit4$trend,
 if(FALSE){
 	# for debugging
 	data=swissRain2
-trend = swissFit4$trend
+trend = swissFit4$model$trend
 param=swissFit4$param
 covariates = list(elevation = swissAltitude,landFac=swissLandType)
 locations = swissRaster
@@ -89,7 +90,7 @@ swissFit5= likfitLgm(data=swissRain2,
 )
 
 
-swissKrige5 = krige(data=swissRain2, trend = swissFit5$trend,
+swissKrige5 = krige(data=swissRain2, trend = swissFit5$model$trend,
 		param=swissFit5$param, 
 		covariates = list(elevation = swissAltitude,landFac2=swissLandType),
 		locations = swissRaster,expPred=TRUE)
@@ -100,13 +101,14 @@ dev.off()
 
 
 # test parallel
+if(FALSE) {
 bigRaster = raster(extent(swissBorder), ncols=600, nrows=400, 
 		crs=swissRain@proj4string)	
 
 
 options(mc.cores = 1)
 unix.time(
-		krige(data=swissRain2, trend = swissFit3$trend,
+		krige(data=swissRain2, trend = swissFit3$model$trend,
 				param=swissFit3$param, 
 				covariates = list(elevation = swissAltitude,land=swissLandType),
 				locations = bigRaster, expPred=TRUE)
@@ -114,10 +116,11 @@ unix.time(
 )
 
 
-options(mc.cores = 4)
+options(mc.cores = 2)
 
-unix.time(krige(data=swissRain2, trend = swissFit3$trend,
+unix.time(krige(data=swissRain2, trend = swissFit3$model$trend,
 				param=swissFit3$param, 
 				covariates = list(elevation = swissAltitude,land=swissLandType),
 				locations = bigRaster, expPred=TRUE)
 )
+}

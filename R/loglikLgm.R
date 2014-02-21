@@ -116,39 +116,30 @@ loglikLgm = function(param,
 		
 		totalSsq = as.vector(Matrix::crossprod(cholCovInvResid))
 
-		totalVarHat = totalSsq/length(observations)
+		# if reml, use N-p in place of N
+		Nadj=length(observations) - reml*length(betaHat)
+		totalVarHat = totalSsq/Nadj
 		
-		if(!haveVariance) { # profile likelihood with optimal sigma
-		
-			minusTwoLogLik = length(observations) * log(2*pi) + 
-				length(observations) * log(totalVarHat) +
+	if(!haveVariance) { # profile likelihood with optimal sigma
+			minusTwoLogLik = Nadj * log(2*pi) + 
+				Nadj * log(totalVarHat) +
 				2*sum(log(Matrix::diag(cholCovMat))) +
-				length(observations) - twoLogJacobian
-		
-			if( reml ) {
-			# REML
-				choldet =  2*sum(log(Matrix::diag(chol(cholCovInvXcross)))) 
-		
-				minusTwoLogLik =  minusTwoLogLik + choldet
-		
-				}  # end reml
-			
-		param[c("variance","nugget")] = totalVarHat * param[c("variance","nugget")]
-
+				Nadj - twoLogJacobian		
+			param[c("variance","nugget")] = 
+					totalVarHat * param[c("variance","nugget")]
 	} else { # a variance was supplied
 		# calculate likelihood with the variance supplied
 		# -2 log lik = n log(2pi) + log(|V|) + resid' Vinv resid
-		
-		minusTwoLogLik = length(observations) * log(2*pi) +
+		minusTwoLogLik = Nadj * log(2*pi) +
 				2*sum(log(Matrix::diag(cholCovMat))) +
 					totalSsq - twoLogJacobian
 		totalVarHat = 1
-		if( reml ) {
-			reml=FALSE
-			warning("a variance was supplied by REML was requested.  doing ML instead.")		
-		}
 	}
-
+	if( reml ) {
+		minusTwoLogLik =  minusTwoLogLik + 
+			2*sum(log(Matrix::diag(chol(cholCovInvXcross))))
+	}
+	
 	# format the output
 	betaHat = as.vector(betaHat)
 	names(betaHat) = colnames(covariates)
@@ -169,10 +160,10 @@ loglikLgm = function(param,
 #		attributes(result)$totalVarHat = totalVarHat
 	attributes(result)$betaHat = betaHat
 	attributes(result)$varBetaHat = as.matrix(varBetaHat)
-#	attributes(result)$reml=reml
+ 	attributes(result)$reml=reml
 #		attributes(result)$twoLogJacobian = twoLogJacobian
 #		attributes(result)$choldet = as.vector(choldet)
-	attributes(result)$resid = resids
+	attributes(result)$resid = as.numeric(resids)
 	result
 }
 
@@ -200,7 +191,7 @@ likfitLgm = function(
 	} else {
 		if(any(names(param)=="variance")){
 			estimateVariance = FALSE
-			warning("variance is fixed and not estimated. If this isn't what you wanted remove variance from param")
+#			warning("variance is fixed and not estimated. If this isn't what you wanted remove variance from param")
 		}		
 	}
 	 
@@ -293,7 +284,7 @@ likfitLgm = function(
 	
 				x = coordinates@coords[,1] + 1i*coordinates@coords[,2]
 				
-				x = x * exp(-1i*param["anisoAngleRadians"])
+				x = x * exp(1i*param["anisoAngleRadians"])
 				x = Re(x) +  (1i/ param["anisoRatio"] )*Im(x)
 				coordinates = SpatialPoints(cbind(Re(x), Im(x)))
 			} # end is anisotripic		
@@ -327,7 +318,27 @@ likfitLgm = function(
 	
 
 	# check to see if it's worth storing box cox quantities
-	if(any(names(param)=="boxcox") & !any(paramToEstimate=="boxcox")) {
+if(any(paramToEstimate=="boxcox")) {
+	if(any(observations<=0)){
+		warning("box cox transform specified with negative observations")
+	}
+}
+
+if(any(names(param)=="boxcox") ) {
+	
+	if(param["boxcox"]!= 1)  {
+		
+		if(any(observations<=0)){
+			warning("box cox transform specified with negative observations")
+		}
+		
+	}		
+	
+	
+}		
+		
+if(any(names(param)=="boxcox") & !any(paramToEstimate=="boxcox")) {
+
 		if(abs(param["boxcox"]-1)>0.0001){ # boxcox not 1
 			stored = list(
 					boxcox = param["boxcox"],
@@ -358,7 +369,8 @@ likfitLgm = function(
 		reml=reml, moreParams=moreParams,
 		method = "L-BFGS-B", stored=stored
 		)
-	
+
+		
 		
 	fromLogLik = loglikLgm(param=fromOptim$par,
 			moreParams=moreParams, 
@@ -384,10 +396,11 @@ likfitLgm = function(
 		projection(result$resid) = theproj
 	}
 	
+	result$model = list(reml=reml)
 	if(class(trend)=="formula") {
-		result$trend = trend
+		result$model$trend = trend
 	} else {
-		result$trend= names(trend)
+		result$model$trend= names(trend)
 	}
 
 	
@@ -401,7 +414,9 @@ likfitLgm = function(
 	parameterTable[names(attributes(fromLogLik)$betaHat), "stdErr"] =
 			stdErr
 
-	thelims = c(0.01, 0.99, 0.025, 0.975, 0.1, 0.9)
+	thelims = c(0.005, 0.025, 0.05, 0.1)
+	thelims = c(rbind(thelims, 1-thelims))
+	
 	theQ = qnorm(thelims)
 	toadd = outer(parameterTable$stdErr, theQ)
 	toadd = toadd + matrix(parameterTable$estimate, 
@@ -439,6 +454,8 @@ likfitLgm = function(
 	
 	
 	result$summary = as.data.frame(parameterTable)
+	
+	
 	
 	result
 }

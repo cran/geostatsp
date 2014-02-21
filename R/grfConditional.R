@@ -1,6 +1,7 @@
 grfConditional = function(data, y=1, 
 			param, locations, Nsim,
-		 	fun=NULL, nuggetInPrediction=TRUE){
+		 	fun=NULL, nuggetInPrediction=TRUE,
+			mc.cores=2){
 		
 		
 	if(is.numeric(locations)){
@@ -93,7 +94,8 @@ simFun = function(D) {
 	res
 	}		
 
-	result = mcmapply(simFun, 1:Nsim, SIMPLIFY=TRUE)
+	result = mcmapply(simFun, 1:Nsim, SIMPLIFY=TRUE, 
+			mc.cores=mc.cores)
 	if(all(sapply(result, class)=="RasterLayer"))
 		result = do.call(brick, result)
 

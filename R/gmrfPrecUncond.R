@@ -30,35 +30,31 @@ gmrfPrecUncond = function(x,
 			1i * rep(seq(border+1, len=Nonside), rep(border,Nonside))
 	rightCells = Re(rightCoords) + (Im(rightCoords)-1)*Nx
 	
-	allCells = c(topCoords, leftCoords, rightCoords, bottomCoords)
-	distmat = abs(outer(allCells, allCells, FUN="-"))
-	distmat[upper.tri(distmat)]=NA
-#	distmat = dist(cbind(Re(allCells), Im(allCells)),diag=T)
-	distmat = new("dsyMatrix", Dim=rep(length(allCells), 2),
-			x=as.vector(distmat),#[lower.tri(distmat, diag=T)], 
-			uplo="L")
+	allCoords = c(topCoords, leftCoords, rightCoords, bottomCoords)
+	covMat = matern(
+			SpatialPoints(cbind(Re(allCoords),Im(allCoords))),
+			param=c(param[c('shape','variance')],
+					param['range']/param['cellSize'])
+			)
 	
-	cellSize = param["cellSize"]
-	scaleCell = param["scale"] * cellSize
-	distmat = distmat*scaleCell
-	covMat = distmat
-	covMat@x = (2^(1-param["shape"])/(param["prec"]*gamma(param["shape"]))) * 
-			covMat@x^param["shape"] * besselK(covMat@x, nu=param["shape"])
-	Matrix::diag(covMat) = 1/param["prec"]
-#	covChol = chol(covMat)
-#	covInvChol = solve(covChol)
-#	precOuter = solve(covMat)
+	
+
+	#	covChol = chol(covMat)
+	#	covInvChol = solve(covChol)
+	#	precOuter = solve(covMat)
 	
 	allCells = c(topCells, leftCells, rightCells, bottomCells)
 	InnerPrecision = x[-allCells, -allCells]
-	InnerPrecInvChol = Matrix::solve(Matrix::chol(InnerPrecision))
 	
+	#A = x[allCells,-allCells]
+	#InnerPrecInvChol = Matrix::solve(Matrix::chol(InnerPrecision))
+	#Aic = A %*% InnerPrecInvChol
+	# AQinvA = Aic %*% t(Aic)
 	
-	
-	A = x[allCells,-allCells]
-	Aic = A %*% InnerPrecInvChol
-	AQinvA = Aic %*% t(Aic)
-	
+	cholInnerPrec = chol(InnerPrecision)
+	A = x[-allCells,allCells]
+	Aic = solve(cholInnerPrec, A)
+	AQinvA = crossprod(Aic,Aic)
 
 	precOuter = Matrix::solve(covMat) + AQinvA
 
