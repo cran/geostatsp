@@ -27,6 +27,16 @@ y=31
 matrix(nn128[,128*(y-1)+x], 128, 128)[ x+seq(-4,4),y+seq(-4, 4)]
 
 length(nn128@x)
+
+\dontrun{
+nn32 = NNmat(32)
+nn64 = NNmat(64)
+nn128 = NNmat(128)
+#save(nn32,nn64,nn128, file=
+"/home/patrick/workspace/diseasemapping/pkg/geostatsp/data/nn32.RData",
+compress='xz')
+}
+
 }
 
 

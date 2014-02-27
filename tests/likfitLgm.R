@@ -95,7 +95,7 @@ unix.time( likfitLgmG(mydat, Y ~ cov1 + cov2,
 		)
 )
 
-options(mc.cores = 4)
+options(mc.cores = 2)
 
 unix.time( likfitLgmG(mydat, Y ~ cov1 + cov2, 
 				param=c(range=0.1,nugget=0.1,shape=2), 

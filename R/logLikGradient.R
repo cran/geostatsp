@@ -84,7 +84,8 @@ logLikGradient = function(param,
 		stored=NULL, moreParams=NULL,
 		lowerG = rep(-Inf, length(param)), 
 		upperG=rep(Inf, length(param)), 
-		eps=rep(0.001, length(param))
+		eps=rep(0.001, length(param)),
+		mc.cores=2
 	){
 		upper = upperG
 		lower = lowerG
@@ -171,7 +172,7 @@ logLikGradient = function(param,
 	rightForMapply = rep(c(TRUE, FALSE), rep(length(param),2))
 
 	if(length(observations)>200 ) {
-		ncores = min(c(2*length(param), getOption("mc.cores")))
+		ncores = mc.cores
 	} else {
 		ncores = 1		
 	}

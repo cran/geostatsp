@@ -10,13 +10,7 @@ krige = function(data, trend,
 	NsimBoxCox=40
 	
 	if(is.numeric(locations)){
-		# locations is number of cells in the x direction
-		Nx = locations
-		Ny = round(locations*diff(data@bbox[2,])/diff(data@bbox[1,]))
-		myExtent = 	extent(data@bbox)
-		myExtent@ymax = myExtent@ymin + Ny * diff(data@bbox[1,])/Nx
-		locations = raster(myExtent, Ny, Nx,
-				data@proj4string)	
+		locations = squareRaster(data, locations)
 	}
 	if(nrow(locations) * ncol(locations) > 10^7) warning("there are lots of cells in the prediction raster,\n this might take a very long time")
 	
@@ -167,7 +161,7 @@ krige = function(data, trend,
 			levelsTable = 
 					levelsTable[c(1, 1:nrow(levelsTable)),c(1,labelCol)]
 			levelsTable[1,1]= min(allValues)-1
-			levelsTable[1,2] = as.character(levelsTable[1,1])
+			levelsTable[1,2] = ''
 			colnames(levelsTable)[2] = "levels"
 			levels(covariates[[D]]) = levelsTable
 			covariates[[D]]@data@isfactor = TRUE
@@ -194,7 +188,7 @@ krige = function(data, trend,
 			levelsTable[1,1]= min(allValues)-1
 			levelsTable[1,2] = "0"
 			colnames(levelsTable)[2]="levels"
-			covariates[[D]]@data@attributes[[1]] =  levelsTable			
+			levels(covariates[[D]])[[1]] =  levelsTable			
 			
 			
 		} else {
@@ -275,10 +269,15 @@ krige = function(data, trend,
 	
 	
 # subtract mean from data
-	theNAdata = apply(covariatesForData, 1, function(qq) any(is.na(qq))) | 
+
+	theNAdata = apply(covariatesForData[,allterms], 1, function(qq) any(is.na(qq))) | 
 			is.na(observations)
 	
-	
+	if(all(theNAdata)) {
+		warning(
+				'it appears there are no observations without at least one covariate missing')
+	}
+		
 	if(any(theNAdata)) {
 		noNAdata = !theNAdata
 		if(length(grep("^SpatialPoints", class(coordinates)))) {
@@ -333,42 +332,70 @@ krige = function(data, trend,
 	Ny = length(observations)
 	param = fillParam(param)
 	
-	krigeOneRow = function(Drow){
 
+	krigeOneRowPar = function(Drow, yFromRowDrow, 
+			locations,
+			param,coordinates,Ny,cholVarData,
+			cholVarDatInvData,
+			xminl,xresl,ncoll,
+			lengthc){
+		
 		# covariance of cells in row Drow with data points
 		resC =  .C("maternArasterBpoints", 
-				as.double(xmin(locations)), as.double(xres(locations)), 
-						as.integer(ncol(locations)), 
-				as.double(yFromRow(locations, Drow)), 
-					as.double(0), as.integer(1),
+				as.double(xminl), 
+				as.double(xresl), 
+				as.integer(ncoll), 
+				as.double(yFromRowDrow), 
+				as.double(0), as.integer(1),
 				as.double(coordinates@coords[,1]), 
-					as.double(coordinates@coords[,2]), 
+				as.double(coordinates@coords[,2]), 
 				N=as.integer(Ny), 
-				result=as.double(matrix(0, ncol(locations), length(coordinates))),
+				result=as.double(matrix(0, ncoll, 
+								lengthc)),
 				as.double(param["range"]),
 				as.double(param["shape"]),
 				as.double(param["variance"]),
 				as.double(param["anisoRatio"]),
 				as.double(param["anisoAngleRadians"])
 		) 
-		covDataPred = matrix(resC$result, nrow=ncol(locations), ncol=Ny)
+		covDataPred = matrix(resC$result, nrow=ncoll, ncol=Ny)
 		
 		
-		cholVarDataInvCovDataPred = Matrix::solve(cholVarData, t(covDataPred))
-
+		cholVarDataInvCovDataPred = Matrix::solve(cholVarData, 
+				t(covDataPred))
+		
 		c( # the conditional expectation
-			as.vector(Matrix::crossprod(cholVarDataInvCovDataPred, 
-						cholVarDatInvData)),
-		# part of the conditional variance
-			apply(cholVarDataInvCovDataPred, 2, function(qq) {
-					sumsq = sum(qq^2)
-				})
+				as.vector(Matrix::crossprod(cholVarDataInvCovDataPred, 
+								cholVarDatInvData)),
+				# part of the conditional variance
+				apply(cholVarDataInvCovDataPred, 2, function(qq) {
+							sumsq = sum(qq^2)
+						})
 		)
 		
 	}
+	
+	
 
-	sums = mcmapply(krigeOneRow,1:nrow(locations))
+	datForK = list(
+			locations=locations,param=param,
+			coordinates=coordinates,Ny=Ny,
+			cholVarData=cholVarData,
+			cholVarDatInvData = cholVarDatInvData,
+			xminl=xmin(locations),
+			xresl = xres(locations),
+			ncoll=ncol(locations),
+			lengthc=length(coordinates)
+			
+		)
+	Srow = 1:nrow(locations)
+		
+	sums=mapply(krigeOneRowPar, Srow, 
+				yFromRow(locations,Srow),
+				MoreArgs=datForK,SIMPLIFY=TRUE)
 
+	
+ 	
 	# row sums of cholVarDataInvCovDataPred
 	forExpected = sums[1:ncol(locations),]
 	# row sums of squares
