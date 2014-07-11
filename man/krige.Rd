@@ -9,7 +9,8 @@ Perform spatial prediction, producing a raster of predictions and conditional st
 }
 \usage{
 krige(data, trend, coordinates = data, param, locations, 
-    covariates = NULL, expPred = FALSE, nuggetInPrediction = TRUE)
+    covariates = NULL, expPred = FALSE, nuggetInPrediction = TRUE,
+    mc.cores=getOption("mc.cores", 1L))
 }
  
 \arguments{
@@ -36,6 +37,7 @@ nugget effect.  The prediction variances will be adjusted accordingly, and the p
 on the natural scale for logged or Box Cox transformed data will be affected. 
 Otherwise predict fitted values. 
 }
+\item{mc.cores}{passed to \code{\link[parallel]{mcmapply}} if greater than 1.}
 }
 \details{
 Given the model parameters and observed data, conditional means and variances of the spatial random field

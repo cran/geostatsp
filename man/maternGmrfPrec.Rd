@@ -16,8 +16,7 @@ Produces the precision matrix for a Gaussian random field on a regular square la
 maternGmrfPrec(N, ...)
 \method{maternGmrfPrec}{dsCMatrix}(N, 
 	param=c(variance=1, range=1, shape=1, cellSize=1),
-  adjustEdges=FALSE,adjustParam=FALSE,
-  adjustShape=FALSE,adjustMarginalVariance=FALSE,...) 
+  adjustEdges=FALSE,...) 
 \method{maternGmrfPrec}{matrix}(N, ...)
 \method{maternGmrfPrec}{default}(N, Ny=N, 	
 param=c(variance=1, range=1, shape=1, cellSize=1),
@@ -42,13 +41,8 @@ Matern differentiability parameter (0, 1, or 2); and \code{cellSize}, the size o
 are present and the latter are missing the reciprocal of the former are taken.}
 \item{border}{number of cells from the edge of the grid to adjust for edge effects.}
 \item{adjustEdges}{If \code{TRUE}, adjust the precision matrix so it does not implicitly assume 
-the field takes values of zero outside the specified region.  Defaults to \code{FALSE}.}
-\item{adjustParam}{If \code{TRUE}, use a numerical optimizer to find a better entries for the precision matrix.  
-Defaults to \code{FALSE}.}
-\item{adjustShape}{If \code{TRUE}, approximate a matern with the optimal shape parameter.  Otherwise
-find the best approximation to a matern with the supplied shape parameter.  Defaults to \code{FALSE}.}
-\item{adjustMarginalVariance}{If \code{TRUE}, use the numeric rather than theoretical values for the
-marginal variance to scale the precision matrix.  Defaults to \code{FALSE}.}
+the field takes values of zero outside the specified region.  Defaults to \code{FALSE}.  Can be a character string specifying the parameters to use for the correction, such as \code{'optimal'} or \code{'optimalShape'}, with \code{TRUE} equivalent to \code{'theo'}}
+
 \item{x}{An MRF precision matrix produced by \code{maternGmrfPrec}}
 \item{nearest}{Number of nearest neighbours to compute}
 \item{...}{Additional arguments passed to \code{maternGmrfPrec.dgCMatrix}}
@@ -56,6 +50,7 @@ marginal variance to scale the precision matrix.  Defaults to \code{FALSE}.}
 \value{
 A sparse matrix \code{dgCMatrix} object, containing a precision matrix for a 
 Gaussian random field or (from the \code{NNmat} function)  a matrix denoting neighbours.  
+
  }
 \details{ The numbering of cells
 is consistent with the \code{raster} package.  Cell 1 is the top left cell, with cell 2 being the cell to the right and numbering

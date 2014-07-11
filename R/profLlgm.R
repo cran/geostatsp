@@ -70,7 +70,7 @@ profLlgm = function(fit,mc.cores=NULL, ...) {
 				dimnames=thedimnames)	
 	} 
 	
-	Sprob = c(1, 0.995, 0.99, 0.95, 0.9, 0.8, 0.5, 0)
+	Sprob = c(1, 0.999, 0.99, 0.95, 0.9, 0.8, 0.5, 0)
 	Squant = qchisq(Sprob, df=length(varying))
 	Scontour = -fit$opt$val/2 -Squant/2 	
 	

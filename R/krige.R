@@ -2,7 +2,7 @@ krige = function(data, trend,
 		coordinates=data,
 		param,  locations, covariates=NULL, 
 		expPred=FALSE,
-		nuggetInPrediction=TRUE) {
+		nuggetInPrediction=TRUE, mc.cores=getOption("mc.cores", 1L)) {
 	
 	haveBoxCox = any(names(param)=="boxcox")
 	if(haveBoxCox)
@@ -389,12 +389,18 @@ krige = function(data, trend,
 			
 		)
 	Srow = 1:nrow(locations)
-		
+	
+	if(mc.cores ==1 ) {
 	sums=mapply(krigeOneRowPar, Srow, 
 				yFromRow(locations,Srow),
 				MoreArgs=datForK,SIMPLIFY=TRUE)
 
-	
+	} else {
+		sums=parallel::mcmapply(krigeOneRowPar, Srow, 
+				yFromRow(locations,Srow),
+				MoreArgs=datForK,SIMPLIFY=TRUE,mc.cores=mc.cores)
+		
+	}
  	
 	# row sums of cholVarDataInvCovDataPred
 	forExpected = sums[1:ncol(locations),]

@@ -41,6 +41,10 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 		names(betas) = names(covariates)
 	
 	
+	covariates = covariates[[intersect(names(covariates), 
+					names(betas))]]
+	
+	
 	themean = 0
 	if('mean' %in% names(param))
 		themean = themean + param['mean']

@@ -60,7 +60,7 @@ swissSim = geostatsp::RFsimulate(
 #   the observed data
 swissSim = geostatsp::RFsimulate(
 		model=swissRes$param,
-		data=swissRes$resid,
+		data=swissRes$data['resid'],
 		x=swissRes$predict,
 		err.model=swissRes$param["nugget"],
 		n=3
@@ -76,7 +76,7 @@ swissSim = geostatsp::RFsimulate(model=
 				rbind(
 						swissRes$param,
 						swissRes$param*0.99),
-		data=swissRes$resid,
+		data=swissRes$data['resid'],
 		x=swissRes$predict,
 		err.model=c(1, 0.99)*swissRes$param["nugget"],
 		n=3
@@ -92,7 +92,7 @@ swissSim = geostatsp::RFsimulate(model=
 						swissRes$param,	
 						0.99*swissRes$param,
 						1.01*swissRes$param),
-		data=swissRes$resid[,c(1,1,1)],
+		data=swissRes$data['resid'][,c(1,1,1)],
 		err.model=c(1, 0.99, 1.01)*swissRes$param["nugget"],
 		x=swissRes$predict,
 		n=3

@@ -1,4 +1,4 @@
-stackRasterList = function(x, template=x[[1]],method='ngb') {
+stackRasterList = function(x, template=x[[1]],method='ngb',mc.cores=NULL) {
 
 	if(class(x)=="SpatialPolygonsDataFrame")
 		x = list(x)
@@ -86,7 +86,17 @@ stackRasterList = function(x, template=x[[1]],method='ngb') {
 	} # end projfun
 	
 	# reproject all the rasters
-	resultList = mapply(projfun, D=1:Nlayers)
+
+	
+	if(!is.null(mc.cores)) {
+		resultList = parallel::mcmapply(
+				projfun, D=1:Nlayers,
+				mc.cores=mc.cores)
+	} else {
+		resultList = mapply(projfun, D=1:Nlayers)
+	}
+	
+	
 
 	result = resultList[[1]]
 	if(Nlayers >1) {

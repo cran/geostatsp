@@ -28,10 +28,13 @@ informationLgm = function(fit, ...) {
 	
 	oneL = function(param, ...) {
 		param[parToLog] = exp(param[parToLog])
-		geostatsp::loglikLgm(param, ...)
+		loglikLgm(param, ...)
 	}
 	
 	baseParam[parToLog] = log(baseParam[parToLog])
+	
+	# get rid of NA's
+	fit$data = fit$data[,]
 	
 	hess = numDeriv::hessian(oneL, baseParam,
 			data=fit$data,trend=fit$model$trend,

@@ -1,5 +1,6 @@
 \name{RFsimulate}
 \alias{RFsimulate}
+\alias{modelRandomFields}
 
 \title{Simulation of Random Fields}
 
@@ -14,6 +15,7 @@
 \usage{
 RFsimulate(model, x, y=NULL, z=NULL, T=NULL, grid,
  data, distances, dim, err.model, n=1, ...)
+modelRandomFields(param, includeNugget=FALSE)
 }
 
 \arguments{
@@ -57,6 +59,8 @@ RFsimulate(model, x, y=NULL, z=NULL, T=NULL, grid,
  further options and control parameters for the simulation
  that are passed to and processed by \command{\link[RandomFields]{RFoptions}}
  }
+ \item{param}{A vector of named parameters}
+ \item{includeNugget}{If \code{FALSE}, the \code{nugget} parameter is ignored. }
 }
 
 \details{
@@ -66,9 +70,11 @@ a different column \code{i} is used with parameters in row \code{i}.
 }
 
 \value{
-If \code{x} is a raster, a \code{RasterLayer} or \code{RasterBrick} is returned.  Otherwise a
-\code{SpatialPointsDataFrame} or \code{SpatialGridDataFrame}  
-}
+If \code{x} is a raster, \code{RFsimulate} returns a \code{RasterLayer} or 
+\code{RasterBrick} is returned.  Otherwise a
+\code{SpatialPointsDataFrame} or \code{SpatialGridDataFrame} .  \code{modelRandomFields} returns
+an object of class   \command{\link[RandomFields]{RMmodel}}.
+ }
 
 
 \author{Martin Schlather, \email{schlather@math.uni-mannheim.de}
@@ -91,6 +97,9 @@ If \code{x} is a raster, a \code{RasterLayer} or \code{RasterBrick} is returned.
 \examples{
 
 model <- c(var=5, range=1,shape=0.5)
+
+
+RandomFields::plot(modelRandomFields(model))
 
 myraster = raster(nrows=60,ncols=60,xmn=0,ymn=0,xmx=10,ymx=10, 
 		crs="+init=epsg:2081")

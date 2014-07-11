@@ -1,8 +1,8 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistics using SpatialPoints and rasters
-Version: 0.9.7
-Date: 2014-02-21
+Version: 0.9.9
+Date: 2014-07-03
 Depends: methods, Matrix, raster, sp, R (>= 3.0.0)
 Suggests: pracma, geoR, RandomFields, rgdal, parallel, numDeriv
 Enhances: spatstat, mapmisc, ellipse
@@ -12,8 +12,8 @@ Description: This package provides to geostatistical modelling facilities using 
 License: GPL
 Repository: CRAN
 Repository/R-Forge/Project: diseasemapping
-Repository/R-Forge/Revision: 756
-Repository/R-Forge/DateTimeStamp: 2014-02-26 15:57:13
-Date/Publication: 2014-02-27 21:13:22
-Packaged: 2014-02-26 16:52:02 UTC; rforge
+Repository/R-Forge/Revision: 785
+Repository/R-Forge/DateTimeStamp: 2014-07-09 17:52:53
+Date/Publication: 2014-07-11 00:15:52
+Packaged: 2014-07-09 18:15:35 UTC; rforge
 NeedsCompilation: yes

@@ -85,7 +85,7 @@ logLikGradient = function(param,
 		lowerG = rep(-Inf, length(param)), 
 		upperG=rep(Inf, length(param)), 
 		eps=rep(0.001, length(param)),
-		mc.cores=2
+		mc.cores=getOption("mc.cores", 1L)
 	){
 		upper = upperG
 		lower = lowerG
@@ -186,7 +186,7 @@ logLikGradient = function(param,
 	reml=reml, covariates=covariates,
 	minustwotimes=minustwotimes)
 	
-if(TRUE) {
+if(ncores>1) {
 	thegrad = mcmapply(grFun, parname=parForMapply, right=rightForMapply,
 			MoreArgs=moreArgs,
 			mc.cores=ncores)

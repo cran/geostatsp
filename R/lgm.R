@@ -47,13 +47,13 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 	
 	
 	notInData = allterms[! allterms %in% names(data)]
-	
+
 	# convert covariates to raster stack with same resolution of prediction raster.
 
 	if(length(covariates)){
 		# extract covariate values and put in the dataset
 		
-		if(length(notInData)==1){
+		if(length(notInData)==1 & length(names(covariates))==1){
 			names(covariates) = notInData
 		}
 		
@@ -92,20 +92,23 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 		param=c()
 	}
 	
-	param['shape']=shape
-	param['nugget']=nugget
-	param['boxcox']=boxcox
-
-	if(!any(names(param)=='range'))
-		param['range']=sd(coordinates(data)[,1])
 					
 	paramToEstimate	= c("range", "shape","nugget","boxcox")[
 			!c(FALSE,fixShape,fixNugget,fixBoxcox)]		
+	range=NA
+	Spar = c(shape=shape,nugget=nugget,range=NA,boxcox=boxcox)
+	
 	if(aniso) {
-		param = c(param, anisoAngleDegrees=0,anisoRatio=1)
-		paramToEstimate = c(paramToEstimate,c("anisoAngleDegrees","anisoRatio"))		
+		Spar = c(Spar, anisoAngleDegrees=NA,anisoRatio=NA)
+		paramToEstimate = c(paramToEstimate,
+				"anisoAngleDegrees","anisoRatio")		
 	}
-				
+
+	Spar = Spar[!names(Spar) %in% names(param)]
+	param = c(param, Spar)
+	
+	
+	
 	
 	# to do: make sure factors in rasters are set up correctly
 	# have baseline as first entry in cov@data@attributes,
@@ -118,13 +121,12 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 	dots$trend=formula
 	dots$data=data
 	dots$paramToEstimate=paramToEstimate
- 	
 
+
+	
 	
 	likRes = do.call(likfitLgm, dots)
 
-
-	
 
 	
 # call krige	
@@ -133,12 +135,24 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 			covariates=covariates, expPred=expPred,
 			nuggetInPrediction=nuggetInPrediction
 			)
-	 
-	res = c(predict=krigeRes, likRes, list(data=data))
+	
+#	data$resid = likRes$resid$resid
+#	likRes$data = data
+
+	data@data = cbind(data.frame(data), 
+			likRes$data[rownames(data.frame(data)),])
+	likRes$data = data
+		
+
+	res = c(predict=krigeRes, likRes)
+
 	
 	# add confidence intervals for covariance parameters
-	res$summary = informationLgm(res)$summary
-	
+	theInf=informationLgm(res)
+	res$varBetaHat = list(beta=res$varBetaHat)
+	names(res) = gsub("varBetaHat", "varParam", names(res))
+	res$summary = 	theInf$summary
+	res$varParam$information = theInf$information
 	
 	for(Dvar in names(covariates)) {
 		theLevels =levels(covariates[[Dvar]])[[1]]
@@ -152,9 +166,14 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 			}
 		}
 	}
-	
-	
-
+	# if range is very big, it's probably in metres, convert to km
+	if(res$summary['range','estimate']>1000) {
+		logicalCol = names(res$summary) == "Estimated"
+		res$summary["range",!logicalCol] = 
+				res$summary["range",!logicalCol] /1000
+		rownames(res$summary) = gsub("^range$", "range/1000", 
+				rownames(res$summary))
+	}
 	
 	return(res)
 }
