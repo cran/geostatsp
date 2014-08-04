@@ -16,7 +16,7 @@ landTable = as.numeric(names(landTable)[landTable > 5])
 swissRain2 = swissRain [swissRain$land %in% landTable, ]
 
 swissFit3 = likfitLgm(data=swissRain2, 
-		trend=lograin~ elevation + factor(land),
+		formula=lograin~ elevation + factor(land),
 		param=c(range=46500, nugget=0.05,shape=1,  
 				anisoAngleDegrees=35, anisoRatio=12),
 		paramToEstimate = c("range","nugget", 
@@ -25,11 +25,11 @@ swissFit3 = likfitLgm(data=swissRain2,
 				anisoRatio=1,anisoAngleDegrees=5)
 )
 
-swissKrige3 = krige(data=swissRain2, 
-		trend = swissFit3$model$trend,
+swissKrige3 = krigeLgm(data=swissRain2, 
+		formula = swissFit3$model$formula,
 		param=swissFit3$param, 
 		covariates = list(elevation = swissAltitude,land=swissLandType),
-		locations = swissRaster, expPred=TRUE)
+		newdata = swissRaster, expPred=TRUE)
 
 pdf("krige3.pdf")
 plot(swissKrige3[["predict"]])	
@@ -46,7 +46,7 @@ swissRain2$landFac = factor(swissRain2$land,
 		labels=landTypes[,2])
 
 swissFit4 = likfitLgm(data=swissRain2, 
-		trend=lograin~ elevation + landFac,
+		formula=lograin~ elevation + landFac,
 		param=c(range=46500, nugget=0.05,shape=1,  
 				anisoAngleDegrees=35, anisoRatio=12),
 		paramToEstimate = c("range","nugget", 
@@ -54,21 +54,13 @@ swissFit4 = likfitLgm(data=swissRain2,
 		parscale = c(range=5000,nugget=0.01, 
 				anisoRatio=1,anisoAngleDegrees=5)
 )
-swissKrige4 = krige(data=swissRain2, trend = swissFit4$model$trend,
+swissKrige4 = krigeLgm(data=swissRain2, formula = swissFit4$model$formula,
 		param=swissFit4$param, 
 		covariates = list(elevation = swissAltitude,landFac=swissLandType),
-		locations = swissRaster,expPred=TRUE )
+		newdata = swissRaster,expPred=TRUE )
 
-if(FALSE){
-	# for debugging
-	data=swissRain2
-trend = swissFit4$model$trend
-param=swissFit4$param
-covariates = list(elevation = swissAltitude,landFac=swissLandType)
-locations = swissRaster
-expPred=TRUE
-coordinates=data
-}
+
+
 
 pdf("krige4.pdf")
 plot(swissKrige4[["predict"]])	
@@ -79,8 +71,8 @@ dev.off()
 
 swissRain2$landFac2 = as.character(swissRain2$landFac)
 
-swissFit5= likfitLgm(data=swissRain2, 
-		trend=lograin~ elevation + factor(landFac2),
+swissFit5= likfitLgm(lograin~ elevation + factor(landFac2),
+		data=swissRain2, 
 		param=c(range=46500, nugget=0.05,shape=1,  
 				anisoAngleDegrees=35, anisoRatio=12),
 		paramToEstimate = c("range","nugget", 
@@ -90,10 +82,11 @@ swissFit5= likfitLgm(data=swissRain2,
 )
 
 
-swissKrige5 = krige(data=swissRain2, trend = swissFit5$model$trend,
+swissKrige5 = krigeLgm(data=swissRain2, 
+		formula = swissFit5$model$formula,
 		param=swissFit5$param, 
 		covariates = list(elevation = swissAltitude,landFac2=swissLandType),
-		locations = swissRaster,expPred=TRUE)
+		newdata = swissRaster,expPred=TRUE)
 pdf("krige5.pdf")
 plot(swissKrige5[["predict"]])	
 plot(swissBorder, add=TRUE)
@@ -108,19 +101,19 @@ bigRaster = raster(extent(swissBorder), ncols=600, nrows=400,
 
 options(mc.cores = 1)
 unix.time(
-		krige(data=swissRain2, trend = swissFit3$model$trend,
+		krigeLgm(data=swissRain2, formula = swissFit3$model$formula,
 				param=swissFit3$param, 
 				covariates = list(elevation = swissAltitude,land=swissLandType),
-				locations = bigRaster, expPred=TRUE)
+				newdata = bigRaster, expPred=TRUE)
 
 )
 
 
 options(mc.cores = 2)
 
-unix.time(krige(data=swissRain2, trend = swissFit3$model$trend,
+unix.time(krigeLgm(data=swissRain2, formula = swissFit3$model$formula,
 				param=swissFit3$param, 
 				covariates = list(elevation = swissAltitude,land=swissLandType),
-				locations = bigRaster, expPred=TRUE)
+				newdata = bigRaster, expPred=TRUE)
 )
 }

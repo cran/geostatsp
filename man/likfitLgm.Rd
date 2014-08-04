@@ -14,7 +14,7 @@
 \usage{
 
 
-likfitLgm(data, trend, 
+likfitLgm(formula, data, 
 		coordinates=data,
 		param=c(range=1,nugget=0,shape=1),
 		upper=NULL,lower=NULL, parscale=NULL,
@@ -22,21 +22,21 @@ likfitLgm(data, trend,
 		reml=TRUE)
 		
 loglikLgm(param, 
-		data, trend, coordinates=data,
+		data, formula, coordinates=data,
 		reml=TRUE, 
 		minustwotimes=TRUE,
 		stored=NULL, moreParams=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{data}{
+ \item{formula}{
+A formula for the fixed effects portion of the model, specifying a response and covariates. 
+Alternately, \code{data} can be a vector of observations and \code{formula} can be 
+a model matrix.
+}
+ \item{data}{
 	An object of class \code{SpatialPointsDataFrame}, a vector of observations, 
 	or a data frame containing observations and covariates.
-}
-\item{trend}{
-A formula for the fixed effects portion of the model, specifying a response and covariates. 
-Alternately, \code{data} can be a vector of observations and \code{trend} can be 
-a model matrix.
 }
 \item{coordinates}{A \code{SpatialPoints} object containing the locations of each observation, 
 which defaults to \code{data}.  Alternately, \code{coordinates} can be a \code{dist} object 
@@ -110,7 +110,7 @@ spplot(mydat, "Y", col.regions=rainbow(10), main="Y")
 par(mfrow=c(1,1))
 }
 
-myres = likfitLgm(mydat, Y ~ cov1 + cov2, 
+myres = likfitLgm(Y ~ cov1 + cov2, mydat, 
 	param=c(range=0.1,nugget=0.1,shape=2), 
 	paramToEstimate = c("range","nugget")
 	)
@@ -137,7 +137,7 @@ legend("bottomright", fill=c("black","red","blue"),
 	legend=c("data","true","MLE"))
 
 # without a nugget
-myresNoN = likfitLgm(mydat, Y ~ cov1 + cov2, 
+myresNoN = likfitLgm(Y ~ cov1 + cov2, mydat, 
 	param=c(range=0.1,nugget=0,shape=1), paramToEstimate = c("range")	
 	)
 
@@ -168,7 +168,7 @@ legend("bottomright", fill=c("black","red","blue","green"),
 # calculate likelihood
 temp=loglikLgm(param=myres$param, 
 		data=mydat, 
-		trend = Y ~ cov1 + cov2,
+		formula = Y ~ cov1 + cov2,
 		reml=FALSE, minustwotimes=FALSE)
 
 
@@ -198,7 +198,7 @@ plot(mydat, col=as.character(cut(mydat$Y, breaks=50, labels=heat.colors(50))),
 par(mar=oldmar)
 
 
-myres = likfitLgm(mydat, Y ~ cov1 + cov2, 
+myres = likfitLgm( Y ~ cov1 + cov2, mydat,
 	param=c(range=0.1,nugget=0,shape=2, anisoAngleDegrees=0, anisoRatio=2), 
 	paramToEstimate = c("range","nugget","anisoRatio","anisoAngleDegrees") 
 	)

@@ -8,7 +8,7 @@
 \description{
 Calculate MLE's of model parameters and perform spatial prediction. }
 \usage{
-lgm(data, locations, covariates = NULL, formula = NULL, shape = 1, 
+lgm(formula, data, newdata, covariates = NULL,  shape = 1, 
     fixShape = TRUE, aniso = FALSE, boxcox = 1, fixBoxcox = TRUE, 
     nugget = 0, fixNugget = FALSE, expPred = FALSE, nuggetInPrediction = TRUE,
     ...) 
@@ -16,20 +16,17 @@ lgm(data, locations, covariates = NULL, formula = NULL, shape = 1,
 }
  
 \arguments{
+\item{formula}{A model formula for the fixed effects, or a character string specifying the response variable.}
  \item{data}{
-A SpatialPointsDataFrame containing  the data to be interpolated, or a vector of observed data
+A SpatialPointsDataFrame containing the locations and observations, and possibly covariates.
 }
-
-
 \item{covariates}{
 The spatial covariates used in prediction, either a \code{\link[raster]{raster}} stack or list of rasters.
 Covariates in \code{formula} but not in \code{data} will be extracted from \code{covariates}.
 }
-
-\item{locations}{Either a \code{\link[raster]{raster}}, or a single integer giving the
+\item{newdata}{Either a \code{\link[raster]{raster}}, or a single integer giving the
 number of cells in the X direction which predictions will be made on.  If the later
-the predictions will be a raster of square cells covering the bounding box of \code{locations}.}
-\item{formula}{A model formula for the fixed effects.}
+the predictions will be a raster of square cells covering the bounding box of \code{data}.}
 \item{shape}{Order of the Matern correlation}
 \item{fixShape}{Set to \code{FALSE} to estimate the Matern order}
 \item{aniso}{Set to \code{TRUE} to use geometric anisotropy.}
@@ -50,7 +47,7 @@ Otherwise predict fitted values.
 specified with a vector \code{param} of named elements}
 }
 \details{
-Calls  \code{\link{likfitLgm}} and  \code{\link{krige}}
+Calls  \code{\link{likfitLgm}} and  \code{\link{krigeLgm}}
 }
 \value{
 A raster stack is 
@@ -66,13 +63,13 @@ For Box-Cox or log-transformed data on the natural (untransformed) scale.
 }
 
 \seealso{
-\code{\link{likfitLgm}}, \code{\link{krige}}
+\code{\link{likfitLgm}}, \code{\link{krigeLgm}}
 }
 \examples{
 
 data("swissRain")
  
-swissRes =  lgm(swissRain, locations=20, formula="rain",
+swissRes =  lgm( formula="rain", data=swissRain, newdata=20,
 	covariates=swissAltitude, boxcox=0.5, fixBoxcox=TRUE, 
 	shape=1, fixShape=TRUE,
 	aniso=FALSE, nugget=0, fixNugget=TRUE,

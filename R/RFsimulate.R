@@ -35,10 +35,19 @@ RFsimulate.RMmodel =
 		x = getGridTopology(x)
 	}
 	
-	# make sure data is an RFspdf (it might be a vanilla spdf)	
-	if(!missing(data)){
-		data=as(data, "RFspatialPointsDataFrame") 
-	}
+	# convert data to an RFspdf (it might be a vanilla spdf)	
+	if(!missing(data)) {
+	if(class(data)=='SpatialPointsDataFrame'){
+		data = RandomFields::conventional2RFspDataFrame(
+				array(
+						as.matrix(data@data),
+						c(dim(data@data),1)
+				),
+				coordinates(data),
+				n=dim(data)[2]
+				)
+#		data=as(data, "RFspatialPointsDataFrame") 
+	} }
 
 
 	res2=RandomFields::RFsimulate(
@@ -48,7 +57,7 @@ RFsimulate.RMmodel =
 		
 	# assign a proj4string if necessary
 	if(class(try(proj4string(res2),silent=TRUE))!="try-error") {
-		if(identical(proj4string(res2), NA)) {
+		if(is.na(proj4string(res2))) {
 			if(class(try(CRS(theProj), silent=TRUE))!= "try-error") {
 					proj4string(res2) = CRS(theProj)
 			}

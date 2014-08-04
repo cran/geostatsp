@@ -1,6 +1,6 @@
 # functions that don't depend on other packages
 export(
- krige,stackRasterList,
+ krigeLgm,stackRasterList,
   gmrfPrecUncond,simLgcp,simPoissonPP,
  lgm, excProb, likfitLgm, loglikLgm,
  profLlgm, informationLgm

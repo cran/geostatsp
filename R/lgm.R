@@ -1,9 +1,12 @@
-lgm <- function(data,  locations, covariates=NULL, formula=NULL,
+lgm <- function(formula,  data,  newdata, 
+		covariates=NULL, 
 		shape=1, fixShape=TRUE,
 		aniso=FALSE, boxcox=1, fixBoxcox=TRUE,
 		nugget = 0, fixNugget = FALSE,
 		expPred=FALSE, nuggetInPrediction=TRUE,...){
 	
+	
+	locations = newdata
 	
 # the formula
 	# get rid of special character is names of data
@@ -118,7 +121,7 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 # call likfit
 	
 	dots$param = param
-	dots$trend=formula
+	dots$formula=formula
 	dots$data=data
 	dots$paramToEstimate=paramToEstimate
 
@@ -130,8 +133,8 @@ lgm <- function(data,  locations, covariates=NULL, formula=NULL,
 
 	
 # call krige	
-	krigeRes =  krige(data=data,trend=formula,
-			param=likRes$param, locations=locations,
+	krigeRes =  krigeLgm(data=data,formula=formula,
+			param=likRes$param, newdata=locations,
 			covariates=covariates, expPred=expPred,
 			nuggetInPrediction=nuggetInPrediction
 			)

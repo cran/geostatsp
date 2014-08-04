@@ -27,8 +27,8 @@ profLlgm = function(fit,mc.cores=NULL, ...) {
 	
 	
 	oneL = function(...){
-		res=geostatsp::likfitLgm(fit$data, 
-				fit$model$trend,
+		res=geostatsp::likfitLgm(data=fit$data, 
+				formula=fit$model$formula,
 				param=c(..., 
 						baseParams),
 				paramToEstimate=reEstimate,

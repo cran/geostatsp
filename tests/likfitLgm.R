@@ -26,7 +26,7 @@ mydat$Ybc = (mydat$Y*0.5+1)^2
 
  
 
-myres = likfitLgm(mydat, Ybc ~ cov1 + cov2, 
+myres = likfitLgm(Ybc ~ cov1 + cov2, mydat, 
 		param=c(range=0.1,nugget=0,shape=2, 
 				anisoAngleDegrees=20, anisoRatio=2,
 				boxcox=0.4), 
@@ -56,7 +56,7 @@ data("swissRain")
 sr2 = swissRain
 sr2$elev = raster::extract(swissAltitude, sr2)
 swissFitAgain = likfitLgm(data=sr2, 
-		trend=rain~ elev,
+		formula=rain~ elev,
 		param=c(range=1000,shape=1,nugget=0,boxcox=0.5),
 		paramToEstimate = c("range","nugget")
 )
@@ -80,7 +80,7 @@ mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 +
 		mydat$U + rnorm(length(mydat), 0, sd=sqrt(trueParam["nugget"]))
 
 
-unix.time( likfitLgm(mydat, Y ~ cov1 + cov2, 
+unix.time( likfitLgm(Y ~ cov1 + cov2, mydat, 
 				param=c(range=0.1,nugget=0.1,shape=2), 
 				paramToEstimate = c("range","nugget")
 		)
@@ -89,7 +89,7 @@ unix.time( likfitLgm(mydat, Y ~ cov1 + cov2,
 if(FALSE) { 
 options(mc.cores = 1)
 
-unix.time( likfitLgmG(mydat, Y ~ cov1 + cov2, 
+unix.time( likfitLgmG( Y ~ cov1 + cov2, mydat,
 				param=c(range=0.1,nugget=0.1,shape=2), 
 				paramToEstimate = c("range","nugget")
 		)
@@ -97,7 +97,7 @@ unix.time( likfitLgmG(mydat, Y ~ cov1 + cov2,
 
 options(mc.cores = 2)
 
-unix.time( likfitLgmG(mydat, Y ~ cov1 + cov2, 
+unix.time( likfitLgmG( Y ~ cov1 + cov2, mydat,
 				param=c(range=0.1,nugget=0.1,shape=2), 
 				paramToEstimate = c("range","nugget")
 		)

@@ -19,7 +19,7 @@ bob = function(x) {
 
 # specify formula name of raster layer
 swissFit = lgm(data=swissRain, formula=rain~ CHE_alt,
-		locations=80, covariates=swissAltitude,
+		newdata=80, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -31,7 +31,7 @@ bob(swissFit)
 # specify formula using name of list element
 
 swissFitAgain = lgm(data=swissRain, formula=rain~ elev+land,
-		locations=80, covariates=list(elev=swissAltitude,land=swissLandType),
+		newdata=80, covariates=list(elev=swissAltitude,land=swissLandType),
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -40,7 +40,7 @@ swissFitAgain$param
 bob(swissFitAgain)
 
 swissFitAgain = lgm(data=swissRain, formula="rain",
-		locations=80, covariates=swissAltitude,
+		newdata=80, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -50,7 +50,7 @@ bob(swissFitAgain)
 
 
 swissFitAgain = lgm(data=swissRain, formula="rain",
-		locations=80, covariates=list(elev=swissAltitude,land=swissLandType),
+		newdata=80, covariates=list(elev=swissAltitude,land=swissLandType),
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -60,7 +60,8 @@ bob(swissFitAgain)
 
 
 # land type, factor covariate
-swissRes2 =  lgm(swissRain, locations=30, formula=rain ~ elev + factor(land),
+swissRes2 =  lgm(rain ~ elev + factor(land), swissRain, 
+		newdata=30, 
 		covariates=list(elev=swissAltitude,land=swissLandType), 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE
@@ -102,7 +103,7 @@ myPoints$y= myModel["intercept"] +
 		myPoints$U+
 		rnorm(length(myPoints), 0, sqrt(myModel["nugget"]))
 
-fitLikfit = likfitLgm(myPoints, trend=y~cov1+cov2, 
+fitLikfit = likfitLgm(y~cov1+cov2, myPoints,  
 		param=c(range=1,nugget=0,shape=1)) 
 
 
@@ -114,10 +115,10 @@ Snugget=NULL
 for(D in Srange) {
 	Slik = c(Slik,
 			loglikLgm(param=c(range=D,nugget=0,shape=1),
-					data=myPoints, trend=y~cov1+cov2))
+					data=myPoints, formula=y~cov1+cov2))
 	temp = likfitLgm(paramToEstimate = "nugget",
 			param=c(range=D,nugget=5,shape=1),
-			data=myPoints, trend=y~cov1+cov2)
+			data=myPoints, formula=y~cov1+cov2)
 	SlikWithN = c(SlikWithN,
 			temp$opt$value
 			)	
@@ -133,7 +134,7 @@ dev.off()
 
 
 # run lgm without providing covariates
-fitMLE =  lgm(myPoints, locations=10, formula=y~ cov1+cov2, 
+fitMLE =  lgm(y~ cov1+cov2, myPoints, newdata=10,  
 		shape=1, fixShape=TRUE)
 
 
@@ -143,13 +144,13 @@ c(fitMLE$summary["range","estimate"], fitLikfit$summary["range","estimate"])
 bob(fitMLE)
 
 # now give covariates as raster brick
-fitMLE =  lgm(myPoints, locations=10, formula=y~ cov1 + cov2, 
+fitMLE =  lgm( y~ cov1 + cov2, myPoints, newdata=10,  
 		covariates=covariates,
 		shape=1, fixShape=TRUE)
 c(fitMLE$summary["range","estimate"], fitLikfit$summary["range","estimate"])
 bob(fitMLE)
 # now give covariates as list
-fitMLE =  lgm(myPoints, locations=10, formula=y~ cov1 + cov2, 
+fitMLE =  lgm(y~ cov1 + cov2, myPoints, newdata=10,   
 		covariates=list(cov1=covariates[["cov1"]],
 				cov2 = covariates[["cov2"]]),
 		shape=1, fixShape=TRUE)
@@ -161,7 +162,7 @@ myPoints = SpatialPointsDataFrame(SpatialPoints(myPoints),
 		data=myPoints@data[,"y",drop=FALSE])
 
 # now give covariates as raster brick
-fitMLE =  lgm(myPoints, locations=10, formula=y~ cov1 + cov2, 
+fitMLE =  lgm(y~ cov1 + cov2,  myPoints, newdata=10,  
 		covariates=covariates,
 		shape=1, fixShape=TRUE)
 c(fitMLE$summary["range","estimate"], fitLikfit$summary["range","estimate"])

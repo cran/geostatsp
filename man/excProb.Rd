@@ -42,7 +42,7 @@ Either a vector of exceedance probabilities or an object of the same class as \c
 
 \examples{
 	data('swissRain')
-	swissFit =  lgm(swissRain, locations=30, formula="rain",
+	swissFit =  lgm("rain", swissRain, newdata=30, 
 	boxcox=0.5,fixBoxcox=TRUE,	covariates=swissAltitude)
 	swissExc = excProb(swissFit, 20)
 	mycol = c("green","yellow","orange","red")
@@ -53,7 +53,7 @@ Either a vector of exceedance probabilities or an object of the same class as \c
 	legend("topleft",legend=mybreaks, col=c(NA,mycol))
 \dontrun{
 	swissRain$sqrtrain = sqrt(swissRain$rain)
-	swissFit2 =  glgm(swissRain, cells=40, formula="sqrtrain",
+	swissFit2 =  glgm(formula="sqrtrain",data=swissRain, cells=40, 
 	covariates=swissAltitude,family="gaussian")
 	swissExc = excProb(swissFit2, threshold=sqrt(30))
 	swissExc = excProb(swissFit2$inla$marginals.random$space, 0,

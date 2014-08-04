@@ -5,7 +5,7 @@
 Converts a list of rasters, possibly with different projections and resolutions, to a single raster stack.
 }
 \description{
-This function is intended to be used prior to passing covariates to \link{krige} in order
+This function is intended to be used prior to passing covariates to \link{krigeLgm} in order
 for the rasters for all covariates to have the same projection and same resolution.  
 
 }

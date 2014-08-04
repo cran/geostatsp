@@ -1,5 +1,5 @@
-\name{krige}
-\alias{krige}
+\name{krigeLgm}
+\alias{krigeLgm}
 
 \title{
 Spatial prediction, or Kriging
@@ -8,28 +8,25 @@ Spatial prediction, or Kriging
 Perform spatial prediction, producing a raster of predictions and conditional standard deviations.
 }
 \usage{
-krige(data, trend, coordinates = data, param, locations, 
+krigeLgm(formula, data, newdata,  param,  
     covariates = NULL, expPred = FALSE, nuggetInPrediction = TRUE,
     mc.cores=getOption("mc.cores", 1L))
 }
  
 \arguments{
+\item{formula}{Either a model formula, or a data frame of linear covariates.}
   \item{data}{
-A SpatialPointsDataFrame containing  the data to be interpolated, or a vector of observed data
+A SpatialPointsDataFrame containing  the data to be interpolated
 }
-\item{trend}{Either a model formula, or a data frame of linear covariates.}
-
-\item{coordinates}{A SpatialPoints object giving the locations of the observed data.  
-If \code{data} is a SpatialPointsDataFrame coordinates is not necessary.}
-\item{covariates}{
+\item{newdata}{Either a \code{\link[raster]{raster}}, or a single integer giving the
+number of cells in the X direction which predictions will be made on.  If the later
+the predictions will be a raster of square cells covering the bounding box of \code{newdata}.}
+ \item{covariates}{
 The spatial covariates used in prediction, either a \code{\link[raster]{raster}} stack or list of rasters.
 }
 \item{param}{A vector of named model parameters, as produced by \code{\link{likfitLgm}}
 }
-\item{locations}{Either a \code{\link[raster]{raster}}, or a single integer giving the
-number of cells in the X direction which predictions will be made on.  If the later
-the predictions will be a raster of square cells covering the bounding box of \code{locations}.}
-  \item{expPred}{
+ \item{expPred}{
 Should the predictions be exponentiated, defaults to \code{FALSE}.
 }
 \item{nuggetInPrediction}{If \code{TRUE}, predict new observations by adding the 
@@ -58,7 +55,7 @@ effects), a list with two raster stacks is returned.
 \item{prediction}{A raster stack as above, though the random effect prediction is resampled to the 
 same locations as the fixed effects.}
 \item{random}{the predictions and conditional variance of the random effects, on the same
-raster as \code{locations}}
+raster as \code{newdata}}
 
 }
 
@@ -81,7 +78,7 @@ swissFit = likfitLgm(data=swissRain,
 			parscale = c(range=5000,nugget=0.01, 
 				anisoRatio=1,anisoAngleDegrees=5)
 )
-myTrend = swissFit$trend
+myTrend = swissFit$formula
 myParams = swissFit$param
 dput(myParams)
 # will give the following
@@ -95,10 +92,10 @@ myTrend =lograin~ elevation
 
 # make sure krige can cope with missing values!
 swissAltitude[1:50,1:50] = NA
-swissKrige = krige(data=swissRain, trend = myTrend,
+swissKrige = krigeLgm(data=swissRain, formula = myTrend,
 	covariates = swissAltitude,  
 	param=myParams,
-	locations = 40, expPred=TRUE)
+	newdata = 40, expPred=TRUE)
 
 
 
@@ -129,9 +126,9 @@ myTrend2=rain~1
 swissRaster = raster(extent(swissBorder), nrows=25, ncols=40)
 
 
-swissKrige2 = krige(data=swissRain, trend = myTrend2,
+swissKrige2 = krigeLgm(data=swissRain, formula = myTrend2,
 	  param=myParams2,
-	locations = swissRaster)
+	newdata = swissRaster)
 
 
 

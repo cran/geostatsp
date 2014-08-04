@@ -98,8 +98,9 @@ an object of class   \command{\link[RandomFields]{RMmodel}}.
 
 model <- c(var=5, range=1,shape=0.5)
 
-
-RandomFields::plot(modelRandomFields(model))
+\dontrun{
+	RandomFields::plot(modelRandomFields(model))
+}
 
 myraster = raster(nrows=60,ncols=60,xmn=0,ymn=0,xmx=10,ymx=10, 
 		crs="+init=epsg:2081")
@@ -119,7 +120,7 @@ swissRain$sqrtrain = sqrt(swissRain$rain)
 
 
 # estimate parameters
-swissRes =  lgm(swissRain, locations=20, formula="sqrtrain",
+swissRes =  lgm(data=swissRain, newdata=20, formula="sqrtrain",
 	covariates=swissAltitude,  
 	shape=1, fixShape=TRUE,
 	aniso=FALSE, nugget=0, fixNugget=TRUE,
@@ -131,7 +132,7 @@ swissRes =  lgm(swissRain, locations=20, formula="sqrtrain",
 #   the observed data
 
 swissSim = geostatsp::RFsimulate(model=swissRes$param,
-	data=swissRes$resid,
+	data=swissRes[,'resid'],
 	x=swissRes$predict,
 	n=3
 )

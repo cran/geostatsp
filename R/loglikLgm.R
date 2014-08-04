@@ -1,11 +1,13 @@
 loglikLgm = function(param,
-		data, trend, coordinates=data,
+		data, formula, coordinates=data,
 		reml=TRUE, 
 		minustwotimes=TRUE,
 		stored=NULL, moreParams=NULL) {
 
 	# create 'covariates', and 'observations'
  	
+	trend = formula
+	
 	if(class(trend)=="formula") {
 		observations = formulaLhs(trend)
 		if(!any(names(data)==observations))
@@ -194,13 +196,15 @@ loglikLgm = function(param,
 
 
 likfitLgm = function(
-		data, trend, 
+		formula, data,
 		coordinates=data,
 		param=c(range=1,nugget=0,shape=1),
 		upper=NULL,lower=NULL, parscale=NULL,
 		paramToEstimate = c("range","nugget"),
 		reml=TRUE) {
 
+	trend = formula
+	
 	# for some reason thing break if I remove this next line...
 #	stuff = (class(coordinates))
 	theproj = proj4string(coordinates)
@@ -397,7 +401,7 @@ if(any(names(param)=="boxcox") & !any(paramToEstimate=="boxcox")) {
 			upper=upperDefaults[paramToEstimate],
 			control = list(parscale=parscaleDefaults[paramToEstimate]),
 			data=observations, 
-			trend=covariates, coordinates=coordinates,
+			formula=covariates, coordinates=coordinates,
 		reml=reml, moreParams=moreParams,
 		method = "L-BFGS-B", stored=stored
 		)
@@ -409,7 +413,7 @@ if(any(names(param)=="boxcox") & !any(paramToEstimate=="boxcox")) {
 	fromLogLik = loglikLgm(param=fromOptim$par,
 			moreParams=moreParams, 
 			data=observations, 
-			trend=covariates, coordinates=coordinates,
+			formula=covariates, coordinates=coordinates,
 			reml=reml
 			)
 			
@@ -445,9 +449,9 @@ if(any(names(param)=="boxcox") & !any(paramToEstimate=="boxcox")) {
 	
 	result$model = list(reml=reml)
 	if(class(trend)=="formula") {
-		result$model$trend = trend
+		result$model$formula = trend
 	} else {
-		result$model$trend= names(trend)
+		result$model$formula= names(trend)
 	}
 
 	

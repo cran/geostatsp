@@ -37,7 +37,7 @@ informationLgm = function(fit, ...) {
 	fit$data = fit$data[,]
 	
 	hess = numDeriv::hessian(oneL, baseParam,
-			data=fit$data,trend=fit$model$trend,
+			data=fit$data,formula=fit$model$formula,
 			reml=fit$model$reml,
 			moreParams=moreParams, ...)
 	

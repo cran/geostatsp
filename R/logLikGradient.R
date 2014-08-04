@@ -215,7 +215,7 @@ loglikLgmG = function(param,
 
 	loglikLgm(param,
 			data=observations, 
-			trend=covariates, coordinates=coordinates,
+			formula=covariates, coordinates=coordinates,
 			reml=reml, 
 			minustwotimes= minustwotimes,
 			stored=stored, moreParams=moreParams) 
@@ -422,7 +422,7 @@ return(fromOptim)
 	fromLogLik = loglikLgm(param=fromOptim$par,
 			moreParams=moreParams, 
 			data=observations, 
-			trend=covariates, coordinates=coordinates,
+			formula=covariates, coordinates=coordinates,
 			reml=reml
 	)
 	
@@ -436,7 +436,7 @@ return(fromOptim)
 	if(class(trend)=="formula") {
 		result$trend = trend
 	} else {
-		result$trend= names(trend)
+		result$formula= names(trend)
 	}
 	
 	

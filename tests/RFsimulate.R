@@ -28,7 +28,8 @@ swissRain$sqrtrain = sqrt(swissRain$rain)
 
 
 # isotropic
-	swissRes =  lgm(swissRain, locations=20, formula="sqrtrain",
+	swissRes =  lgm(data=swissRain, 
+			newdata=20, formula="sqrtrain",
 			covariates=swissAltitude,   
 			shape=1, fixShape=TRUE,
 			aniso=FALSE, fixNugget=FALSE,
@@ -37,7 +38,8 @@ swissRain$sqrtrain = sqrt(swissRain$rain)
 	
 	
  # anisotropic
-swissRes =  lgm(swissRain, locations=20, formula="sqrtrain",
+swissRes =  lgm("sqrtrain",
+		swissRain, newdata=20, 
 		covariates=swissAltitude,   
 		shape=1, fixShape=TRUE,
 		aniso=TRUE, fixNugget=FALSE,
