@@ -1,15 +1,23 @@
+
+
 modelRandomFields = function(param, includeNugget=FALSE){
 
 if(class(param)=="RMmodel")
 		return(param)
 
+	
+	
 param = fillParam(param)
+
+
+
 if(!is.vector(param))
 	warning("param should be a vector if it's to be converted to an RMmodel")
 
 param["scaleRandomFields"] = param["range"]/2 
 
-
+if (requireNamespace("RandomFields", quietly = TRUE)) { 
+	
 if (abs(param["anisoRatio"]-1) <=  10^(-4) ){
 	model = RandomFields::RMmatern(
 			nu=param["shape"], 
@@ -48,7 +56,10 @@ if (abs(param["anisoRatio"]-1) <=  10^(-4) ){
 		model = RandomFields::RMplus(model, 
 				RandomFields::RMnugget(var=param["nugget"]))
 	}
-
+} else {
+	# RandomFields is not available
+	model = param
+}
 model 
 }
 

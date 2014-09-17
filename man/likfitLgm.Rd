@@ -97,7 +97,8 @@ mydat = SpatialPointsDataFrame(cbind(runif(n), runif(n)),
 # simulate a random field
 trueParam = c(variance=2^2, range=0.15, shape=2, nugget=0.5^2)
 
-mydat$U = geostatsp::RFsimulate(trueParam,mydat)$variable1
+mydat$U = RFsimulate(trueParam,mydat)$sim1
+
 
 # add fixed effects
 mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 

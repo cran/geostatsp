@@ -124,6 +124,10 @@ legend("right", pch=1, col=c('black','blue'), legend=c('exp','gau'))
 
 # comparing to geoR and RandomFields
 
+if (requireNamespace("RandomFields", quietly = TRUE) &
+requireNamespace("geoR", quietly = TRUE) 
+) { 
+
 covGeoR = covRandomFields = NULL
 
 for(D in shapeSeq) {
@@ -142,7 +146,7 @@ matpoints(distVec, covRandomFields, cex=0.5, pch=2)
 
 legend("top", lty=c(1,NA,NA), pch=c(NA, 1, 2), 
 	legend=c("geostatsp","geoR","RandomFields"))
-
+}
  
 }
 

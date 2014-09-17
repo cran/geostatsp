@@ -37,11 +37,11 @@ stackRasterList = function(x, template=x[[1]],method='ngb',mc.cores=NULL) {
 			if(length(names(x[[D]]))!=1)
 				warning("polygon ", D, "has more than one data column, using the first" )
 			
-			require(rgdal, quietly=TRUE ) 
+			require('rgdal', quietly=TRUE ) 
 			
 			toAdd =  
 					rasterize(
-							spTransform(x[[D]], template@crs), 
+							spTransform(x[[D]], CRS(projection(template))), 
 							raster(template), field=names(x[[D]][1])
 					)
  

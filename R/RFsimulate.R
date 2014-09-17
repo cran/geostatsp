@@ -1,42 +1,34 @@
+setClass('RMmodel', 
+		representation(
+				# call='RMexp(var=1, sclae=1, Aniso=id, proj=id)
+				call = "language",
+				# name='RMexp'
+				name = "character",
+				# submodels=NULL, submodels=list(RMmodel1, RMmodel2)
+				submodels = "list",
+				# model specific parameter 
+				par.model = "list",
+				# var=1, scale=1, Aniso=id, proj=id 
+				par.general = "list"
+		)
+)
 
-RFsimulate = function(model, x, y = NULL, z = NULL, T = NULL, grid, data, 
-		distances, dim, err.model, n = 1, ...) {
-	UseMethod("RFsimulate")
-}
+
+setGeneric('RFsimulate', function(model,x, data=NULL, err.model=NULL, n=1, ...) 
+			standardGeneric("RFsimulate")
+)
 
 
-RFsimulate.RMmodel = 
-		function (model, x, y = NULL, z = NULL, T = NULL, grid, data, 
-				distances, dim, err.model, n = 1, ...) 
-{
+setMethod("RFsimulate", 
+		signature("RMmodel", "GridTopology"),
+		function(model, x,  data = NULL, 
+		err.model=NULL, n = 1, ...)  {
 
-	# if x has a projection, copy it to the output
-	theProj = try(proj4string(x), silent=TRUE)
-	if(class(theProj)=="try-error")
-		theProj=NA
-	
-	xOrig=x
-	if(any(attributes(class(x))$package=="raster")) {
-		x = as(x, "GridTopology")
-		isRaster = TRUE
-	} else {
-		isRaster=FALSE
-	}
-	
-	if(length(grep("^SpatialPoints", class(x)))){
-		y=coordinates(x)[,2]
-		x=coordinates(x)[,1]
-		isSpatialPoints = TRUE
-	} else {
-		isSpatialPoints = FALSE
-	}
 
-	if(length(grep("^Spatial(Pixels|Grid)", class(x)))){
-		x = getGridTopology(x)
-	}
-	
+	if (requireNamespace("RandomFields", quietly = TRUE)) { 
+		
 	# convert data to an RFspdf (it might be a vanilla spdf)	
-	if(!missing(data)) {
+	if(!is.null(data)) {
 	if(class(data)=='SpatialPointsDataFrame'){
 		data = RandomFields::conventional2RFspDataFrame(
 				array(
@@ -48,107 +40,244 @@ RFsimulate.RMmodel =
 				)
 #		data=as(data, "RFspatialPointsDataFrame") 
 	} }
-
-
-	res2=RandomFields::RFsimulate(
-			model, x, y, z , T , grid, data, 
-			distances, dim, err.model, n , ...
-			)
-		
-	# assign a proj4string if necessary
-	if(class(try(proj4string(res2),silent=TRUE))!="try-error") {
-		if(is.na(proj4string(res2))) {
-			if(class(try(CRS(theProj), silent=TRUE))!= "try-error") {
-					proj4string(res2) = CRS(theProj)
-			}
-		}				
-	}
-
 	
-	# if x is a raster and the raster package is available
-	# convert the results to a raster
-	if(isRaster & 
-			any(rownames(installed.packages())=="raster")) {
-
-		if(n==1) {
-			# one simulation, convert to raster
-			if(is.matrix(res2)) {
-				res3 = xOrig
-				values(res3) = as.vector(res2)
-			} else  {
-				res3 = raster::raster(res2)
-			}
-		} else {
-			# more than one simulate, convert to raster brick
-			res3 = list()
-			for(D in 1:n) {
-				res3[[D]] = 
-						raster::raster(res2, layer=D)
-			}
-			res3= do.call(raster::brick, res3)
-		}
-		res2 = res3
-	} 
-	res2
+	theArgs = list(...)
+	theArgs$model = model
+	theArgs$x = x
+	if(!is.null(data))
+		theArgs$data = data
+	if(!is.null(err.model))
+		theArgs$err.model = err.model
+	theArgs$n = n
+	theArgs$spConform=TRUE
+	
+	res= do.call(RandomFields::RFsimulate, theArgs)
+#			RandomFields::RFsimulate(
+#			model=model, x=x, data=data, 
+ #err.model=err.model, n=n , 
+	#		spConform=FALSE,
+	#		...
+	#		)
+	res = SpatialGridDataFrame(res@grid, res@data)
+	res = brick(res)
+	if(nlayers(res)==1)
+		res = res[[1]]
+} else {
+	res = NULL
 }
+res
+}
+)
 
-RFsimulate.numeric = function(model, x, y = NULL, z = NULL, T = NULL, grid, data, 
-		distances, dim, err.model, n = 1, ...)  {
-
-	model = modelRandomFields(model)
-
-	# if err.model is numeric, assume it's a nugget variance
-	if(!missing(err.model)){
-		if(is.numeric(err.model)) {
-			err.model = 
-					RandomFields::RMnugget(
-							var=err.model)
-		}
-	}
-	
-	
-	if(!missing(data)) {
-		if(class(data)=="SpatialPointsDataFrame") {
-			if(ncol(data)==1){
+setMethod("RFsimulate", 
+		signature("RMmodel", "SpatialPoints"),
+		function(model, x, 	data = NULL, 
+				err.model=NULL, n = 1, ...)  {
+		# convert data to an RFspdf (it might be a vanilla spdf)	
+			if (requireNamespace("RandomFields", quietly = TRUE)) { 
+				
+			if(!is.null(data)) {
+			if(class(data)=='SpatialPointsDataFrame'){
 				data = RandomFields::conventional2RFspDataFrame(
-						data.frame(data)[,1],
-						coords=coordinates(data),
-						n=1, vdim=1
-				) 
-			}
-		}
+						array(
+								as.matrix(data@data),
+								c(dim(data@data),1)
+						),
+						coordinates(data),
+						n=dim(data)[2]
+				)
+#		data=as(data, "RFspatialPointsDataFrame") 
+			} }
+
+		theArgs = list(...)
+		theArgs$model = model
+		theArgs$x = x@coords[,1]
+		theArgs$y = x@coords[,2]
+		if(!is.null(data))
+			theArgs$data = data
+		if(!is.null(err.model))
+			theArgs$err.model = err.model
+		theArgs$n = n
+		theArgs$spConform=FALSE
+		
+		res= do.call(RandomFields::RFsimulate, theArgs)
+		res = SpatialPointsDataFrame(
+				SpatialPoints(x),
+				as.data.frame(res),
+				proj4string = CRS(projection(x))
+				)
+	} else {
+		res = SpatialPoints(x)
 	}
-	
-	
-	#RandomFields::
-	#
-	res2=geostatsp::RFsimulate(model, x, y  , z  , T   , grid, 
-		data,	distances, dim, err.model, n  , ...)
 
-# convert to non-RandomFields object
-if(length(grep("[Ss]patialPointsDataFrame", class(res2)))){
-	res2 = as(res2, "SpatialPointsDataFrame")
+	res
+})
+
+
+setMethod("RFsimulate", 
+		signature("numeric", "SpatialPoints"), 
+	function(model, x,  data = NULL, 
+		 err.model=NULL, n = 1, ...)  {
+
+if (requireNamespace("RandomFields", quietly = TRUE)) { 
+	model = modelRandomFields(model)
+	if(!is.null(err.model))
+		err.model = RandomFields::RMnugget(var=err.model)
+	
+	res2=callGeneric(model, x,  
+		data=data,	err.model= err.model, n=n  ,  ...)
+} else { #RandomFields not available
+ 
+		theCov = matern(x, param=model)
+		if(!is.null(data)) {
+			covd = matern(data, param=model)
+			covpreddata = matern(x, y=data, param=model)
+			if(!is.null(err.model))
+				diag(covd) = diag(covd) + err.model
+			Linv = solve(chol(covd))
+			xcov =  tcrossprod( covpreddata,Linv)
+			theCov  =theCov - tcrossprod(xcov)
+		}
+		theChol = chol(theCov)
+		theRandom = matrix(rnorm(n*nrow(theCov)), nrow=nrow(theCov), ncol=n)
+		theSim = theChol %*% theRandom
+		if(!is.null(data)) {
+			theSim = theSim + xcov %*% 
+					(Linv %*% data.frame(data)[,1])	
+		}
+		
+		res2 = x
+		if(!length(grep("DataFrame$", class(res2)))) {
+			res2 = as(res2, paste(class(res2), "DataFrame",sep=""))
+		}
+		res2@data = as.data.frame(as.matrix(theSim))
+
+	}
+	names(res2) = paste("sim", 1:length(names(res2)), sep="")
+	
+ return(res2)
+}
+)
+
+setMethod("RFsimulate", signature("numeric", "GridTopology"), 
+	function(model, x, data = NULL, 
+				err.model=NULL, n = 1, ...)  {
+		if (requireNamespace("RandomFields", quietly = TRUE)) { 
+				model = modelRandomFields(model)
+				if(!is.null(err.model))
+					err.model = RandomFields::RMnugget(var=err.model)
+				res2=callGeneric(model, x,  
+						data=data,	err.model= err.model,
+						n=n  , 
+						...)
+		} else { #RandomFields not available
+					res2 = raster(x)
+					if(n>1) {
+						res2 = brick(res2, nl=n)
+					}
+					theCov = matern(res2, param=model)
+					if(!is.null(data)) {
+					 covd = matern(data, param=model)
+					 covpreddata = matern(res2, y=data, param=model)
+					 if(!is.null(err.model))
+						 diag(covd) = diag(covd) + err.model
+					 Linv = solve(chol(covd))
+					 xcov =  tcrossprod( covpreddata,Linv)
+					 theCov  =theCov - tcrossprod(xcov)
+					}
+					theChol = chol(theCov)
+					theRandom = matrix(rnorm(n*nrow(theCov)), nrow=nrow(theCov), 
+							ncol=n)
+					theSim = crossprod(theChol , theRandom)
+					if(!is.null(data)) {
+						theSim = theSim + xcov %*% 
+								(Linv %*% data.frame(data)[,1])	
+					}
+					values(res2) = as.vector(theSim)
+	
+			}
+		names(res2) = paste("sim", 1:length(names(res2)), sep="")
+			
+		res2
+		}
+)
+
+
+setMethod("RFsimulate", 
+	signature("numeric", "Raster"), 
+	function(model, x,
+				data=NULL, 
+				err.model=NULL, n = 1, ...)  {
+			
+		theproj = projection(x)
+		x = as(x, "GridTopology")
+		res2 = callGeneric( 
+				model, x,  
+				data=data, err.model=err.model, n=n  , ... 
+		)
+			
+		proj4string(res2) = CRS(theproj)
+			
+		return(res2)
+	}
+)
+
+
+RFsimulate.SPgrid	=	function(
+		model, x, 
+				data=NULL, 
+				 err.model=NULL, n = 1, ...)  {
+			xOrig = x
+			x= as(x, "GridTopology")
+
+			res2 = callGeneric( 
+					model, x,  
+					data=data,	
+					err.model= err.model, n=n  , ... 
+			)
+			
+			if(!length(grep("DataFrame$", class(xOrig)))) {
+				xOrig = as(xOrig, paste(class(xOrig), "DataFrame",sep=""))
+			}
+			xOrig@data = as.data.frame(res2)
+			
+			return(xOrig)
 }
 
-	return(res2)
+setMethod("RFsimulate", 
+		signature("numeric", "SpatialPixels"), 
+		RFsimulate.SPgrid)
+setMethod("RFsimulate", 
+		signature("numeric", "SpatialGrid"), 
+		RFsimulate.SPgrid)
 
+
+
+setMethod("RFsimulate", 
+		signature("data.frame", "ANY"),
+		function(model, x, data=NULL, 
+				err.model=NULL, n = nrow(model), ...)  {
+			
+		model = as(model, "matrix")
+		
+		callGeneric( 
+				model, x, 
+				data=data,	err.model= err.model,
+				n=n  , ... 
+		)
+	}
+)
+
+setMethod("RFsimulate", 
+		signature("matrix", "Spatial"),
+	function(model, x,  data=NULL, 
+	 err.model=NULL, n = nrow(model), ...)  {
 	
-}
+ if(is.null(rownames(model)))
+	 rownames(model) = paste("par", 1:nrow(model),sep="") 
+ Siter = round(seq(1,nrow(model), len=n))
 
-RFsimulate.data.frame = function(model, x, y = NULL, z = NULL, T = NULL, grid, data, 
-		distances, dim, err.model, n = 1, ...)  {
-	model = as(model, "matrix")
-	geostatsp::RFsimulate(model, x, y  , z  , T   , grid, data, 
-			distances, dim, err.model, n  , ...)
-}
-
-RFsimulate.matrix = function(model, x, y = NULL, z = NULL, T = NULL, grid, data, 
-		distances, dim, err.model, n = 1, ...)  {
-	
-
-	Siter = round(seq(1,nrow(model), len=n))
-
-	if(!missing(data)) {
+	if(!is.null(data)) {
 		if(class(data)!= "SpatialPointsDataFrame")
 			warning("data should be a SpatialPointsDataFrame")
 	# check data variables
@@ -167,7 +296,7 @@ RFsimulate.matrix = function(model, x, y = NULL, z = NULL, T = NULL, grid, data,
 		# do something so data[,D] doesn't break
 		data = NULL
 	}
-	if(!missing(err.model)) {
+	if(!is.null(err.model)) {
 		if(is.numeric(err.model)){
 			if(length(err.model)==1) {
 				err.model = rep(err.model, length(Siter))
@@ -182,30 +311,89 @@ RFsimulate.matrix = function(model, x, y = NULL, z = NULL, T = NULL, grid, data,
 	}
 
 	model= model[Siter,]
+	result = NULL
 	
-	result = list()
-	
-	
-	for(D in 1:nrow(model)) {
+	for(D in nrow(model):1) {
 
-	result[[D]] = geostatsp::RFsimulate(
+
+	resHere = 	callGeneric(
 			model[D,], 
-			x, y  , z  , T   , grid, data[,D], 
-			distances, dim, err.model[D], n=1  , ...)
-
-	}
-	
-	# try to convert result from a list to raster brick or spdf
-	if(attributes(class(result[[1]]))$package=="raster") {
-		result = do.call(raster::brick, result)
-	}
-	if(length(grep("Spatial*DataFrame", class(result[[1]]) )))	{
-		result[[1]]@data	= as.data.frame(
-				lapply(result, function(qq) data.frame(qq)[,1])
+			x, data= data[,D], 
+			err.model= err.model[D], n=1,
+			...)
+	result = cbind( 
+		 resHere@data[,1], result
 		)
-		result = result[[1]]
 	}
 	
-	result
+	
+	resHere@data	= as.data.frame( result)
+
+	if(!is.null(rownames(model)))
+		names(resHere) = rownames(model)
+	resHere
 }
+)
+
+setMethod("RFsimulate", 
+		signature("matrix", "Raster"),
+		function(model, x, data=NULL, 
+				 err.model=NULL, n = nrow(model), ...)  {
+
+			 if(is.null(rownames(model)))
+				rownames(model) = paste("par", 1:nrow(model),sep="") 
+			Siter = round(seq(1,nrow(model), len=n))
+			
+			if(!is.null(data)) {
+				if(class(data)!= "SpatialPointsDataFrame")
+					warning("data should be a SpatialPointsDataFrame")
+				# check data variables
+				if(ncol(data) == 1) {
+					data = data[,rep(1,length(Siter))]
+					
+				} else if(ncol(data) > 1) {
+					# if there's more than one, assume we're interested in the first one
+					
+					if(ncol(data)!= nrow(model)){
+						warning("number of columnns in data should be either 1 or equal to number of rows of model")
+					}
+					data = data[,Siter]		
+				}
+			} else {
+				# do something so data[,D] doesn't break
+				data = NULL
+			}
+			if(!is.null(err.model)) {
+				if(is.numeric(err.model)){
+					if(length(err.model)==1) {
+						err.model = rep(err.model, length(Siter))
+					} else if(length(err.model)==nrow(model)){
+						err.model = err.model[Siter]
+					} else {
+						warning("number of values in err.model should be either 1 or equal to number of rows of model")
+					}
+				}
+			} else {
+				err.model= NULL
+			}
+			
+			model= model[Siter,]
+			result = NULL
+			
+			for(D in nrow(model):1) {
+				resultHere = 	callGeneric(
+						model[D,], 
+						x, data= data[,D], 
+						err.model[D], n=1,
+						...)
+				result = brick( 
+						resultHere,result
+				)
+			}
+			
+			if(!is.null(rownames(model)))
+				names(result) = rownames(model)
+			result
+		}
+)
 

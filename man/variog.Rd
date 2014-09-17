@@ -48,6 +48,8 @@ data("swissRain")
 swissRain$lograin = log(swissRain$rain)
 swissv= variog(swissRain, formula=lograin ~ 1,option="bin")
 swissEnv = variog.mc.env(swissRain, lograin ~ 1, obj.var=swissv,nsim=9) 
-plot(swissv, env=swissEnv, main = "Swiss variogram")
+if(!is.null(swissv)){
+	plot(swissv, env=swissEnv, main = "Swiss variogram")
+}
 }
 

@@ -4,5 +4,6 @@ murder: murder torontoBorder torontoNight
 nn32: nn128 nn32 nn64
 rongelapUTM
 swissRain: swissAltitude swissBorder swissLandType swissRain
+swissRainR: swissNN swissRainR
 torontoPop: torontoIncome torontoPdens
 wheat

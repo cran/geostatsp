@@ -1,8 +1,5 @@
 library("geostatsp")
 data("swissRain")
-library("rgdal")
-
-
 
 bob = function(x) {
 	thepar = x$param
@@ -95,8 +92,8 @@ myPoints = myPoints[!thedist]
 
 myPoints = SpatialPointsDataFrame(myPoints, 
 		data=as.data.frame(extract(covariates, myPoints)))
-library("RandomFields")
-myPoints$U = geostatsp::RFsimulate(myModel,myPoints)$variable1 
+
+myPoints$U = RFsimulate(myModel,myPoints)$sim1
 myPoints$y= myModel["intercept"] +
 		as.matrix(myPoints@data[,names(covariates)]) %*% 
 		myModel[names(covariates)] +

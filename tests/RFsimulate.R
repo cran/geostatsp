@@ -1,15 +1,21 @@
 library("geostatsp")
-library("RandomFields")
+
 model <- c(var=5, range=20,shape=0.5)
 
-myraster = raster(nrows=100,ncols=100,xmn=0,ymn=0,xmx=10,ymx=10, 
+if (requireNamespace("RandomFields", quietly = TRUE)) { 
+	myraster = raster(nrows=100,ncols=100,xmn=100,ymn=100,xmx=110,ymx=110, 
+			crs="+init=epsg:2081")
+	
+} else {
+myraster = raster(nrows=20,ncols=20,xmn=100,ymn=100,xmx=110,ymx=110, 
 		crs="+init=epsg:2081")
+}
 
 for(Dn in c(1,3)) {
 	set.seed(0) 
-	simu <- geostatsp::RFsimulate(model, x=myraster, n=Dn)
+	simu <- RFsimulate(model, x=myraster, n=Dn)
 	set.seed(0) 
-	simu2 <- geostatsp::RFsimulate(model, x=as(myraster,"SpatialPixels"), n=Dn)
+	simu2 <- RFsimulate(model, x=as(myraster,"SpatialPixels"), n=Dn)
 	
 	print(proj4string(simu))
 	print(proj4string(simu2))
@@ -21,6 +27,30 @@ for(Dn in c(1,3)) {
 	}
 }
 
+simu = RFsimulate(rbind(a=model, b=model+0.1), 
+		x=myraster, n=3
+		)
+
+		simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
+				x=as(myraster,"SpatialPoints")[
+						sample(ncell(myraster), 12)
+						,]
+		)
+		simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
+		x=as(myraster,"SpatialPixels")
+		)
+simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
+				x=as(myraster,"SpatialGrid")
+		)
+		
+		
+		par(mfrow=c(nlayers(simu),2))
+		for(D in 1:nlayers(simu)) {
+			plot(simu[[D]])
+			plot(raster(simu2,layer=D))
+		}
+		
+		
 data("swissRain")
 swissRain$sqrtrain = sqrt(swissRain$rain)
 
@@ -48,10 +78,8 @@ swissRes =  lgm("sqrtrain",
  
 
 
-	# uncoinditional simulation
-library("RandomFields")
-RFoptions(printlevel=0)
-swissSim = geostatsp::RFsimulate(
+# uncoinditional simulation
+swissSim = RFsimulate(
 		model=swissRes$param,
 		x=swissRes$predict,
 		n=3
@@ -60,7 +88,8 @@ swissSim = geostatsp::RFsimulate(
 
 # simulate from the random effect conditional on
 #   the observed data
-swissSim = geostatsp::RFsimulate(
+
+swissSim = RFsimulate(
 		model=swissRes$param,
 		data=swissRes$data['resid'],
 		x=swissRes$predict,
@@ -72,9 +101,8 @@ swissSim = geostatsp::RFsimulate(
 plot(swissSim[[1]])
 plot(swissBorder, add=TRUE)
 
-
 # now with multiple parameter sets 
-swissSim = geostatsp::RFsimulate(model=
+swissSim = RFsimulate(model=
 				rbind(
 						swissRes$param,
 						swissRes$param*0.99),
@@ -89,7 +117,7 @@ plot(swissBorder, add=TRUE)
 
 # and multiple simulations
 # now with multiple datasets 
-swissSim = geostatsp::RFsimulate(model=
+swissSim = RFsimulate(model=
 				rbind(
 						swissRes$param,	
 						0.99*swissRes$param,
@@ -103,8 +131,12 @@ swissSim = geostatsp::RFsimulate(model=
 plot(swissSim[[1]])
 plot(swissBorder, add=TRUE)
 
+
+
+
 # create a small raster of elevation data
 swissAltSmall = aggregate(swissAltitude,fact=5)
+swissAltSmall = resample(swissAltSmall, swissSim)
 
 # calculate the fixed effects portion of the rainfall process
 rainMean = swissRes$param["(Intercept)"] +
@@ -113,11 +145,12 @@ rainMean = swissRes$param["(Intercept)"] +
 # define a function to identify the location of maximum rainfall	
 maxRainLocation = function(x, ...) {
 	rain =  (rainMean + x)^2
-	xyFromCell(rain, which.max(rain))
+	 which.max(rain)
 }
 
 
 swissLocation = raster::cellStats(swissSim,   maxRainLocation)
+swissLocation = xyFromCell(swissSim, swissLocation)
 plot(swissRes$predict[["predict"]])
 plot(swissBorder, add=TRUE)
 points(swissLocation)

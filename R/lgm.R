@@ -1,9 +1,19 @@
-lgm <- function(formula,  data,  newdata, 
+setGeneric('lgm', function(formula,data, ...) standardGeneric("lgm"))
+
+setMethod("lgm", 
+		signature("ANY", "Spatial"), 
+		
+		function(formula,  data,  
 		covariates=NULL, 
-		shape=1, fixShape=TRUE,
-		aniso=FALSE, boxcox=1, fixBoxcox=TRUE,
-		nugget = 0, fixNugget = FALSE,
-		expPred=FALSE, nuggetInPrediction=TRUE,...){
+		shape=1, boxcox=1, nugget = 0, 
+		newdata, 
+		expPred=FALSE, nuggetInPrediction=TRUE,
+		reml=TRUE,mc.cores=1,
+		aniso=FALSE,
+		fixShape=TRUE,
+		fixBoxcox=TRUE,
+		fixNugget = FALSE,
+		...){
 	
 	
 	locations = newdata
@@ -181,3 +191,4 @@ lgm <- function(formula,  data,  newdata,
 	return(res)
 }
 
+)

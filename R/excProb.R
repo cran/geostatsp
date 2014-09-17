@@ -1,8 +1,13 @@
 excFunQQ = function(themat, threshold) {
 
+
+	
 	if(length(themat)) {
 	over = themat[,"x"]>threshold
 	
+	if(any(is.na(over))) {
+		return(NA)
+	}
 	if(all(over)){
 		prob = 1
 	} else if(any(over)) {

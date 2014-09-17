@@ -51,7 +51,7 @@ mylist = list(a=raster(matrix(1:36, 6, 6,byrow=TRUE), 0,1000,0,1000,
        crs="+proj=utm +zone=17 +ellps=GRS80 +units=m +no_defs")
 	)
 	
-if(.Platform$OS.type=='unix') {	
+if(.Platform$OS.type=='unix' & require('rgdal', quietly=TRUE)) {	
 	mystack = stackRasterList(mylist,mc.cores=2)
 	mystack
 }
