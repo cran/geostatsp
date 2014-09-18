@@ -113,7 +113,7 @@ model <- c(var=5, range=1,shape=0.5)
 	RandomFields::plot(modelRandomFields(model))
 }
 
-myraster = raster(nrows=60,ncols=60,xmn=0,ymn=0,xmx=10,ymx=10, 
+myraster = raster(nrows=20,ncols=30,xmn=0,ymn=0,xmx=6,ymx=4, 
 		crs="+init=epsg:2081")
 
 set.seed(0) 
@@ -121,7 +121,7 @@ set.seed(0)
 simu <- RFsimulate(model, x=myraster, n=3)
 
 
-plot(simu[[2]])
+plot(simu[['sim2']])
 
 
 
@@ -131,10 +131,10 @@ swissRain$sqrtrain = sqrt(swissRain$rain)
 
 
 # estimate parameters
-swissRes =  lgm(data=swissRain, newdata=20, formula="sqrtrain",
+swissRes =  lgm(data=swissRain, newdata=50, formula="sqrtrain",
 	covariates=swissAltitude,  
 	shape=1, fixShape=TRUE,
-	aniso=FALSE, nugget=0, fixNugget=TRUE,
+	aniso=FALSE, nugget=1, fixNugget=TRUE,
 	nuggetInPrediction=FALSE
 	)
 
@@ -142,14 +142,14 @@ swissRes =  lgm(data=swissRain, newdata=20, formula="sqrtrain",
 # simulate from the random effect conditional on
 #   the observed data
 
-swissSim = geostatsp::RFsimulate(model=swissRes$param,
-	data=swissRes[,'resid'],
+swissSim = RFsimulate(model=swissRes$param,
+	data=swissRes$data[,'resid'],
 	x=swissRes$predict,
 	n=3
 )
 
 # plot the simulated random effect
-plot(swissSim[[1]])
+plot(swissSim[['sim2']])
 plot(swissBorder, add=TRUE)
 }
 

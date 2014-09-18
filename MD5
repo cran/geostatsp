@@ -1,6 +1,6 @@
-a45b631750f444b02927c6db2b81fd63 *DESCRIPTION
+91817d08d21988b2faaddb4b9a442698 *DESCRIPTION
 73959c93851e7898d25406b0573fa135 *NAMESPACE
-da9f77fee884bde6604c517d0f6bdadf *R/RFsimulate.R
+d28c8c540f56eedb234ef0b0ecfa20cf *R/RFsimulate.R
 ad5ff3f4f6d4d07452fee09eb675d0a6 *R/asImRaster.R
 1cfa87d2614580e4cff91ab1b896fd2d *R/excProb.R
 01c6e7f4b480ad2d8ecbe4025646bded *R/formulaLhs.R
@@ -32,7 +32,7 @@ a89063c2160e08c1fe9e378ed44c2539 *data/nn32.RData
 79bad6bbf63ab81cf9c6f1c7dafe4d4d *data/swissRainR.RData
 dbf3d22786b4ca338880740168488f5b *data/torontoPop.RData
 5763ebe8f64b266bd2f732672be1f0b8 *data/wheat.RData
-66159034db6c8e95966e920caa466d76 *man/RFsimulate.Rd
+ba7a1506864348259c000f0b2bd1b8b1 *man/RFsimulate.Rd
 daafab39fb960b6ccab659da264bcb37 *man/asImRaster.Rd
 78c17ba75cf98b5d8167777a3d64e4f8 *man/excProb.Rd
 bc72024c2958dbacb8ec37aa2d720029 *man/gambiaUTM.Rd
@@ -55,7 +55,7 @@ e589646e01c68fc41e1f70064e635240 *man/swissRain.Rd
 2bd4f13df0a6387edb939a01e821c9b4 *man/wheat.Rd
 d41d8cd98f00b204e9800998ecf8427e *src/Makevars
 f13f206e53fa6284fad255c40e6959bd *src/matern.c
-e61823f9fd8aab24235470448e30f002 *tests/RFsimulate.R
+a59f0c9a0585952726aafca31fd75397 *tests/RFsimulate.R
 f9854cdd269b8308ab8adf9c556c978a *tests/krige.R
 936b3242bae0cd133bfcfd42c66db1d5 *tests/lgm.R
 0c875e6d2e01fd5deb908ae4cdcb2d8d *tests/lgmRaster.R
