@@ -123,7 +123,8 @@ if (requireNamespace("RandomFields", quietly = TRUE)) {
 	} else {
 	theSim = theSim@data
 	}
-
+	names(theSim) = gsub("^variable1\\.n","sim", names(theSim))
+	
 } else { #RandomFields not available
  
 		theCov = matern(x, param=model)
@@ -143,7 +144,7 @@ if (requireNamespace("RandomFields", quietly = TRUE)) {
 			theSim = theSim + xcov %*% 
 					(Linv %*% data.frame(data)[,1])	
 		}
-		theSim = as.data.frame(theSim)
+		theSim = as.data.frame(as.matrix(theSim))
 	} # end no RandomFields	
 	
 	names(theSim) = paste("sim", 1:n, sep="")
@@ -169,6 +170,9 @@ setMethod("RFsimulate", signature("numeric", "GridTopology"),
 					data=data,	err.model= err.model,
 					n=n  , 
 					...)
+
+			names(theSim) = gsub("^variable1\\.n","sim", names(theSim))
+
 			if(class(theSim)%in%c('try-error', 'NULL')) {
 					warning("error in RandomFields")
 					theSim=as.data.frame(matrix(NA, prod(x@cells.dim), n))
@@ -198,10 +202,9 @@ setMethod("RFsimulate", signature("numeric", "GridTopology"),
 				theSim = theSim + xcov %*% 
 							(Linv %*% data.frame(data)[,1])	
 			}
-			theSim = as.data.frame(theSim)
-
+			theSim = as.data.frame(as.matrix(theSim))
+			names(theSim) = paste("sim", 1:ncol(theSim),sep="")
 		}
-		names(theSim) = paste("sim", 1:n, sep="")
 		res = SpatialGridDataFrame(x,theSim)
 			
 		res
@@ -215,13 +218,20 @@ RFsimulate.Raster = function(
 			
 		theproj = projection(x)
 		x = as(x, "GridTopology")
-		res2 = callGeneric( 
+		res = callGeneric( 
 				model, x,  
 				data=data, err.model=err.model, n=n  , ... 
 		)
-		res2 = raster(res2)			
+		res2 = raster(res)			
+		if(length(names(res))>2) {
+			res2 = brick(res2, nl=length(names(res)))
+			for(D in 2:length(names(res))) {
+				res2[[D]] = raster(res,layer=D)
+			}
+		}
 		proj4string(res2) = CRS(theproj)
-			
+		names(res2) = gsub("^variable1\\.n","sim", names(res2))
+		
 		return(res2)
 }
 
@@ -248,6 +258,10 @@ RFsimulate.SPgrid	=	function(
 }
 
 setMethod("RFsimulate", signature("numeric", "Raster"), 
+		RFsimulate.Raster
+)
+
+setMethod("RFsimulate", signature("RMmodel", "Raster"), 
 		RFsimulate.Raster
 )
 

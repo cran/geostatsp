@@ -8,8 +8,9 @@ Spatial prediction, or Kriging
 Perform spatial prediction, producing a raster of predictions and conditional standard deviations.
 }
 \usage{
-krigeLgm(formula, data, newdata,  param,  
-    covariates = NULL, expPred = FALSE, nuggetInPrediction = TRUE,
+krigeLgm(formula, data, grid,  covariates = NULL,
+	param,  
+    expPred = FALSE, nuggetInPrediction = TRUE,
     mc.cores=getOption("mc.cores", 1L))
 }
  
@@ -18,9 +19,9 @@ krigeLgm(formula, data, newdata,  param,
   \item{data}{
 A SpatialPointsDataFrame containing  the data to be interpolated
 }
-\item{newdata}{Either a \code{\link[raster]{raster}}, or a single integer giving the
+\item{grid}{Either a \code{\link[raster]{raster}}, or a single integer giving the
 number of cells in the X direction which predictions will be made on.  If the later
-the predictions will be a raster of square cells covering the bounding box of \code{newdata}.}
+the predictions will be a raster of square cells covering the bounding box of \code{data}.}
  \item{covariates}{
 The spatial covariates used in prediction, either a \code{\link[raster]{raster}} stack or list of rasters.
 }
@@ -64,13 +65,13 @@ raster as \code{newdata}}
 \code{\link{lgm}}
 }
 \examples{
-data(swissRain)
+data('swissRain')
 swissRain$lograin = log(swissRain$rain)
-swissRain$elevation = extract(swissAltitude, swissRain)
+swissRain[[names(swissAltitude)]] = extract(swissAltitude, swissRain)
 
 \dontrun{
 swissFit = likfitLgm(data=swissRain, 
-			trend=lograin~ elevation,
+			formula=lograin~ CHE_alt,
 			param=c(range=46500, nugget=0.05,shape=1,  
 					anisoAngleDegrees=35, anisoRatio=12),
 			paramToEstimate = c("range","nugget", 
@@ -83,11 +84,11 @@ myParams = swissFit$param
 dput(myParams)
 # will give the following
 }
-myParams=structure(c(4.49732366951939, 0.000216147764497527, 46575.4897705083, 
-0.0918626121620231, 37.3640527963592, 11.9247798102433, 1, 0.686396444665454
-), .Names = c("(Intercept)", "elevation", "range", "nugget", 
-"anisoAngleDegrees", "anisoRatio", "shape", "variance"))
-myTrend =lograin~ elevation
+myParams=structure(c(2.26621791403682, 0.00014474608227038, 48928.027588747, 
+0.0973034174963395, 37.2883307364709, 11.5429109094065, 1, 0.736723861095649
+), .Names = c("(Intercept)", "CHE_alt", "range", "nugget", "anisoAngleDegrees", 
+"anisoRatio", "shape", "variance"))
+myTrend =lograin~ CHE_alt
 
 
 # make sure krige can cope with missing values!
@@ -95,7 +96,7 @@ swissAltitude[1:50,1:50] = NA
 swissKrige = krigeLgm(data=swissRain, formula = myTrend,
 	covariates = swissAltitude,  
 	param=myParams,
-	newdata = 40, expPred=TRUE)
+	grid = 40, expPred=TRUE)
 
 
 
@@ -105,7 +106,7 @@ plot(swissBorder, add=TRUE)
 # now with box cox and provide a raster for prediction, no covariates
 \dontrun{
 swissFit2 = likfitLgm(data=swissRain, 
-			trend=rain~1,
+			formula=rain~1,
 			param=c(range=52000, nugget=0.1,shape=1, boxcox=0.5,
 					anisoAngleDegrees=35, anisoRatio=8),
 			paramToEstimate = c("range","nugget", 
@@ -117,8 +118,8 @@ myTrend2 = swissFit2$trend
 myParams2 = swissFit2$param
 dput(myParams2)
 }
-myParams2=structure(c(20.7805835664033, 51161.049007108, 8.64565931800056, 
-37.0906650998427, 7.34077366178755, 1, 0.5, 79.3696192640485), .Names = c("(Intercept)", 
+myParams2=structure(c(5.1259476451533, 57230.2319794406, 0.878030061109591, 
+37.1176523248768, 7.37809931787162, 1, 0.5, 9.3502154358886), .Names = c("(Intercept)", 
 "range", "nugget", "anisoAngleDegrees", "anisoRatio", "shape", 
 "boxcox", "variance"))
 myTrend2=rain~1
@@ -128,7 +129,7 @@ swissRaster = raster(extent(swissBorder), nrows=25, ncols=40)
 
 swissKrige2 = krigeLgm(data=swissRain, formula = myTrend2,
 	  param=myParams2,
-	newdata = swissRaster)
+	grid = swissRaster)
 
 
 

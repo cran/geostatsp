@@ -2,8 +2,18 @@
 \docType{methods}
 \alias{lgm}
 \alias{lgm-methods}
-\alias{lgm,ANY,Raster-method}
-\alias{lgm,ANY,Spatial-method}
+\alias{lgm,NULL,ANY,ANY,ANY-method}
+\alias{lgm,numeric,ANY,ANY,ANY-method}
+\alias{lgm,character,ANY,ANY,ANY-method}
+\alias{lgm,formula,ANY,numeric,ANY-method}
+\alias{lgm,formula,Raster,Raster,ANY-method}
+\alias{lgm,formula,Raster,missing,missing-method}
+\alias{lgm,formula,Spatial,Raster,Raster-method}
+\alias{lgm,formula,Spatial,Raster,list-method}
+\alias{lgm,formula,Spatial,Raster,NULL-method}
+\alias{lgm,formula,Spatial,Raster,data.frame-method}
+\alias{lgm,formula,data.frame,Raster,data.frame-method}
+
 
 \title{
  Linear Geostatistical Models
@@ -14,9 +24,47 @@ Calculate MLE's of model parameters and perform spatial prediction. }
  
 
 \usage{
-\S4method{lgm}{ANY,Spatial}(formula, data,covariates=NULL, 
-		shape=1, boxcox=1, nugget = 0, 
-		newdata, 
+\S4method{lgm}{NULL,ANY,ANY,ANY}(formula=NULL, data,
+		grid,
+		covariates=NULL, 
+		...) 
+\S4method{lgm}{numeric,ANY,ANY,ANY}(formula, data,
+		grid,
+		covariates=NULL, 
+		...) 
+\S4method{lgm}{character,ANY,ANY,ANY}(formula, data,
+		grid,
+		covariates=NULL, 
+		...) 
+\S4method{lgm}{formula,ANY,numeric,ANY}(formula, data,
+		grid,
+		covariates=NULL, 
+		...) 
+\S4method{lgm}{formula,Raster,Raster,ANY}(formula, data,
+		grid,
+		covariates=list(), buffer=0,
+		...) 
+\S4method{lgm}{formula,Raster,missing,missing}(
+		formula, data,
+		grid,
+		covariates, 
+		...) 
+\S4method{lgm}{formula,Spatial,Raster,Raster}(formula, data,
+		grid,
+		covariates=list(), buffer=0,
+		...) 
+\S4method{lgm}{formula,Spatial,Raster,list}(formula, data,
+		grid,
+		covariates=list(), buffer=0,
+		...) 
+\S4method{lgm}{formula,Spatial,Raster,NULL}(formula, data,
+		grid,
+		covariates=list(), buffer=0,
+		...) 
+\S4method{lgm}{formula,Spatial,Raster,data.frame}(formula, data,
+		grid,
+		covariates=list(), 
+			shape=1, boxcox=1, nugget = 0, 
 		expPred=FALSE, nuggetInPrediction=TRUE,
 		reml=TRUE,mc.cores=1,
 		aniso=FALSE,
@@ -24,17 +72,16 @@ Calculate MLE's of model parameters and perform spatial prediction. }
 		fixBoxcox=TRUE,
 		fixNugget = FALSE,
 		...) 
-\S4method{lgm}{ANY,Raster}(formula, data, 	
-covariates=NULL,
-                  shape=1,boxcox=1,nugget=0,
-				  newdata=data,
+\S4method{lgm}{formula,data.frame,Raster,data.frame}(formula, data,
+		grid,
+		covariates=data.frame(), 
+		            shape=1,boxcox=1,nugget=0,
 				  expPred=FALSE, nuggetInPrediction=TRUE,
 				  reml = TRUE,
 				  mc.cores=1,		
 				  oneminusar=seq(0.01, 0.4,len=4), 
                   range=NULL, 
-                  ...) 
-
+		...) 
 }
  
 \arguments{
@@ -42,6 +89,9 @@ covariates=NULL,
  \item{data}{
 A \code{SpatialPointsDataFrame} or \code{Raster} layer, brick or stack containing the locations and observations, and possibly covariates.
 }
+\item{grid}{Either a \code{\link[raster]{raster}}, or a single integer giving the
+number of cells in the X direction which predictions will be made on.  If the later
+the predictions will be a raster of square cells covering the bounding box of \code{data}.}
 \item{covariates}{
 The spatial covariates used in prediction, either a \code{\link[raster]{raster}} stack or list of rasters.
 Covariates in \code{formula} but not in \code{data} will be extracted from \code{covariates}.
@@ -49,9 +99,6 @@ Covariates in \code{formula} but not in \code{data} will be extracted from \code
 \item{shape}{Order of the Matern correlation}
 \item{boxcox}{Box-Cox transformation parameter (or vector of parameters), set to 1 for no transformation.}
 \item{nugget}{Value for the nugget effect (observation error) variance, or vector of such values.}
-\item{newdata}{Either a \code{\link[raster]{raster}}, or a single integer giving the
-number of cells in the X direction which predictions will be made on.  If the later
-the predictions will be a raster of square cells covering the bounding box of \code{data}.}
  \item{expPred}{
 Should the predictions be exponentiated, defaults to \code{FALSE}.
 }
@@ -69,6 +116,7 @@ done in parallel where possible. }
 \item{fixNugget}{Set to \code{FALSE} to estimate the nugget effect parameter.}
 \item{oneminusar}{Vector of GMRF autoregressive parameters over which the likelihood is computed.}
 \item{range}{Vector of range parameters over which the likelihood is computed, ignored if \code{oneminusar} is non-NULL}
+\item{buffer}{Extra distance to add around \code{grid}.}
 \item{...}{Additional arguments passed to \code{\link{likfitLgm}}.  Starting values can be
 specified with a vector \code{param} of named elements}
 }
@@ -103,10 +151,10 @@ output from the call to the  \code{\link[stats]{optim}} function.
 data("swissRain")
  
 swissRes =  lgm( formula="rain", 
-	data=swissRain, newdata=20,
+	data=swissRain, grid=20,
 	covariates=swissAltitude, boxcox=0.5, fixBoxcox=TRUE, 
 	shape=1, fixShape=TRUE,
-	aniso=FALSE, nugget=0, fixNugget=TRUE,
+	aniso=FALSE, nugget=0, fixNugget=FALSE,
 	nuggetInPrediction=FALSE
 )
 
@@ -126,7 +174,7 @@ swissResR =  lgm( formula=layer ~ alt,
 	nugget =  seq(0,0.0001,len=2)
 	)
 
-swissResR$summary[c('oneminusar','range','propNugget','(Intercept).betaHat', 'x.betaHat'),]
+swissResR$summary[c('oneminusar','range','propNugget','(Intercept).betaHat', 'alt.betaHat'),]
 }
 
 

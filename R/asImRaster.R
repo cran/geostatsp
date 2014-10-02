@@ -3,8 +3,7 @@
 #}
 
 asImRaster = function(X, ...) {
-
-if(all(c('spatstat','mgcv') %in% rownames(installed.packages()))){	
+  if(requireNamespace('spatstat',quietly=TRUE)){	
 	res=spatstat::as.im(raster::as.matrix(X)[nrow(X):1,], 
 			xrange=bbox(X)[1,], 
 			yrange=bbox(X)[2,], ...)

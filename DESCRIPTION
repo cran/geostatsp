@@ -1,20 +1,20 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistics using SpatialPoints and rasters
-Version: 1.0.1
-Date: 2014-09-17
+Version: 1.1.0
+Date: 2014-09-30
 Depends: Matrix, raster, sp, R (>= 3.0.0)
 Imports: abind, numDeriv, pracma, methods
 Suggests: geoR, RandomFields, rgdal, parallel, mapmisc, ellipse
-Enhances: spatstat
+Enhances: spatstat, INLA
 Author: Patrick Brown <patrick.brown@utoronto.ca>[aut, cre], Robert Hijmans [ctb]
 Maintainer: Patrick Brown <patrick.brown@utoronto.ca>
-Description: This package provides to geostatistical modelling facilities using raster and SpatialPoints objects.
+Description: This package provides to geostatistical modelling facilities using raster and SpatialPoints objects.  Non-Gaussian models are fit using INLA, obtainable from http://www.r-inla.org. 
 License: GPL
 Repository: CRAN
 Repository/R-Forge/Project: diseasemapping
-Repository/R-Forge/Revision: 836
-Repository/R-Forge/DateTimeStamp: 2014-09-18 01:33:55
-Date/Publication: 2014-09-18 17:31:28
-Packaged: 2014-09-18 02:50:09 UTC; rforge
+Repository/R-Forge/Revision: 864
+Repository/R-Forge/DateTimeStamp: 2014-10-02 14:12:55
+Date/Publication: 2014-10-02 19:12:55
+Packaged: 2014-10-02 14:50:20 UTC; rforge
 NeedsCompilation: yes

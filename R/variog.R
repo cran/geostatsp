@@ -1,11 +1,14 @@
 variog = function(geodata, ...) {
-	UseMethod("variog")
-	
+	UseMethod("variog")	
 }
 
-
 variog.default <- function(geodata, ...) {
-	geoR::variog(geodata, ...)
+	if (requireNamespace("geoR", quietly = TRUE)) { 
+		result=geoR::variog(geodata, ...) 
+	} else {
+		result = NULL
+	}
+result
 }
 			
 variog.SpatialPointsDataFrame = function(geodata,formula, ...) {
@@ -45,5 +48,4 @@ variog.mc.env.SpatialPointsDataFrame = function(geodata,formula, ...) {
 			result = NULL
 	}
 result
-
 }

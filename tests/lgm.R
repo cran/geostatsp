@@ -16,7 +16,7 @@ bob = function(x) {
 
 # specify formula name of raster layer
 swissFit = lgm(data=swissRain, formula=rain~ CHE_alt,
-		newdata=80, covariates=swissAltitude,
+		grid=80, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -28,7 +28,7 @@ bob(swissFit)
 # specify formula using name of list element
 
 swissFitAgain = lgm(data=swissRain, formula=rain~ elev+land,
-		newdata=80, covariates=list(elev=swissAltitude,land=swissLandType),
+		grid=80, covariates=list(elev=swissAltitude,land=swissLandType),
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -37,7 +37,7 @@ swissFitAgain$param
 bob(swissFitAgain)
 
 swissFitAgain = lgm(data=swissRain, formula="rain",
-		newdata=80, covariates=swissAltitude,
+		grid=80, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -47,7 +47,7 @@ bob(swissFitAgain)
 
 
 swissFitAgain = lgm(data=swissRain, formula="rain",
-		newdata=80, covariates=list(elev=swissAltitude,land=swissLandType),
+		grid=80, covariates=list(elev=swissAltitude,land=swissLandType),
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
@@ -58,7 +58,7 @@ bob(swissFitAgain)
 
 # land type, factor covariate
 swissRes2 =  lgm(rain ~ elev + factor(land), swissRain, 
-		newdata=30, 
+		grid=30, 
 		covariates=list(elev=swissAltitude,land=swissLandType), 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE
@@ -131,7 +131,7 @@ dev.off()
 
 
 # run lgm without providing covariates
-fitMLE =  lgm(y~ cov1+cov2, myPoints, newdata=10,  
+fitMLE =  lgm(y~ cov1+cov2, myPoints, grid=10,  
 		shape=1, fixShape=TRUE)
 
 
@@ -141,13 +141,13 @@ c(fitMLE$summary["range","estimate"], fitLikfit$summary["range","estimate"])
 bob(fitMLE)
 
 # now give covariates as raster brick
-fitMLE =  lgm( y~ cov1 + cov2, myPoints, newdata=10,  
+fitMLE =  lgm( y~ cov1 + cov2, myPoints, grid=10,  
 		covariates=covariates,
 		shape=1, fixShape=TRUE)
 c(fitMLE$summary["range","estimate"], fitLikfit$summary["range","estimate"])
 bob(fitMLE)
 # now give covariates as list
-fitMLE =  lgm(y~ cov1 + cov2, myPoints, newdata=10,   
+fitMLE =  lgm(y~ cov1 + cov2, myPoints, grid=10,   
 		covariates=list(cov1=covariates[["cov1"]],
 				cov2 = covariates[["cov2"]]),
 		shape=1, fixShape=TRUE)
@@ -159,7 +159,7 @@ myPoints = SpatialPointsDataFrame(SpatialPoints(myPoints),
 		data=myPoints@data[,"y",drop=FALSE])
 
 # now give covariates as raster brick
-fitMLE =  lgm(y~ cov1 + cov2,  myPoints, newdata=10,  
+fitMLE =  lgm(y~ cov1 + cov2,  myPoints, grid=10,  
 		covariates=covariates,
 		shape=1, fixShape=TRUE)
 c(fitMLE$summary["range","estimate"], fitLikfit$summary["range","estimate"])

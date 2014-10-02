@@ -186,8 +186,8 @@ logLikGradient = function(param,
 	reml=reml, covariates=covariates,
 	minustwotimes=minustwotimes)
 	
-if(ncores>1) {
-	thegrad = mcmapply(grFun, parname=parForMapply, right=rightForMapply,
+if(ncores>1 & requireNamespace("parallel", quietly=TRUE)) {
+	thegrad = parallel::mcmapply(grFun, parname=parForMapply, right=rightForMapply,
 			MoreArgs=moreArgs,
 			mc.cores=ncores)
 } else {

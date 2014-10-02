@@ -29,7 +29,7 @@ swissKrige3 = krigeLgm(data=swissRain2,
 		formula = swissFit3$model$formula,
 		param=swissFit3$param, 
 		covariates = list(elevation = swissAltitude,land=swissLandType),
-		newdata = swissRaster, expPred=TRUE)
+		grid = swissRaster, expPred=TRUE)
 
 pdf("krige3.pdf")
 plot(swissKrige3[["predict"]])	
@@ -57,7 +57,7 @@ swissFit4 = likfitLgm(data=swissRain2,
 swissKrige4 = krigeLgm(data=swissRain2, formula = swissFit4$model$formula,
 		param=swissFit4$param, 
 		covariates = list(elevation = swissAltitude,landFac=swissLandType),
-		newdata = swissRaster,expPred=TRUE )
+		grid = swissRaster,expPred=TRUE )
 
 
 
@@ -86,7 +86,7 @@ swissKrige5 = krigeLgm(data=swissRain2,
 		formula = swissFit5$model$formula,
 		param=swissFit5$param, 
 		covariates = list(elevation = swissAltitude,landFac2=swissLandType),
-		newdata = swissRaster,expPred=TRUE)
+		grid = swissRaster,expPred=TRUE)
 pdf("krige5.pdf")
 plot(swissKrige5[["predict"]])	
 plot(swissBorder, add=TRUE)
@@ -104,7 +104,7 @@ unix.time(
 		krigeLgm(data=swissRain2, formula = swissFit3$model$formula,
 				param=swissFit3$param, 
 				covariates = list(elevation = swissAltitude,land=swissLandType),
-				newdata = bigRaster, expPred=TRUE)
+				grid = bigRaster, expPred=TRUE)
 
 )
 
@@ -114,6 +114,6 @@ options(mc.cores = 2)
 unix.time(krigeLgm(data=swissRain2, formula = swissFit3$model$formula,
 				param=swissFit3$param, 
 				covariates = list(elevation = swissAltitude,land=swissLandType),
-				newdata = bigRaster, expPred=TRUE)
+				grid = bigRaster, expPred=TRUE)
 )
 }

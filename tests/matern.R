@@ -68,5 +68,6 @@ myMatern[1:3,1:3]
 
 
 
-mypoints = SpatialPointsDataFrame(cbind(runif(5), runif(5)),data=data.frame(id=1:5))
+param = c(range=0.06, shape=1.5,	anisoRatio=2, anisoAngleDegrees=-25)
+mypoints = SpatialPointsDataFrame(cbind(runif(10), runif(10)),data=data.frame(id=1:10))
 matern(mypoints, param=param)

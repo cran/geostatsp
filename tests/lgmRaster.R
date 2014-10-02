@@ -11,7 +11,11 @@ swissResR =  lgm( formula=layer ~ alt,
 		mc.cores=c(1,2)[1+(.Platform$OS.type=='unix')]
 )
 
-swissResR$summary[c('oneminusar','range','propNugget','(Intercept).betaHat', 'x.betaHat'),]
+swissResR$summary[c('oneminusar','range','propNugget','(Intercept).betaHat', 'alt.betaHat'),]
+
+# profile likelihood plot
+
+# plot map of predicted values
 
 swissResR =  lgm( formula=layer ~ alt, 
 		data=swissRainR2, shape=2,
@@ -21,7 +25,11 @@ swissResR =  lgm( formula=layer ~ alt,
 		mc.cores=c(1,2)[1+(.Platform$OS.type=='unix')]
 )
 
-swissResR$summary[c('oneminusar','range','propNugget','(Intercept).betaHat', 'x.betaHat'),]
+swissResR$summary[c('oneminusar','range','propNugget','(Intercept).betaHat', 'alt.betaHat'),]
 
 # range in km
 swissResR$summary[ 'range' ,] * sqrt(mean(values(area(swissRainR))))/mean(res(swissRainR))
+
+# profile likelihood plot
+
+# plot map of predicted values

@@ -1,8 +1,8 @@
 # functions that don't depend on other packages
-export(
+export( lgm, glgm, lgcp,
  krigeLgm,stackRasterList,
   gmrfPrecUncond,simLgcp,simPoissonPP,
- lgm, excProb, likfitLgm, loglikLgm,
+ excProb, likfitLgm, loglikLgm,
  profLlgm, informationLgm
 )
 
@@ -21,7 +21,6 @@ S3method(matern, default)
 #S3method(as.im, RasterLayer)
 export(asImRaster)
 
-importFrom(parallel, mcmapply)
 
 export(squareRaster)
 S3method(squareRaster, matrix) 
@@ -58,11 +57,15 @@ import(
   Matrix, methods
 )
 
-# the following lines aren't needed because 
+importFrom(numDeriv,hessian)
+importFrom(abind, abind)
+importFrom(pracma, trapz)
+
+# the following are imports from packages listed as Suggests
 # calls to these functions are made with ::
-# they're listed here for completeness
+# the imports below are unnecessary but here for completeness
 #importFrom(geoR, variog, variog.mc.env)
-#importFrom(pracma, trapz)
-#importFrom(abind, abind)
 #importFrom(spatstat,as.im,as.im.matrix)
+#importFrom(parallel, mcmapply)
+
 

@@ -4,7 +4,7 @@ data('swissRain')
 Ncores = c(1,2)[1+(.Platform$OS.type=='unix')]
 
 swissFit = lgm(data=swissRain, formula=rain~ SRTM_1km,
-		newdata=150, covariates=swissAltitude,
+		grid=150, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE,reml=TRUE,

@@ -67,7 +67,7 @@ library('geostatsp')
 data('swissRain')
 
 swissFit = lgm(data=swissRain, formula=rain~ SRTM_1km,
-		newdata=10, covariates=swissAltitude,
+		grid=10, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE,reml=TRUE,

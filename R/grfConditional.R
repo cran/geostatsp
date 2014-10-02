@@ -93,9 +93,13 @@ simFun = function(D) {
 
 	res
 	}		
-
-	result = mcmapply(simFun, 1:Nsim, SIMPLIFY=TRUE, 
+	if(requireNamespace("parallel", quietly=TRUE)){
+	result = parallel::mcmapply(simFun, 1:Nsim, SIMPLIFY=TRUE, 
 			mc.cores=mc.cores)
+} else {
+	result = mapply(simFun, 1:Nsim, SIMPLIFY=TRUE)
+	
+}
 	if(all(sapply(result, class)=="RasterLayer"))
 		result = do.call(brick, result)
 

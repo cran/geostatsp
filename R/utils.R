@@ -1,3 +1,4 @@
+
 # taken from the raster package
 #   the function isn't exported from raster so it must be replicated here
 # author Robert Hijmans
@@ -55,3 +56,19 @@
 	}
 	return(TRUE)
 }
+
+cellsBuffer = function(cells, buffer) {
+	
+	cells = squareRaster(cells)
+	buffer =  ceiling(buffer/xres(cells))
+	
+	cellsInla = raster::extend(cells, c(buffer, buffer))
+	values(cellsInla ) =  
+			c(t(matrix(seq(1,ncell(cellsInla)), 
+									nrow=nrow(cellsInla), ncol=ncol(cellsInla))))
+	names(cellsInla) = "space"
+	
+	
+	result = list(small=crop(cellsInla, cells), big=cellsInla)
+}
+

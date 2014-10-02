@@ -1,6 +1,8 @@
 library('geostatsp')
 n=100
-mydat = SpatialPointsDataFrame(cbind(runif(n), runif(n)), 
+
+set.seed(0)
+mydat = SpatialPointsDataFrame(cbind(seq(0,1,len=n), runif(n)), 
 		data=data.frame(cov1 = rnorm(n), cov2 = rpois(n, 0.5))
 )
 
@@ -26,6 +28,7 @@ mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 +
 mydat$Ybc = (mydat$Y*0.5+1)^2
 
  
+print(range(mydat$Ybc))
 
 myres = likfitLgm(Ybc ~ cov1 + cov2, mydat, 
 		param=c(range=0.1,nugget=0,shape=2, 
@@ -74,7 +77,7 @@ mydat = SpatialPointsDataFrame(cbind(runif(n), runif(n)),
 # simulate a random field
 trueParam = c(variance=2^2, range=0.15, shape=2, nugget=0.5^2)
 
-mydat$U = geostatsp::RFsimulate(trueParam,mydat)$sim1
+mydat$U = RFsimulate(trueParam,mydat)$sim1
 
 # add fixed effects
 mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 

@@ -358,20 +358,19 @@ summaryGmrfFit.matrix = function(x,npar=1) {
                             "",rownames(parMat))
     
     se = grep("\\.se$", rownames(parMat), value=TRUE)
-    seInt = parMat[grep('^\\(', se, value = T),1]
-    seX = parMat[grep('^x', se, value = T),1]
-    parMat['(Intercept).betaHat',4] = seInt
-    parMat['x.betaHat',4] = seX
-    parMat['x.betaHat',2] = as.numeric(parMat['x.betaHat',1]-2*seX)
-    parMat['x.betaHat',3] = as.numeric(parMat['x.betaHat',1]+2*seX)
-    parMat['(Intercept).betaHat',2] = as.numeric(parMat['(Intercept).betaHat',1]-2*seInt)
-    parMat['(Intercept).betaHat',3] = as.numeric(parMat['(Intercept).betaHat',1]+2*seInt)
-    parRid = parMat[which(rownames(parMat) %in% se),]
-    judgRid = !(rownames(parMat) %in% rownames(parRid))
-    parKeep = parMat[which(judgRid == T),]
-    dele = c(grep("^shape",rownames(parKeep)), grep("^sigmasq",rownames(parKeep)))
-    parKeep[dele,2] = NA
-    parKeep[dele,3] = NA
+	betahats = gsub("se$", "betaHat", se)
+	
+	parMat[betahats,"se"] = parMat[se,"mle"]
+	
+
+	parMat[betahats,"q0.025"] = as.numeric(parMat[betahats,"mle"]-2*parMat[betahats,"se"])
+	parMat[betahats,"q0.975"] = as.numeric(parMat[betahats,"mle"]+2*parMat[betahats,"se"])
+	
+ 
+    parKeep = parMat[!rownames(parMat) %in% se,]
+	
+    dele = grep("^shape|^sigmasq|^xisq|^tausq",rownames(parKeep))
+    parKeep[dele,grep("^q0\\.", colnames(parKeep))] = NA
     result[[D1]] = parKeep
     
   }

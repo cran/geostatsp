@@ -9,6 +9,7 @@
 \alias{RFsimulate,numeric,SpatialPoints-method}
 \alias{RFsimulate,numeric,GridTopology-method}
 \alias{RFsimulate,RMmodel,GridTopology-method}
+\alias{RFsimulate,RMmodel,Raster-method}
 \alias{RFsimulate,RMmodel,SpatialPoints-method}
 \alias{RFsimulate,matrix,Raster-method} 
 \alias{RFsimulate,matrix,Spatial-method} 
@@ -37,6 +38,8 @@ err.model=NULL, n = 1, ...)
 \S4method{RFsimulate}{numeric,GridTopology}(model, x, data=NULL, 
  err.model=NULL, n = 1, ...)
 \S4method{RFsimulate}{RMmodel,GridTopology}(model, x, data=NULL, 
+ err.model=NULL, n = 1, ...)
+\S4method{RFsimulate}{RMmodel,Raster}(model, x, data=NULL, 
  err.model=NULL, n = 1, ...)
 \S4method{RFsimulate}{RMmodel,SpatialPoints}(model, x, data=NULL, 
  err.model=NULL, n = 1, ...)

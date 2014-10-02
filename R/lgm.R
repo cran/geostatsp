@@ -1,12 +1,94 @@
-setGeneric('lgm', function(formula,data, ...) standardGeneric("lgm"))
+setGeneric('lgm', function(formula,data,grid,covariates=NULL, ...) standardGeneric("lgm"))
+
+# sort out formula
+# null formula
+setMethod("lgm", 
+		signature("NULL"), 
+		gm.nullFormula
+)
+
 
 setMethod("lgm", 
-		signature("ANY", "Spatial"), 
+		signature("numeric"),  
+		gm.numericFormula
+)
+
+# change character to formula
+setMethod("lgm", 
+		signature("character"),  
+		gm.characterFormula
+)
+
+
+# numeric cells, create raster from data bounding box
+
+setMethod("lgm", 
+		signature("formula", "ANY", "numeric"),
+		gm.gridNumeric
+)
+
+
+
+# extrat covariates for data, convert covariates to a stack
+setMethod("lgm", 
+		signature("formula", "Raster", "Raster"),
+		gm.dataRaster
+)
+
+#setMethod("lgm", 
+#		signature("formula", "Raster", "missing", "ANY"),
+# aggregate the covariates to data, merge covariates into data, call formula, Raster, missing, missing)
+#		gm.dataRaster
+#				
+#)
+
+setMethod("lgm", 
+		signature("formula", "Raster", "missing", "missing"),
+		function(formula, 
+				data,  
+				grid,
+				covariates, ...) {
+		gridHere = raster(data)
+		if(abs(diff(res(gridHere)))>0.000001 )
+			warning("data is not on a square grid")
+		dataSP = as(data, "SpatialPointsDataFrame")
+		dataDF = dataSP@data
 		
-		function(formula,  data,  
-		covariates=NULL, 
+		callGeneric(
+				formula=formula, data=dataDF,
+				grid=gridHere,
+				covariates=data.frame(), 
+				...
+		)	
+		}
+)
+
+
+setMethod("lgm", 
+			signature("formula", "Spatial", "Raster", "list"),
+			gm.dataSpatial
+	)
+
+	setMethod("lgm", 
+			signature("formula", "Spatial", "Raster", "NULL"),
+			gm.dataSpatial
+	)
+	
+	
+setMethod("lgm", 
+		signature("formula", "Spatial", "Raster", "Raster"),
+		gm.dataSpatial
+)
+
+
+
+setMethod("lgm", 
+		signature("formula", "Spatial", "Raster","data.frame"), 
+		function(formula, 
+				data,  
+				grid,
+		covariates=list(), 
 		shape=1, boxcox=1, nugget = 0, 
-		newdata, 
 		expPred=FALSE, nuggetInPrediction=TRUE,
 		reml=TRUE,mc.cores=1,
 		aniso=FALSE,
@@ -15,89 +97,9 @@ setMethod("lgm",
 		fixNugget = FALSE,
 		...){
 	
-	
-	locations = newdata
-	
-# the formula
-	# get rid of special character is names of data
-	names(data) = gsub("[[:punct:]]|[[:space:]]","_", names(data))
-	
-	if(is.null(formula))
-		formula = names(data)[1]
-	if(is.integer(formula))
-		formula = names(data)[formula]
-	if(class(formula)!= "formula") {
-		if(length(covariates)) {
-			if(!length(names(covariates))) {
-				names(covariates) = 
-						paste("c", 1:length(covariates),sep="")			
-			}
-			names(covariates) = 
-					gsub("[[:punct:]]|[[:space:]]",
-							"_", names(covariates))
-
-			formula = as.formula(
-					paste(formula, "~ ",
-							paste(names(covariates),collapse="+")
-					)
-			)
-		} else { # end covariates not null
-			formula = as.formula(paste(formula, "~1"))	
-		}
-	} # end formula not a formula
-	
-# extract covariates	
-	
-	# check for factors
-	allterms = rownames(attributes(terms(formula))$factors)
-	
-	allterms = gsub("^offset\\(", "", allterms)
-	alltermsWithF = gsub("\\)$", "", allterms)
-	theFactors = grep("^factor", alltermsWithF, value=T)
-	theFactors = gsub("^factor\\(", "", theFactors)
-	
-	allterms = gsub("^factor\\(", "", alltermsWithF)
+	locations = grid
 	
 	
-	notInData = allterms[! allterms %in% names(data)]
-
-	# convert covariates to raster stack with same resolution of prediction raster.
-
-	if(length(covariates)){
-		# extract covariate values and put in the dataset
-		
-		if(length(notInData)==1 & length(names(covariates))==1){
-			names(covariates) = notInData
-		}
-		
-		for(D in notInData) {
-			
-			if(!.compareCRS(covariates[[D]], data,unknown=TRUE) ) {
-				
-				require('rgdal', quietly=TRUE ) 
-				
-				data[[D]] = raster::extract(covariates[[D]], 
-					spTransform(data, CRSobj=CRS(projection(covariates[[D]])))) 
-			} else {
-				data[[D]] = raster::extract(covariates[[D]], 
-						 data) 
-			}
-			# check for factors
-			
-			if(!is.null(levels(covariates[[D]]))){
-				# create factor, make most common value the baseline
-				theTable = sort(table(data[[D]]), decreasing=TRUE)
-				data[[D]] = factor(data[[D]], levels=as.integer(names(theTable)))
-			}
-		}	
-		
-		
-
-	} 
-	
-	if(! all(notInData %in% names(covariates)))
-		warning("some terms in the model are missing from both the data and the covariates")
-
 	dots <- list(...)  
 	if(any(names(dots)=='param')) {
 		param=dots$param	
@@ -105,7 +107,7 @@ setMethod("lgm",
 		param=c()
 	}
 	
-					
+
 	paramToEstimate	= c("range", "shape","nugget","boxcox")[
 			!c(FALSE,fixShape,fixNugget,fixBoxcox)]		
 	range=NA
@@ -136,20 +138,21 @@ setMethod("lgm",
 	dots$paramToEstimate=paramToEstimate
 
 
-	
-	
-	likRes = do.call(likfitLgm, dots)
-
-
+ 	likRes = do.call(likfitLgm, dots)
+ 
+#	stuff <<- list(formula=formula, data=data, grid=grid, covariates=covariates,
+#			param=likRes$param,expPred=expPred,nuggetInPrediction=nuggetInPrediction)	
 	
 # call krige	
-	krigeRes =  krigeLgm(data=data,formula=formula,
-			param=likRes$param, newdata=locations,
-			covariates=covariates, expPred=expPred,
+	krigeRes =  krigeLgm(
+			formula=formula,data=data,
+			grid=grid,
+			covariates=covariates, param=likRes$param, 
+			expPred=expPred,
 			nuggetInPrediction=nuggetInPrediction
 			)
-	
-#	data$resid = likRes$resid$resid
+
+		#	data$resid = likRes$resid$resid
 #	likRes$data = data
 
 	data@data = cbind(data.frame(data), 
@@ -166,7 +169,8 @@ setMethod("lgm",
 	names(res) = gsub("varBetaHat", "varParam", names(res))
 	res$summary = 	theInf$summary
 	res$varParam$information = theInf$information
-	
+
+	if(FALSE){
 	for(Dvar in names(covariates)) {
 		theLevels =levels(covariates[[Dvar]])[[1]]
 		if(!is.null(nrow(theLevels))){
@@ -178,6 +182,7 @@ setMethod("lgm",
 						rownames(res$summary))
 			}
 		}
+	}
 	}
 	# if range is very big, it's probably in metres, convert to km
 	if(res$summary['range','estimate']>1000) {
