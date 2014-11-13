@@ -1,3 +1,4 @@
+
 \name{krigeLgm}
 \alias{krigeLgm}
 

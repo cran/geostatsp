@@ -17,7 +17,7 @@ lcOneRow = function(thisrow, idxCol=NULL) {
 setGeneric('glgm', 
 		function(
 				formula, data, grid, 
-				covariates, 
+				covariates=NULL, 
 				...) {
 			standardGeneric("glgm")
 		}
@@ -59,11 +59,11 @@ setMethod("glgm",
 		)
 
 
-		setMethod("glgm", 
+setMethod("glgm", 
 				signature("formula", "Spatial", "Raster", "NULL"),
 				gm.dataSpatial
 		)
-
+		
 setMethod("glgm", 
 		signature("formula", "Spatial", "Raster", "list"),
 		gm.dataSpatial
@@ -77,7 +77,7 @@ setMethod("glgm",
 setMethod("glgm", 
 		
 				signature("formula", "Spatial", "Raster", "data.frame"),
-				function(formula, data, grid, covariates, ...) {
+				function(formula, data, grid, covariates=NULL, ...) {
 
 		dataDF = data@data
 
@@ -99,7 +99,7 @@ setMethod("glgm",
 setMethod("glgm", 
 		signature("formula", "data.frame", "Raster", "data.frame"), 
 		function(formula, data,  grid, 
-				covariates=data.frame(), 
+				covariates=NULL, 
 				shape=1, priorCI=NULL, 
 				mesh=FALSE,...) {
 
@@ -259,8 +259,8 @@ formulaForLincombs =
 	# strip out trailing +
 formulaForLincombs = gsub("\\+[[:space:]]?$", "", formulaForLincombs)
 
-	# if we have covariates and inla is available
-	if(nchar(formulaForLincombs) ) {
+	# if we have covariates in the formula and in the data
+	if(nchar(formulaForLincombs) & nrow(covariates) ) {
 
 		formulaForLincombs=as.formula(paste("~", formulaForLincombs))
 	
@@ -276,9 +276,10 @@ formulaForLincombs = gsub("\\+[[:space:]]?$", "", formulaForLincombs)
 			cantPredict = cantPredict[-theFactors2]
 			theFactorsInFormula = temp[theFactors2]
 		}
-		if(length(cantPredict))
-			covariates[,cantPredict]= 0
-		covariates = covariates[,c("space", varsInPredict),drop=FALSE]
+		if(length(cantPredict)){
+				covariates[,cantPredict]= 0
+		}
+		covariates = covariates[,c("space", thevars),drop=FALSE]
 		lincombMat = model.matrix(update.formula(
 						formulaForLincombs, ~.+space),
 					covariates, na.action=NULL)
@@ -467,6 +468,8 @@ theSpace = as.integer(gsub("^c", "", theSpaceName))
 
 	linc = inlaResult$summary.lincomb.derived[theSpaceName,]
 	linc$space = theSpace
+	inlaResult$marginals.predict = 
+			inlaResult$marginals.lincomb.derived
 
 	missingCells = values(cells)[! values(cells) %in% theSpace]
 
@@ -481,17 +484,23 @@ theSpace = as.integer(gsub("^c", "", theSpaceName))
 	
 		linc = rbind(linc, toadd)
 
-		missingNames = rownames(toadd)
-		missingMarginals = vector("list", length(missingNames))
-		names(missingMarginals) = missingNames
+		# Add in empty lists for the marginals of missing cells
 		
-		inlaResult$marginals.lincomb.derived = c(	
-				inlaResult$marginals.lincomb.derived,
+		missingMarginals = vector("list", length(missingCells))
+		names(missingMarginals) = rownames(toadd)
+		
+		inlaResult$marginals.predict = c(	
+				inlaResult$marginals.predict,
 				missingMarginals)
 		
 	}
-	linc = as.matrix(linc[paste("c", values(cells), sep=""),])
-
+	linc = as.matrix(linc[match( values(cells), linc$space),])
+	inlaResult$marginals.predict = 
+			inlaResult$marginals.predict[
+					paste("c", values(cells), sep="")
+			]
+	
+	
 	resRasterFitted = 
 			brick(extent(cells), nrows=nrow(cells),
 					ncols=ncol(cells), crs=projection(cells),
@@ -502,12 +511,7 @@ theSpace = as.integer(gsub("^c", "", theSpaceName))
 	values(resRasterFitted) = as.vector(linc)
 	
 	
-	# Add in empty lists for the marginals of missing cells
 	
-	inlaResult$marginals.predict = 
-			inlaResult$marginals.lincomb.derived[
-					paste("c", values(cells), sep="")
-					]
 			
 	
 	
@@ -563,7 +567,8 @@ thesd = c(
 
 params$summary = rbind(params$summary,
 		matrix(NA, nrow=length(thesd)+1, ncol=ncol(params$summary),
-				dimnames = list(c("range", names(thesd)), NULL))
+				dimnames = list(c("range", names(thesd)), 
+						colnames(params$summary)))
 )
 
 

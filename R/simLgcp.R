@@ -1,38 +1,48 @@
 simPoissonPP = function(intensity) {
 	
-	ivec = values(intensity)
-	ivec[is.na(ivec)] = 0
-	ivec =  ivec*prod(res(intensity))
+	intensity = intensity * prod(res(intensity))
+	
+	tosub = data.frame(id=NA,v=0)
+	intensity = subs(intensity, tosub, subsWithNA=FALSE)
 	
 	NperCell = intensity
-	values(NperCell) = rpois(ncell(intensity), ivec)
+	values(NperCell) = rpois(ncell(intensity)*nlayers(intensity), values(intensity))
 	
-	if(maxValue(NperCell)>1000)
+	if(any(maxValue(NperCell)>1000))
 		warning("A large number of events are being simulated, more than", maxValue(NperCell))
 	
-	events = rep(1:ncell(NperCell), values(NperCell))
+	events= vector('list', nlayers(intensity))
+	for(D in 1:nlayers(intensity)) {
+	eventsD = rep(1:ncell(NperCell), values(NperCell[[D]]))
 	
-	if(length(events)>1e6)
+	if(length(eventsD)>1e6)
 		warning("more than 1,000,000 events being simulated")
 	
-	events = as.data.frame(NperCell,xy=TRUE)[events, c("x","y")]
+	eventsD = xyFromCell(NperCell, eventsD) 
 	
-	events = events + cbind(
-			runif(dim(events)[1],-xres(intensity)/2, xres(intensity)/2),
-			runif(dim(events)[1],-yres(intensity)/2, yres(intensity)/2)
+	eventsD= eventsD + cbind(
+			runif(dim(eventsD)[1],-xres(intensity)/2, xres(intensity)/2),
+			runif(dim(eventsD)[1],-yres(intensity)/2, yres(intensity)/2)
 	)
 	
-	events = SpatialPoints(events)
-	projection(events) = projection(intensity)
-	
+	events[[D]] = SpatialPoints(eventsD)
+	projection(events[[D]]) = projection(intensity)	
+	}
+
+	if(length(events)==1) {
+		names(events) = 'events'
+	} else {
+		names(events) = paste("events", 1:length(events),sep="")	
+	}
 	events
-	
 }
 
 simLgcp = function(param, covariates=NULL, betas=NULL, 
-		rasterTemplate=covariates[[1]],  ...) {
+		offset=NULL, 
+		rasterTemplate=covariates[[1]],  n=1, 
+		...) {
 	
-	randomEffect = RFsimulate(model=param, x=rasterTemplate,  ...)
+	randomEffect = RFsimulate(model=param, x=rasterTemplate, n=n, ...)
 	
 	if(!is.null(covariates))
 		covariates = stackRasterList(covariates, randomEffect)
@@ -40,10 +50,12 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 	if(is.null(names(betas)))
 		names(betas) = names(covariates)
 	
-	
+	betas = c(rep(1, length(offset)), betas)
+	names(betas)[seq(1, len=length(offset))] = offset
+
+		
 	covariates = covariates[[intersect(names(covariates), 
 					names(betas))]]
-	
 	
 	themean = 0
 	if('mean' %in% names(param))
@@ -55,26 +67,35 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 
 	
 	
+	thefixed = calc(covariates, function(qq) themean + sum(qq * betas[names(qq)]))
+	linearPredictor = brick(thefixed)[[rep(1, n)]]
+	linearPredictor = linearPredictor +randomEffect 
+	names(linearPredictor) = gsub("^sim", "linearPredictor", names(randomEffect))
 	
-	linearPredictor = themean +randomEffect
-	
-	for(D in names(covariates)) {
-		linearPredictor = linearPredictor + betas[D]* covariates[[D]]		
-	}
-
 	intensity = exp(linearPredictor)
+	names(intensity) = gsub("^sim", "intensity", names(randomEffect))
+
+
+	intSansOffset = linearPredictor
+	for(Doffset in offset){
+		intSansOffset = intSansOffset - covariates[[Doffset]]
+	}
+	intSansOffset = exp(intSansOffset)
+	names(intSansOffset) = gsub("^sim", "relativeIntensity", names(randomEffect))
 	
 	events = simPoissonPP(intensity)
 	
-	names(linearPredictor) = "linearPredictor"
-	names(intensity) = "intensity"
-	names(randomEffect) = "random"
+	names(randomEffect) = gsub("^sim", "random", names(randomEffect))
 	
-	return(list(events=events,
-					raster = stack(randomEffect,
-							linearPredictor, intensity,covariates),
-					params=list(random=param, fixed=betas)
-			))
-			
-
+	return(c(
+			events, 
+			list(
+				raster = stack(randomEffect,
+						linearPredictor, intensity,
+						intSansOffset,
+						covariates),
+				parameters=list(random=param, fixed=betas)
+			)
+		)
+	)
 }

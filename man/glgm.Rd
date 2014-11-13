@@ -25,34 +25,34 @@ Fits a generalized linear geostatistical model or a log-Gaussian Cox process
 using \code{inla} }
 \usage{
 \S4method{glgm}{NULL,ANY,ANY,ANY}(formula=NULL, data,  grid, 
-				covariates, 
+				covariates=NULL, 
 				...)
 \S4method{glgm}{numeric,ANY,ANY,ANY}(formula, data,  grid, 
-				covariates, 
+				covariates=NULL, 
 				...)
 \S4method{glgm}{character,ANY,ANY,ANY}(formula, data,  grid, 
-				covariates, 
+				covariates=NULL, 
 				...)
 \S4method{glgm}{formula,ANY,numeric,ANY}(formula, data,  grid, 
-				covariates, 
+				covariates=NULL, 
 				...)
 \S4method{glgm}{formula,Raster,Raster,ANY}(formula, data,  grid, 
-				covariates=list(), buffer=0,
+				covariates=NULL, buffer=0,
 				...)
 \S4method{glgm}{formula,Spatial,Raster,list}(formula, data,  grid, 
-				covariates=list(), buffer=0,
+				covariates=NULL, buffer=0,
 				...)
 \S4method{glgm}{formula,Spatial,Raster,NULL}(formula, data,  grid, 
-				covariates=list(), buffer=0,
+				covariates=NULL, buffer=0,
 				...)
 \S4method{glgm}{formula,Spatial,Raster,Raster}(formula, data,  grid, 
-				covariates=list(), buffer=0,
+				covariates=NULL, buffer=0,
 				...)
 \S4method{glgm}{formula,data.frame,Raster,data.frame}(formula, data,  grid, 
-				covariates=data.frame(), 
+				covariates=NULL, 
 				shape=1, priorCI=NULL, 
 				mesh=FALSE,...) 
-lgcp(formula=NULL, data,  grid, covariates=list(), border,
+lgcp(formula=NULL, data,  grid, covariates=NULL, border,
 	...)
 }
  

@@ -3,7 +3,7 @@ export( lgm, glgm, lgcp,
  krigeLgm,stackRasterList,
   gmrfPrecUncond,simLgcp,simPoissonPP,
  excProb, likfitLgm, loglikLgm,
- profLlgm, informationLgm
+ profLlgm, informationLgm, conditionalGmrf, spatialRoc
 )
 
 

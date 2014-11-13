@@ -1,4 +1,6 @@
-setGeneric('lgm', function(formula,data,grid,covariates=NULL, ...) standardGeneric("lgm"))
+setGeneric('lgm', function(formula,data,grid,covariates=NULL, ...) 
+			standardGeneric("lgm")
+)
 
 # sort out formula
 # null formula
@@ -47,7 +49,7 @@ setMethod("lgm",
 		function(formula, 
 				data,  
 				grid,
-				covariates, ...) {
+				covariates=NULL, ...) {
 		gridHere = raster(data)
 		if(abs(diff(res(gridHere)))>0.000001 )
 			warning("data is not on a square grid")
@@ -87,7 +89,7 @@ setMethod("lgm",
 		function(formula, 
 				data,  
 				grid,
-		covariates=list(), 
+		covariates=NULL, 
 		shape=1, boxcox=1, nugget = 0, 
 		expPred=FALSE, nuggetInPrediction=TRUE,
 		reml=TRUE,mc.cores=1,
@@ -137,12 +139,15 @@ setMethod("lgm",
 	dots$data=data
 	dots$paramToEstimate=paramToEstimate
 
-
  	likRes = do.call(likfitLgm, dots)
  
 #	stuff <<- list(formula=formula, data=data, grid=grid, covariates=covariates,
 #			param=likRes$param,expPred=expPred,nuggetInPrediction=nuggetInPrediction)	
-	
+
+
+
+
+
 # call krige	
 	krigeRes =  krigeLgm(
 			formula=formula,data=data,
@@ -151,7 +156,7 @@ setMethod("lgm",
 			expPred=expPred,
 			nuggetInPrediction=nuggetInPrediction
 			)
-
+			
 		#	data$resid = likRes$resid$resid
 #	likRes$data = data
 

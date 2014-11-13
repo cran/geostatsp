@@ -123,7 +123,7 @@ if (requireNamespace("RandomFields", quietly = TRUE)) {
 	} else {
 	theSim = theSim@data
 	}
-	names(theSim) = gsub("^variable1\\.n","sim", names(theSim))
+	names(theSim) = gsub("^variable1(\\.n)?","sim", names(theSim))
 	
 } else { #RandomFields not available
  
@@ -171,7 +171,7 @@ setMethod("RFsimulate", signature("numeric", "GridTopology"),
 					n=n  , 
 					...)
 
-			names(theSim) = gsub("^variable1\\.n","sim", names(theSim))
+			names(theSim) = gsub("^variable1(\\.n)?","sim", names(theSim))
 
 			if(class(theSim)%in%c('try-error', 'NULL')) {
 					warning("error in RandomFields")

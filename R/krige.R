@@ -7,9 +7,13 @@ krigeLgm = function(
 		nuggetInPrediction=TRUE, 
 		mc.cores=getOption("mc.cores", 1L)) {
 	
+	# this function really needs some tidying!
+	
 	trend = formula
 	locations = grid
 	coordinates=data
+	
+
 	
 	haveBoxCox = any(names(param)=="boxcox")
 	if(haveBoxCox)
@@ -33,6 +37,7 @@ krigeLgm = function(
 	
 	observations = meanRaster = NULL
 	
+
 	if(!length(names(covariates))) {
 		# no coariates, mean is intercept
 		if(any(names(param)=='(Intercept)')) {
@@ -72,27 +77,35 @@ krigeLgm = function(
 
 
 		}	
-	}
+	} # end covariates is DF
+	
 	
 	if(class(data)=="SpatialPointsDataFrame"&class(formula)=="formula") {
+
 		if(all(names(covariates)%in% names(data))) {
+
 			modelMatrixForData = model.matrix(formula, data@data)
-			meanForData = rep(NA, length(data))
-			names(meanForData) = rownames(data@data)
+
+			theParams = intersect(colnames(modelMatrixForData), names(param))
+ 
+			meanForData =	 as.vector(tcrossprod(
+						param[theParams],
+						modelMatrixForData[,theParams])
+			)
+			names(meanForData) = rownames(modelMatrixForData)
 			
-		theParams = intersect(colnames(modelMatrixForData), names(param))
- 
-		forMeanForData =	 drop(tcrossprod(
-						param[colnames(modelMatrixForData)],modelMatrixForData[,theParams]))
- 
-		
-		meanForData[rownames(modelMatrixForData)] = forMeanForData
-		
 
+			
+			haveData = match(names(meanForData), 
+				rownames(data@data))
 		
-		observations = drop(data[[ all.vars(formula)[1]] ] )
 		
+			data = data[haveData,]
+			coordinates=data
 
+			
+		observations = drop(data@data[,
+						all.vars(formula)[1] ] )
 		
 		if(haveBoxCox) {
 			if(abs(param["boxcox"]) < 0.001) {
@@ -107,11 +120,10 @@ krigeLgm = function(
 		}
 		observations = observations - meanForData		
 		
-		data = data[!is.na(observations),]
 		
-		observations = observations[!is.na(observations)]
 		}
 	} # end data is spdf	
+
 
 	
 	if(!length(observations) | is.null(meanRaster)) {
@@ -170,7 +182,7 @@ krigeLgm = function(
 		
 		if(!all(allterms %in% names(data)))
 			warning("some covariates don't appear in data")
-	} else {
+	} else { # trend not formula
 		# trend is a data frame of covariates
 		# look for factors in it
 		covariatesForData = as.data.frame(trend)
@@ -334,55 +346,77 @@ krigeLgm = function(
 		covariatesDF=covariates
 		
 	} 
- 	
+ 
 	# convert trend formula to LHS
 	trendFormula = formulaRhs(trendFormula)
 	meanRaster = raster(locations)
 	
 
-	missingVars = all.vars(trendFormula)%in% names(covariatesDF)
-	missingVars = all.vars(trendFormula)[!missingVars]
 	
- 	
-	# check if all variables are in covariates
-	if(length(missingVars)) {
+	if(length(all.vars(trendFormula))){ # if have covariates
+	 missingVars = all.vars(trendFormula)%in% names(covariatesDF)
+	 missingVars = all.vars(trendFormula)[!missingVars]
+	
+
+	 # check if all variables are in covariates
+	 if(length(missingVars)) {
 		cat("cant find covariates ",
 				paste(missingVars, collapse=","),
 				" for prediction, imputing zeros\n")		
 		
 		covariatesDF[,missingVars]=0	
-	}
+	 }
  
-	modelMatrixForRaster = model.matrix(trendFormula, covariatesDF)
- 
-	meanFixedEffects = 
+	 modelMatrixForRaster = model.matrix(trendFormula, covariatesDF)
+
+	 if(!all(colnames(modelMatrixForRaster)%in% names(param))){
+		 warning("cant find coefficients",
+				 paste(names(modelMatrixForRaster)[
+								 !names(modelMatrixForRaster)%in% names(param)
+						 ], collapse=","),
+				 "in param\n")
+	 }
+	 
+	 
+	 meanFixedEffects = 
 			modelMatrixForRaster %*% param[colnames(modelMatrixForRaster)]
 	
-	anyNA = apply(covariatesDF, 1, function(qq) any(is.na(qq)))
-	if(any(anyNA)) {
+	 anyNA = apply(covariatesDF, 1, function(qq) any(is.na(qq)))
+	 if(any(anyNA)) {
 		oldmm = rep(NA, ncell(meanRaster))
 		oldmm[!anyNA] = meanFixedEffects
 		values(meanRaster) = oldmm
-	} else {
+	 } else {
 		values(meanRaster) = meanFixedEffects
+	 }
+	 
+
+	 
+	 modelMatrixForData = model.matrix(trendFormula, covariatesForData)
+	 haveData = match(rownames(modelMatrixForData), 
+			 rownames(covariatesForData))
+	 observations = observations[haveData]
+	 coordinates = coordinates[haveData,]
+	 
+	 meanForData = 
+			 modelMatrixForData %*% param[colnames(modelMatrixForData)]
+
+	} else { #no covariates	
+
+		if(any(names(param)=='(Intercept)')) {
+			values(meanRaster) = param['(Intercept)'] 
+		} else {
+			values(meanRaster) = 0
+		}
+		meanForData = rep(values(meanRaster)[1], length(observations))
 	}
+	
 	names(meanRaster) = "fixed"
-	
-	
-	if(!all(colnames(modelMatrixForRaster)%in% names(param))){
-		warning("cant find coefficients",
-				paste(names(modelMatrixForRaster)[
-								!names(modelMatrixForRaster)%in% names(param)
-						], collapse=","),
-				"in param\n")
-	}
-	
- 
-	
+
 	
 # subtract mean from data
 
-	theNAdata = apply(covariatesForData[,allterms], 1, function(qq) any(is.na(qq))) | 
+	theNAdata =  
 			is.na(observations)
 	
 	if(all(theNAdata)) {
@@ -390,12 +424,12 @@ krigeLgm = function(
 				'it appears there are no observations without at least one covariate missing')
 	}
 		
- 
+
 	
 	if(any(theNAdata)) {
 		noNAdata = !theNAdata
 		if(length(grep("^SpatialPoints", class(coordinates)))) {
-			coordinates = SpatialPoints(coordinates)[noNAdata]	
+			coordinates = coordinates[noNAdata,]	
 		} else if(class(coordinates)=="dist"){
 			coordinates = as.matrix(coordinates)
 			coordinates = coordinates[noNAdata,noNAdata]
@@ -404,14 +438,9 @@ krigeLgm = function(
 			warning("missing vlaues in data but unclear how to remove them from coordinates")
 		}
 		observations = observations[noNAdata]
-		covariatesForData = covariatesForData[noNAdata,,drop=FALSE]
 	}
 	
 	
-	modelMatrixForData = model.matrix(trendFormula, covariatesForData)
-	
-	meanForData = 
-			modelMatrixForData %*% param[colnames(modelMatrixForData)]
 
 	
 	if(haveBoxCox) {
@@ -429,8 +458,6 @@ krigeLgm = function(
 	observations = observations - meanForData
 
 	} # end old code not called from LGM
-	
- 
 
 	
 	varData = geostatsp::matern(coordinates, param=param)
@@ -440,11 +467,9 @@ krigeLgm = function(
 
 	cholVarDatInvData = Matrix::solve(cholVarData, observations)
 
-
 	Ny = length(observations)
 	param = fillParam(param)
 	
-
 	krigeOneRowPar = function(Drow, yFromRowDrow, 
 			locations,
 			param,coordinates,Ny,cholVarData,
@@ -485,8 +510,7 @@ krigeLgm = function(
 		x
 		
 	}
-	
-	
+
 
 	datForK = list(
 			locations=locations,param=param,
@@ -525,7 +549,6 @@ krigeLgm = function(
 	
 	predRaster = meanRaster + randomRaster
 	names(predRaster) = "predict"
-	
 	
 	
 	if(any(forVar > param["variance"])){

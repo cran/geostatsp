@@ -42,28 +42,28 @@ Calculate MLE's of model parameters and perform spatial prediction. }
 		...) 
 \S4method{lgm}{formula,Raster,Raster,ANY}(formula, data,
 		grid,
-		covariates=list(), buffer=0,
+		covariates=NULL, buffer=0,
 		...) 
 \S4method{lgm}{formula,Raster,missing,missing}(
 		formula, data,
 		grid,
-		covariates, 
+		covariates=NULL, 
 		...) 
 \S4method{lgm}{formula,Spatial,Raster,Raster}(formula, data,
 		grid,
-		covariates=list(), buffer=0,
+		covariates=NULL, buffer=0,
 		...) 
 \S4method{lgm}{formula,Spatial,Raster,list}(formula, data,
 		grid,
-		covariates=list(), buffer=0,
+		covariates=NULL, buffer=0,
 		...) 
 \S4method{lgm}{formula,Spatial,Raster,NULL}(formula, data,
 		grid,
-		covariates=list(), buffer=0,
+		covariates=NULL, buffer=0,
 		...) 
 \S4method{lgm}{formula,Spatial,Raster,data.frame}(formula, data,
 		grid,
-		covariates=list(), 
+		covariates=NULL, 
 			shape=1, boxcox=1, nugget = 0, 
 		expPred=FALSE, nuggetInPrediction=TRUE,
 		reml=TRUE,mc.cores=1,
@@ -74,7 +74,7 @@ Calculate MLE's of model parameters and perform spatial prediction. }
 		...) 
 \S4method{lgm}{formula,data.frame,Raster,data.frame}(formula, data,
 		grid,
-		covariates=data.frame(), 
+		covariates=NULL, 
 		            shape=1,boxcox=1,nugget=0,
 				  expPred=FALSE, nuggetInPrediction=TRUE,
 				  reml = TRUE,

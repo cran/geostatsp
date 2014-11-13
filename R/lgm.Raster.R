@@ -1,8 +1,8 @@
-
-setMethod("lgm", 
-		signature("formula", "data.frame", "Raster", "data.frame"), 
-	function(formula,data, grid,
-				covariates=data.frame(),
+# 
+# setMethod("lgm", 
+# 		signature("formula", "data.frame", "Raster", "data.frame"), 
+lgm.Raster=	function(formula,data, grid,
+				covariates=NULL,
                   shape=1,boxcox=1,nugget=0,
 				  expPred=FALSE, nuggetInPrediction=TRUE,
 				  reml = TRUE,
@@ -23,12 +23,12 @@ setMethod("lgm",
   allYvar = grep(paste("^", Yvar, "[[:digit:]]*$",sep=""), names(data), value=TRUE)
   
   Yvec = as.matrix(data[,allYvar, drop=FALSE], drop=FALSE)
-
+  reXmat = Xmat
+#	colnames(reXmat) = c('(Intercept)', 'x') 
   thel = loglikGmrf(oneminusar=oneminusar,
-                    Yvec=Yvec,Xmat=Xmat,
+                    Yvec=Yvec,Xmat=reXmat,
                     NN=NN,propNugget=nugget,
                     shape=shape,mc.cores=mc.cores,...)
-
   thesummary = list()
   if (reml){
     chooseLike = 'logL.reml'
@@ -56,6 +56,7 @@ setMethod("lgm",
   }
   else{
     # $propNugget
+		print(dimnames(thel))
     propNug = thel['propNugget',,1]
     propLike =  thel[chooseLike,,1]
     propm2Like =  thel[m2Like,,1]
@@ -91,12 +92,9 @@ setMethod("lgm",
   thesummary$model$reml = reml
   thesummary$model$trend = formula
  
-  if (reml){
-    thesummary$summary = summaryGmrfFit(thel)$reml
-  }else{
-    thesummary$summary = summaryGmrfFit(thel)$ml  
-  }
-  
+  thesummary$summary = summaryGmrfFit(thel)[,,c('ml','reml')[reml+1]]
+
+	
   thesummary$param = thesummary$summary[,'mle']
   
   mleparam = thesummary$param
@@ -116,7 +114,7 @@ setMethod("lgm",
 	values(thesummary$predict) = NA
     values(thesummary$predict[['fixed']]) =
       Xmat %*% mleparam[
-        paste(colnames(Xmat),".betaHat",sep='')]
+        paste(colnames(reXmat),".betaHat",sep='')]
 	for(D in colnames(Yvec)) {
     values(thesummary$predict[[paste('random', D, sep=".")]]) =
       Yvec[,D] - values(thesummary$predict[['fixed']])
@@ -129,6 +127,9 @@ setMethod("lgm",
 }
 
 
-)
+setMethod("lgm", 
+		signature("formula", "data.frame", "Raster", "data.frame"), 
+		lgm.Raster)
+
 
 

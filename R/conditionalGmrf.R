@@ -1,24 +1,57 @@
+
+varOneCell = function(Dcell, DcellEnd, 
+		Qchol, cholQptau, param) {
+	Ncell = ncol(Qchol)
+	Dcell = Dcell:DcellEnd
+	# Dcell can be a vector of cells
+	thisD = sparseMatrix(Dcell,1:length(Dcell),x=1,
+			dims=c(Ncell,length(Dcell)))
+	solveQ = solve(Qchol, thisD)
+	solveQdiag = diag(solveQ[Dcell,])
+	#		solveQp = solve(cholIcQ, solveQ,system='P')
+	#		thisDp = solve(cholIcQ, thisD ,system='P')
+	solvecqp = 	solve(cholQptau , thisD)
+	
+	result=param['variance_optimal']*(
+				solveQdiag - 
+				apply(solvecqp * solveQ, 2, sum)
+				) / param['nugget']
+	result
+}
+
+
 conditionalGmrf = function(param,
                            Yvec,Xmat, NN,
                            template=NULL, 
-                           mc.cores=1, ...) {
-  
-  names(param) = gsub("sigmasq","variance",names(param))
-  names(param) = gsub("tausq","nugget",names(param))
+                           mc.cores=1, 
+						   cellsPerLoop=10,
+						   ...) {
+  if(is.vector(param))
+	  param = as.matrix(param)
+					   
+  rownames(param) = gsub("sigmasq","variance", rownames(param))
+  rownames(param) = gsub("tausq","nugget", rownames(param))
   
 
-  fixed=as.vector(Xmat %*% 
-                    param[paste(colnames(Xmat), "betaHat", sep=".")]
-  )
-  
-  
-  Q = maternGmrfPrec(NN,
-                     param=c(param[c('oneminusar','shape')], variance=1),
+  fixed= Xmat %*% param[paste(colnames(Xmat), "betaHat", sep="."),]
+ 
+  residsOrig = Yvec -	fixed
+		
+ Q = list(maternGmrfPrec(NN,
+                     param=c(param[c('oneminusar','shape'),1], variance=1),
                      ...)
-  Qchol = Cholesky(Q, LDL=FALSE)
+	)
+ Qchol = list(Cholesky(Q[[1]], LDL=FALSE))
+  for(Dsim in seq(from=2, by=1, len=ncol(param)-1)) {
+	 Q[[Dsim]] = maternGmrfPrec(NN,
+			 param=c(param[c('oneminusar','shape'),Dsim], variance=1),
+			 ...)
+	 Qchol[[Dsim]] = update(Qchol[[1]], Q[[Dsim]])
+ }	
+	
   # Q/sigmasq = var(U)^(-1)
   
-  cholQptau = update(Qchol,parent=Q,mult=1/param['nugget'])
+
   # Qptau = tausq (1/tausq + Q)
   
   
@@ -41,51 +74,75 @@ conditionalGmrf = function(param,
   #	cholIcQ@perm = as.integer(ptwice2@perm-1)
   
   
-  residsOrig = Yvec -	fixed
-  EUY = 	as.vector(
-    solve(cholQptau, residsOrig,system='A')
-  )/param['nugget']
+
+  EUY = VUY= NULL
+  cholQptau = list()
   
+  SstartCell = seq(from=1, to=nrow(Xmat), by=cellsPerLoop)
+
+  SstartCell = c(SstartCell, nrow(Xmat)+1)
+
+  SendCell = SstartCell[-1]-1
+  SstartCell = SstartCell[-length(SstartCell)]
   
-  
-  theidm=c(length(EUY),1)
-  varOneCell = function(D) {
-    thisD = sparseMatrix(D,1,x=1,dims=theidm)
-    solveQ = as.vector(solve(Qchol, thisD))
-    #		solveQp = solve(cholIcQ, solveQ,system='P')
-    #		thisDp = solve(cholIcQ, thisD ,system='P')
-    param['variance_optimal']*(
-      solveQ[D] - 
-        sum(
-          as.vector(solve(cholQptau, thisD)) * 
-            solveQ
-        )/param['nugget']
-    )
+  for(Dsim in 1:ncol(param)) {
+	  cholQptau[[Dsim]] = update(Qchol[[Dsim]],
+			  parent=Q[[Dsim]],
+			  mult=1/param['nugget',Dsim]
+	  )
+	  
+	  EUY = cbind(EUY, 
+			  as.vector(
+					  solve(cholQptau[[Dsim]], 
+							  residsOrig[,Dsim],
+							  system='A'
+					  )
+			  )/param['nugget',Dsim]
+	  )
+	  moreArgs = list(
+			  Qchol=Qchol[[Dsim]], 
+			  cholQptau=cholQptau[[Dsim]], 
+			  param=param[,Dsim]
+	  )
+	  if(mc.cores==1) {
+		 thediag = mapply(varOneCell, Dcell=SstartCell,
+				 DcellEnd=SendCell,
+				 MoreArgs = moreArgs,
+				 SIMPLIFY=FALSE
+		 )
+	  } else {
+		  thediag = parallel::mcmapply(
+				  varOneCell, Dcell=SstartCell,
+				  DcellEnd=SendCell,
+				  MoreArgs = moreArgs,
+				  mc.cores=mc.cores,SIMPLIFY=FALSE)
+	  }
+	  VUY = cbind(VUY,
+			  unlist(thediag)
+	  )
   }
   
+   
   
-  if(mc.cores==1) {
-    thediag = mapply(varOneCell, 1:length(residsOrig))
-  } else {
-    thediag = parallel::mcmapply(varOneCell, 1:length(EUY),
-                                 mc.cores=mc.cores,SIMPLIFY=TRUE)
-  }
-  
-  
-  
-  VUY = as.vector(
-    thediag
-  )
-  
-  
-  result=cbind(random=EUY,krigeSd= sqrt(VUY),
-               fixed=fixed,predict=fixed+EUY,resids=residsOrig)
+  result=abind::abind(random=EUY,krigeSd= sqrt(VUY),
+               fixed=fixed,predict=fixed+EUY,
+			   resids=residsOrig,
+			   along=3)
+	if(is.null(dimnames(result)[[2]])) {
+		dimnames(result)[[2]] = 
+				paste("sim", 1:(dim(result)[[2]]),sep="")
+	}
+	   
   if(!is.null(template)){
-    resRast = raster::brick(raster(template), nl=ncol(result))
-    names(resRast) = colnames(result)
-    values(resRast) = as.vector(result)
+    resRast = raster::brick(raster(template), nl=prod(dim(result)[-1]))
+    names(resRast) = as.vector(do.call(
+					function(a,b) outer(a,b,paste,sep="_"),
+					dimnames(result)[-1] ))
+	if(dim(result)[[2]]==1) {
+		names(resRast) = dimnames(result)[[3]]
+	}
+	values(resRast) = as.vector(result)
     result = resRast		
-    
   }
   result
 }

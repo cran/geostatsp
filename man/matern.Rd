@@ -74,6 +74,15 @@ starting at the top left.
 }
 
 \examples{
+param=c(shape=1,range=2)
+u=1:4
+	uscale = sqrt(8*param['shape'])* u / param['range']
+cbind(dist=u, 
+manual=	( 1/(gamma(param['shape']) * 2^(param['shape']-1)  ) ) * 
+			uscale^param['shape'] * besselK( uscale , param['shape']),
+geostatsp=matern(u, param=param)
+)
+
 # example with raster
 myraster = raster(nrows=40,ncols=60,xmn=-3,xmx=3,ymn=-2,ymx=2)
 param = c(range=2, shape=2,	anisoRatio=2, anisoAngleDegrees=-25)

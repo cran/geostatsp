@@ -1,7 +1,7 @@
 
 gm.nullFormula = 
 		function(formula=NULL, data, grid, 
-		covariates, ...) {
+		covariates=NULL, ...) {
 	formula =  1 
 	callGeneric(
 			formula=formula, data=data,
@@ -13,7 +13,7 @@ gm.nullFormula =
 
 gm.numericFormula = 
 		function(formula, data, grid, 
-				covariates, ...) {
+				covariates=NULL, ...) {
 	
 formula = names(data)[formula]
 callGeneric(
@@ -26,7 +26,7 @@ callGeneric(
 
 gm.characterFormula = 
 		function(formula, data, grid, 
-				covariates, ...) {
+				covariates=NULL, ...) {
 
 
 	if(length(names(covariates)))
@@ -50,7 +50,7 @@ callGeneric(
 }		
 
 
-gm.gridNumeric = function(formula, data, grid, covariates, ...) {
+gm.gridNumeric = function(formula, data, grid, covariates=NULL, ...) {
 		
 
 	gridRaster = squareRaster(data, grid)
@@ -63,7 +63,7 @@ gm.gridNumeric = function(formula, data, grid, covariates, ...) {
 	)	
 }
 
-gm.dataRaster = function(formula,data,grid, covariates=list(), buffer=0,...){
+gm.dataRaster = function(formula,data,grid, covariates=NULL, buffer=0,...){
 
 	
 	cellsBoth = cellsBuffer(grid, buffer)			
@@ -159,7 +159,7 @@ for(D in intersect(Sfactor, names(covariatesDF))) {
 
 gm.dataSpatial = 
 function(formula, data,  grid, 
-		covariates=list(), 
+		covariates=NULL, 
 		buffer=0,
 		...) {
 
@@ -181,11 +181,13 @@ function(formula, data,  grid,
 			covFactors = c(D, covFactors)
 	}
 
+	
 	Sfactors = c(
 			names(data)[apply(data@data,2,is.factor)],
 			covFactors,
 			theFactors
 	)
+	Sfactors = unique(Sfactors)
 	covFactors = intersect(Sfactors,names(covariates))
 	
 	cantFind = setdiff(Sfactors, c(names(data), names(covariates)))
@@ -242,9 +244,14 @@ function(formula, data,  grid,
 		if(is.null(theLevels)) {
 			theLabels = paste("l", names(theTable),sep="")
 		} else {
+			idCol = grep("^id$", names(theLevels), ignore.case=TRUE)[1]
+			if(!length(idCol)) idCol = 1
+			labelCol = grep("^category$|^label$", names(theLevels), ignore.case=TRUE)[1]
+			if(!length(labelCol)) labelCol = 2
+			
 			theLabels = theLevels[
-				match(as.integer(names(theTable)), theLevels$ID)
-				,"Category"]
+				match(as.integer(names(theTable)), theLevels[,idCol])
+				,labelCol]
 		}
 		data[[D]] = factor(data[[D]], levels=as.integer(names(theTable)),
 				labels=theLabels)			

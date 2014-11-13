@@ -164,7 +164,8 @@ maternGmrfPrec.dsCMatrix = function(N,
 		
 		paramInfo$theo = c(param[c('shape','cellSize','oneminusar')],
 				rangeInCells=as.numeric(sqrt(8*param['shape'])/sqrt(a-4)),
-				a=as.vector(a)
+				a=as.vector(a), 
+				scale = as.numeric(sqrt(a-4))
 			)
 			
 			
