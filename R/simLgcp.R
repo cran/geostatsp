@@ -4,9 +4,15 @@ simPoissonPP = function(intensity) {
 	
 	tosub = data.frame(id=NA,v=0)
 	intensity = subs(intensity, tosub, subsWithNA=FALSE)
-	
+
+  if(any(maxValue(intensity)>1000))
+    warning("A large number of events are being simulated, more than", maxValue(intensity))
+  
+  
 	NperCell = intensity
-	values(NperCell) = rpois(ncell(intensity)*nlayers(intensity), values(intensity))
+	values(NperCell)= rpois(
+      ncell(intensity)*nlayers(intensity), 
+      values(intensity))
 	
 	if(any(maxValue(NperCell)>1000))
 		warning("A large number of events are being simulated, more than", maxValue(NperCell))
@@ -47,8 +53,11 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 	if(!is.null(covariates))
 		covariates = stackRasterList(covariates, randomEffect)
 
-	if(is.null(names(betas)))
+	if(is.null(names(betas)) & (!length(offset)))
 		names(betas) = names(covariates)
+  if(length(offset)==length(names(covariates)))
+    offset = names(covariates)
+  
 	
 	betas = c(rep(1, length(offset)), betas)
 	names(betas)[seq(1, len=length(offset))] = offset
@@ -67,8 +76,12 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 
 	
 	
-	thefixed = calc(covariates, function(qq) themean + sum(qq * betas[names(qq)]))
-	linearPredictor = brick(thefixed)[[rep(1, n)]]
+	thefixed = raster(randomEffect)
+  values(thefixed) = themean
+  for(Dbeta in names(covariates))
+    thefixed = thefixed + betas[Dbeta]*covariates[[Dbeta]]
+
+  linearPredictor = brick(thefixed)[[rep(1, n)]]
 	linearPredictor = linearPredictor +randomEffect 
 	names(linearPredictor) = gsub("^sim", "linearPredictor", names(randomEffect))
 	

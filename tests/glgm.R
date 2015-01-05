@@ -1,3 +1,9 @@
+havePackages = c(
+    'INLA' = requireNamespace('INLA', quietly=TRUE)
+)
+
+print(havePackages)
+
 # number of cells... smaller is faster but less interesting
 Ncell = 25
 
@@ -7,8 +13,8 @@ require('geostatsp')
 data('swissRain')
 swissRain$lograin = log(swissRain$rain)
 
-if(require('INLA', quietly=TRUE)) {
-swissFit =  glgm("lograin", swissRain, Ncell, 
+if(all(havePackages)) {
+  swissFit =  glgm("lograin", swissRain, Ncell, 
 		covariates=swissAltitude, family="gaussian", buffer=20000,
 		priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
 		control.mode=list(theta=c(1.9,0.15,2.6),restart=TRUE),
@@ -166,26 +172,36 @@ swissFit =  glgm( formula="lograin",data=swissRain, grid=Ncell,
 # a model with little data, posterior should be same as prior
 
 data2 = SpatialPointsDataFrame(cbind(c(1,0), c(0,1)),
-		data=data.frame(y=c(0,0), offset=c(-100,-200)))
+		data=data.frame(y=c(0,0), offset=c(-50,-50)))
 
-res = glgm(data=data2, grid=20, formula=y~1, 
-covariates=NULL,
-		priorCI = list(sd=c(1,2), range=c(0.3, 2)),
-		family="poisson",buffer=0.5)
+res = glgm(data=data2, grid=20, formula=y~1 + offset(offset), 
+    covariates=NULL,
+		priorCI = list(sd=c(0.3,0.5), range=c(0.25, 0.4)),
+		family="poisson",buffer=0.5, 
+    control.fixed=list(mean.intercept=0, prec.intercept=1),
+    control.mode=list(theta=c(2, 2),restart=TRUE)
+)
 
-priorPrec = res$par$sd$params
-priorRange = res$par$range$params
 pdf("nodata.pdf")
 
-par(mfrow=c(2,1))
+par(mfrow=c(3,1))
+
+# intercept
+plot(res$inla$marginals.fixed[['(Intercept)']], col='blue', type='l',
+    xlab='intercept',lwd=3)
+xseq = res$inla$marginals.fixed[['(Intercept)']][,'x']
+lines(xseq, dnorm(xseq, 0, 1),col='red',lty=2,lwd=3)
+legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
+
 # sd
-plot(res$parameters$sd$prior,type='l', col='blue')
-lines(res$parameters$sd$post,col='red')
+plot(res$parameters$sd$prior,type='l', col='blue',xlab='sd',lwd=3)
+lines(res$parameters$sd$post,col='red',lty=2,lwd=3)
+legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
 
 
 # range
-plot(res$parameters$range$prior,type='l', col='blue')
-lines(res$parameters$range$post,col='red')
+plot(res$parameters$range$prior,type='l', col='blue', xlab='range',lwd=3)
+lines(res$parameters$range$post,col='red',lty=2,lwd=3)
 legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
 dev.off()
 

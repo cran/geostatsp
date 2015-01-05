@@ -336,7 +336,7 @@ formulaForLincombs = gsub("\\+[[:space:]]?$", "", formulaForLincombs)
 #	return(forInla)
  
 
-	if(require("INLA", quietly=TRUE)) {
+	if(requireNamespace("INLA", quietly=TRUE)) {
 		inlaResult = do.call(INLA::inla, forInla) 
 	} else {
 		inlaResult = 

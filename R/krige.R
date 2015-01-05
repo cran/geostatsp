@@ -13,7 +13,6 @@ krigeLgm = function(
 	locations = grid
 	coordinates=data
 	
-
 	
 	haveBoxCox = any(names(param)=="boxcox")
 	if(haveBoxCox)
@@ -94,13 +93,10 @@ krigeLgm = function(
 			)
 			names(meanForData) = rownames(modelMatrixForData)
 			
-
-			
 			haveData = match(names(meanForData), 
 				rownames(data@data))
-		
-		
-			data = data[haveData,]
+
+    data = data[haveData,]
 			coordinates=data
 
 			
@@ -119,9 +115,7 @@ krigeLgm = function(
 			
 		}
 		observations = observations - meanForData		
-		
-		
-		}
+		} # end all covariates in data
 	} # end data is spdf	
 
 
@@ -139,25 +133,20 @@ krigeLgm = function(
 	# look for factors in the model formula
 	if(class(trend)=="formula"){
  
-		trendFormula = trend		
+    trendFormula = update.formula(trend, junk~.)
+    
+    
 		covariatesForData = data@data
-		
- 
  		
 		if(is.vector(data)) {
 			observations = data
-		} else {
-			
+		} else {			
 			observations = all.vars(trend)[1]
-			
-
-			
 			observations = covariatesForData[,observations]
 		}
 		
-		theVars = all.vars(formulaRhs(trendFormula))
-
-	
+		theVars = all.vars(trendFormula)[-1]
+  
 		if(length(theVars)) {
 			factorsInData = unlist(lapply(
 							covariatesForData[,theVars,drop=FALSE],
@@ -175,7 +164,6 @@ krigeLgm = function(
 		factorsInFormula = gsub("\\)$", "", factorsInFormula)
 		
 		factorsInTrend=NULL
-		trendFormula = trend
 		
 		allterms = gsub("^[[:alnum:]]+\\(", "", allterms)
 		allterms = gsub("\\)$", "", allterms)
@@ -196,20 +184,18 @@ krigeLgm = function(
 		factorsInFormula = factorsInData = NULL
 		
 		# guess at the formula
-		trendFormlua = as.formula(paste("~",
+		trendFormula = as.formula(paste("junk ~",
 						paste(names(covariatesForData), collapse="+")
 				))
-		
 	} # end trend not a formula
 	
-
 	# we know which variables factors
 	theFactors = unique(c(factorsInFormula, factorsInData, factorsInTrend))
 	theFactors = theFactors[theFactors %in% names(covariates) ]
 
  	if(length(grep("^Raster|^list", class(covariates)))) { 
  	# if there's only variable in the model assign it's name to covariates
-	covariateNames = all.vars(trendFormula)[-1]
+	covariateNames = all.vars(update.formula(trendFormula, junk~.))[-1]
 	if(length(covariateNames)==1){
 		# so far only one variable
 		names(covariates)= covariateNames
@@ -317,7 +303,7 @@ krigeLgm = function(
 		}
 		
 		
-	}
+	} # end loop through factors
 	
 	if(length(grep("^Raster|^list", class(covariates))) & length(theVars)) {
 		# method for resampling covariate rasters
@@ -326,38 +312,32 @@ krigeLgm = function(
 		
 		covariates = stackRasterList(covariates,template=locations, method=method)
  
-		theVars = all.vars(formulaRhs(trendFormula))
+		theVars = do.call('intersect',
+        dimnames(attributes(terms(trendFormula))$factors))
+    
 		if(nlayers(covariates)==1 & length(theVars)==1) {
 			names(covariates) = theVars
 		}
- 
 		
 		# construct the fixed effects component
 		covariatesDF = raster::as.data.frame(covariates, xy=TRUE)
-
- 
 		# get rid of trailing _ created by as.data.frame
 		names(covariatesDF) = gsub("_levels$", "", names(covariatesDF))
 	} else {
 		covariatesDF = as.data.frame(matrix(NA, ncol=0, nrow=ncell(locations)))
 	}
-	} else {# end covariates is raster
-		
+	} else {# end covariates is raster, assume it's a data frame
 		covariatesDF=covariates
-		
 	} 
  
-	# convert trend formula to LHS
-	trendFormula = formulaRhs(trendFormula)
+	# get rid of response variable in trend formula
 	meanRaster = raster(locations)
-	
 
 	
-	if(length(all.vars(trendFormula))){ # if have covariates
-	 missingVars = all.vars(trendFormula)%in% names(covariatesDF)
-	 missingVars = all.vars(trendFormula)[!missingVars]
+	if(length(all.vars(trendFormula))>1){ # if have covariates
+	 missingVars = all.vars(trendFormula)[-1] %in% names(covariatesDF)
+	 missingVars = all.vars(trendFormula)[-1][!missingVars]
 	
-
 	 # check if all variables are in covariates
 	 if(length(missingVars)) {
 		cat("cant find covariates ",
@@ -367,7 +347,7 @@ krigeLgm = function(
 		covariatesDF[,missingVars]=0	
 	 }
  
-	 modelMatrixForRaster = model.matrix(trendFormula, covariatesDF)
+	 modelMatrixForRaster = model.matrix(trendFormula, cbind(covariatesDF,junk=0))
 
 	 if(!all(colnames(modelMatrixForRaster)%in% names(param))){
 		 warning("cant find coefficients",
@@ -392,7 +372,8 @@ krigeLgm = function(
 	 
 
 	 
-	 modelMatrixForData = model.matrix(trendFormula, covariatesForData)
+	 modelMatrixForData = model.matrix(trendFormula, 
+       cbind(covariatesForData,junk=0))
 	 haveData = match(rownames(modelMatrixForData), 
 			 rownames(covariatesForData))
 	 observations = observations[haveData]
@@ -453,7 +434,7 @@ krigeLgm = function(
 					param["boxcox"]
 		}
 		
-	}
+	} # end have box cox
 	
 	observations = observations - meanForData
 

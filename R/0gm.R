@@ -29,13 +29,15 @@ gm.characterFormula =
 				covariates=NULL, ...) {
 
 
-	if(length(names(covariates)))
+if(length(names(covariates)))
 	names(covariates) = gsub("[[:punct:]]|[[:space:]]","_", names(covariates))
 if(length(covariates) & !length(names(covariates))) 
 	names(covariates) = paste("c", 1:length(covariates),sep="")			
 
 if(length(formula)==1)
 	formula = unique(c(formula, names(covariates)))
+if(length(formula)==1)
+	formula = c(formula, '1')
 
 formula = paste(formula[1] , "~",
 		paste(formula[-1], collapse=" + ")
@@ -220,12 +222,12 @@ function(formula, data,  grid,
 		covariatesDF = data.frame()
 	}
 	
-
-	
 	# loop through factors which aren't in data, extract it from covariates
 	for(D in setdiff(all.vars(formula), names(data))){
+		if(is.null(covariates[[D]]))
+			warning("cant find covariate '", D, "' in covariates or data")
 		if(!.compareCRS(covariates[[D]], data, unknown=TRUE) ) {
-			if(require('rgdal', quietly=TRUE ) ) { 
+			if(requireNamespace('rgdal', quietly=TRUE ) ) { 
 				data[[D]] = raster::extract(covariates[[D]], 
 						spTransform(data, CRSobj=CRS(projection(covariates[[D]]))))
 			} else warning("need rgdal if covariates and data are different projections")

@@ -69,3 +69,5 @@ importFrom(pracma, trapz)
 #importFrom(parallel, mcmapply)
 
 
+# only needed because INLA is requireNamespace instead of require
+export(inla.models)

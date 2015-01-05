@@ -37,7 +37,7 @@ stackRasterList = function(x, template=x[[1]],method='ngb',mc.cores=NULL) {
 			if(length(names(x[[D]]))!=1)
 				warning("polygon ", D, "has more than one data column, using the first" )
 			
-			require('rgdal', quietly=TRUE ) 
+			requireNamespace('rgdal', quietly=TRUE ) 
 			
 			toAdd =  
 					rasterize(
