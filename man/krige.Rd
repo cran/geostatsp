@@ -70,7 +70,7 @@ data('swissRain')
 swissRain$lograin = log(swissRain$rain)
 swissRain[[names(swissAltitude)]] = extract(swissAltitude, swissRain)
 
-\dontrun{
+if(interactive()  | Sys.info()['user'] =='patrick') {
 swissFit = likfitLgm(data=swissRain, 
 			formula=lograin~ CHE_alt,
 			param=c(range=46500, nugget=0.05,shape=1,  
@@ -84,17 +84,18 @@ myTrend = swissFit$formula
 myParams = swissFit$param
 dput(myParams)
 # will give the following
-}
+} else {
 myParams=structure(c(2.26621791403682, 0.00014474608227038, 48928.027588747, 
 0.0973034174963395, 37.2883307364709, 11.5429109094065, 1, 0.736723861095649
 ), .Names = c("(Intercept)", "CHE_alt", "range", "nugget", "anisoAngleDegrees", 
 "anisoRatio", "shape", "variance"))
 myTrend =lograin~ CHE_alt
-
+}
 
 # make sure krige can cope with missing values!
 swissAltitude[1:50,1:50] = NA
-swissKrige = krigeLgm(data=swissRain, formula = myTrend,
+swissKrige = krigeLgm(data=swissRain, 
+	formula = myTrend,
 	covariates = swissAltitude,  
 	param=myParams,
 	grid = 40, expPred=TRUE)
@@ -105,7 +106,8 @@ plot(swissKrige[["predict"]], main="predicted rain")
 plot(swissBorder, add=TRUE)
 
 # now with box cox and provide a raster for prediction, no covariates
-\dontrun{
+
+if(interactive()  | Sys.info()['user'] =='patrick') {
 swissFit2 = likfitLgm(data=swissRain, 
 			formula=rain~1,
 			param=c(range=52000, nugget=0.1,shape=1, boxcox=0.5,
@@ -118,12 +120,13 @@ swissFit2 = likfitLgm(data=swissRain,
 myTrend2 = swissFit2$trend
 myParams2 = swissFit2$param
 dput(myParams2)
-}
+} else {
 myParams2=structure(c(5.1259476451533, 57230.2319794406, 0.878030061109591, 
 37.1176523248768, 7.37809931787162, 1, 0.5, 9.3502154358886), .Names = c("(Intercept)", 
 "range", "nugget", "anisoAngleDegrees", "anisoRatio", "shape", 
 "boxcox", "variance"))
 myTrend2=rain~1
+}
 
 swissRaster = raster(extent(swissBorder), nrows=25, ncols=40)
 

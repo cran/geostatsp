@@ -14,13 +14,15 @@ setClass('RMmodel',
 )
 
 
-setGeneric('RFsimulate', function(model,x, data=NULL, err.model=NULL, n=1, ...) 
+setGeneric('RFsimulate', function(
+        model,x, data=NULL, 
+        err.model=NULL, n=1, ...) 
 			standardGeneric("RFsimulate")
 )
 
 
 setMethod("RFsimulate", 
-		signature("RMmodel", "GridTopology"),
+		signature(model="RMmodel", x="GridTopology"),
 		function(model, x,  data = NULL, 
 		err.model=NULL, n = 1, ...)  {
 
@@ -62,7 +64,7 @@ res
 )
 
 setMethod("RFsimulate", 
-		signature("RMmodel", "SpatialPoints"),
+		signature(model="RMmodel", x="SpatialPoints"),
 		function(model, x, 	data = NULL, 
 				err.model=NULL, n = 1, ...)  {
 			
@@ -106,7 +108,7 @@ setMethod("RFsimulate",
 
 
 setMethod("RFsimulate", 
-		signature("numeric", "SpatialPoints"), 
+		signature(model="numeric", x="SpatialPoints"), 
 	function(model, x,  data = NULL, 
 		 err.model=NULL, n = 1, ...)  {
 
@@ -115,8 +117,12 @@ if (requireNamespace("RandomFields", quietly = TRUE)) {
 	if(!is.null(err.model))
 		err.model = RandomFields::RMnugget(var=err.model)
 	
-	theSim=callGeneric(model, x,  
-		data=data,	err.model= err.model, n=n  ,  ...)
+	theSim=callGeneric(
+      model, x,  data = NULL, 
+      err.model=NULL, n = 1, ...
+      )
+   #model, x,  
+#		data=data,	err.model= err.model, n=n  ,  ...)
 	if(class(theSim)%in%c('try-error', 'NULL')) {
 		warning("error in RandomFields")
 		theSim=as.data.frame(matrix(NA, length(x), n))
@@ -126,28 +132,39 @@ if (requireNamespace("RandomFields", quietly = TRUE)) {
 	names(theSim) = gsub("^variable1(\\.n)?","sim", names(theSim))
 	
 } else { #RandomFields not available
- 
-		theCov = matern(x, param=model)
+    model['nugget']=0
 		if(!is.null(data)) {
-			covd = matern(data, param=model)
-			covpreddata = matern(x, y=data, param=model)
-			if(!is.null(err.model))
-				diag(covd) = diag(covd) + err.model
-			Linv = solve(chol(covd))
-			xcov =  tcrossprod( covpreddata,Linv)
+      theCov = matern(x, param=model)
+			#covd = matern(data, param=model)
+			#if(!is.null(err.model))
+			#	diag(covd) = diag(covd) + err.model
+			#Linv = solve(chol(covd))
+      paramForData = model
+      if(!is.null(err.model))
+        paramForData['nugget']=as.numeric(err.model)
+      Linv = matern(data, param=paramForData, type='inverseCholesky')
+      covpreddata = matern(x, y=data, param=model)
+      xcov =  tcrossprod( covpreddata,Linv)
 			theCov  =theCov - tcrossprod(xcov)
-		}
-		theChol = chol(theCov)
-		theRandom = matrix(rnorm(n*nrow(theCov)), nrow=nrow(theCov), ncol=n)
+      theChol = chol(theCov)
+		} else {
+      theChol = matern(x, param=model, type='cholesky')
+    }
+		theRandom = matrix(rnorm(n*nrow(theChol)), nrow=nrow(theChol), ncol=n)
 		theSim = theChol %*% theRandom
 		if(!is.null(data)) {
 			theSim = theSim + xcov %*% 
 					(Linv %*% data.frame(data)[,1])	
 		}
 		theSim = as.data.frame(as.matrix(theSim))
+    names(theSim) = paste("sim", 1:n,sep="")
 	} # end no RandomFields	
-	
-	names(theSim) = paste("sim", 1:n, sep="")
+
+
+ 
+  if(n==1){
+    names(theSim) = gsub("1$", "", names(theSim)) 
+  }
 	
 	res = SpatialPointsDataFrame(SpatialPoints(x),
 			data=theSim,
@@ -158,7 +175,9 @@ if (requireNamespace("RandomFields", quietly = TRUE)) {
 	}
 )
 
-setMethod("RFsimulate", signature("numeric", "GridTopology"), 
+setMethod("RFsimulate", 
+    signature(model="numeric", 
+        x="GridTopology"), 
 	function(model, x, data = NULL, 
 				err.model=NULL, n = 1, ...)  {
 		if (requireNamespace("RandomFields", quietly = TRUE)) { 
@@ -184,18 +203,38 @@ setMethod("RFsimulate", signature("numeric", "GridTopology"),
 			if(n>1) {
 					res2 = brick(res2, nl=n)
 			}
-			theCov = matern(res2, param=model)
+
 			if(!is.null(data)) {
-				 covd = matern(data, param=model)
-				 covpreddata = matern(res2, y=data, param=model)
-				 if(!is.null(err.model))
-					 diag(covd) = diag(covd) + err.model
-				 Linv = solve(chol(covd))
+        theCov = matern(res2, param=model)
+        #covd = matern(data, param=model)
+        #if(!is.null(err.model))
+        #	diag(covd) = diag(covd) + err.model
+        #Linv = solve(chol(covd))
+        paramForData = model
+        if(!is.null(err.model))
+         theCov = matern(res2, param=model)
+         
+         paramForData = model
+         if(!is.null(err.model))
+           paramForData['nugget']=as.numeric(err.model)
+         Linv = matern(data, param=paramForData, type='inverseCholesky')
+         
+         
+				 #covd = matern(data, param=model)
+
+				 #if(!is.null(err.model))
+				# diag(covd) = diag(covd) + err.model
+				 #Linv = solve(chol(covd))
+         
+         covpreddata = matern(res2, y=data, param=model)
 				 xcov =  tcrossprod( covpreddata,Linv)
 				 theCov  =theCov - tcrossprod(xcov)
-			}
-			theChol = chol(theCov)
-			theRandom = matrix(rnorm(n*nrow(theCov)), nrow=nrow(theCov), 
+         theChol = chol(theCov)
+			} else {
+        theChol = matern(res2, param=model, type='cholesky')
+      }
+
+			theRandom = matrix(rnorm(n*nrow(theChol)), nrow=nrow(theChol), 
 							ncol=n)
 			theSim = crossprod(theChol , theRandom)
 			if(!is.null(data)) {
@@ -203,15 +242,87 @@ setMethod("RFsimulate", signature("numeric", "GridTopology"),
 							(Linv %*% data.frame(data)[,1])	
 			}
 			theSim = as.data.frame(as.matrix(theSim))
-			names(theSim) = paste("sim", 1:ncol(theSim),sep="")
+ 
+        names(theSim) = paste("sim", 1:ncol(theSim),sep="")
+ 
 		}
+    
+    if(n==1){
+      names(theSim) = gsub("1$", "", names(theSim)) 
+    }
+    
+    
 		res = SpatialGridDataFrame(x,theSim)
 			
 		res
 		}
 )
 			
-RFsimulate.Raster = function(
+setMethod("RFsimulate", 
+    signature("matrix", "Raster"),
+    function(model, x, data=NULL, 
+        err.model=NULL, n = nrow(model), ...)  {
+      
+      if(is.null(rownames(model)))
+        rownames(model) = paste("par", 1:nrow(model),sep="") 
+      Siter = round(seq(1,nrow(model), len=n))
+      
+      if(!is.null(data)) {
+        if(class(data)!= "SpatialPointsDataFrame")
+          warning("data should be a SpatialPointsDataFrame")
+        # check data variables
+        if(ncol(data) == 1) {
+          data = data[,rep(1,length(Siter))]
+          
+        } else if(ncol(data) > 1) {
+          # if there's more than one, assume we're interested in the first one
+          
+          if(ncol(data)!= nrow(model)){
+            warning("number of columnns in data should be either 1 or equal to number of rows of model")
+          }
+          data = data[,Siter]		
+        }
+      } else {
+        # do something so data[,D] doesn't break
+        data = NULL
+      }
+      if(!is.null(err.model)) {
+        if(is.numeric(err.model)){
+          if(length(err.model)==1) {
+            err.model = rep(err.model, length(Siter))
+          } else if(length(err.model)==nrow(model)){
+            err.model = err.model[Siter]
+          } else {
+            warning("number of values in err.model should be either 1 or equal to number of rows of model")
+          }
+        }
+      } else {
+        err.model= NULL
+      }
+      
+      model= model[Siter,]
+      result = NULL
+      
+      for(D in nrow(model):1) {
+        resultHere = 	callGeneric(
+            model[D,], 
+            x, data= data[,D], 
+            err.model[D], n=1,
+            ...)
+        result = brick( 
+            resultHere,result
+        )
+      }
+      
+      if(!is.null(rownames(model)))
+        names(result) = rownames(model)
+      result
+    }
+)
+
+setMethod("RFsimulate", 
+    signature(model="ANY", x="Raster"), 
+    function(
 		model, x,
 		data=NULL, 
 		err.model=NULL, n = 1, ...)  {
@@ -219,8 +330,10 @@ RFsimulate.Raster = function(
 		theproj = projection(x)
 		x = as(x, "GridTopology")
 		res = callGeneric( 
-				model, x,  
-				data=data, err.model=err.model, n=n  , ... 
+				model=model, x=x,  
+				data=data, 
+        err.model=err.model, 
+        n=n, ... 
 		)
 		res2 = raster(res)			
 		if(length(names(res))>2) {
@@ -234,6 +347,7 @@ RFsimulate.Raster = function(
 		
 		return(res2)
 }
+)
 
 
 RFsimulate.SPgrid	=	function(
@@ -243,12 +357,13 @@ RFsimulate.SPgrid	=	function(
 			xOrig = x
 			x= as(x, "GridTopology")
 
-			res2 = callGeneric( 
-					model, x,  
-					data=data,	
-					err.model= err.model, n=n  , ... 
-			)
-			
+#			res2 = callGeneric( 
+#					model, x,  
+#					data=data,	
+#					err.model= err.model, 
+#          n=n, ... 
+#			)
+			res2 = callGeneric()
 			if(!length(grep("DataFrame$", class(xOrig)))) {
 				xOrig = as(xOrig, paste(class(xOrig), "DataFrame",sep=""))
 			}
@@ -257,13 +372,6 @@ RFsimulate.SPgrid	=	function(
 			return(xOrig)
 }
 
-setMethod("RFsimulate", signature("numeric", "Raster"), 
-		RFsimulate.Raster
-)
-
-setMethod("RFsimulate", signature("RMmodel", "Raster"), 
-		RFsimulate.Raster
-)
 
 setMethod("RFsimulate", 
 		signature("numeric", "SpatialPixels"), 
@@ -282,11 +390,11 @@ setMethod("RFsimulate",
 			
 		model = as(model, "matrix")
 		
-		callGeneric( 
-				model, x, 
-				data=data,	err.model= err.model,
-				n=n  , ... 
-		)
+		callGeneric() 
+#				model, x, 
+#				data=data,	err.model= err.model,
+#				n=n  , ... 
+#		)
 	}
 )
 
@@ -339,7 +447,7 @@ setMethod("RFsimulate",
 
 
 	resHere = 	callGeneric(
-			model[D,], 
+			model=model[D,], 
 			x, data= data[,D], 
 			err.model= err.model[D], n=1,
 			...)
@@ -357,65 +465,4 @@ setMethod("RFsimulate",
 }
 )
 
-setMethod("RFsimulate", 
-		signature("matrix", "Raster"),
-		function(model, x, data=NULL, 
-				 err.model=NULL, n = nrow(model), ...)  {
-
-			 if(is.null(rownames(model)))
-				rownames(model) = paste("par", 1:nrow(model),sep="") 
-			Siter = round(seq(1,nrow(model), len=n))
-			
-			if(!is.null(data)) {
-				if(class(data)!= "SpatialPointsDataFrame")
-					warning("data should be a SpatialPointsDataFrame")
-				# check data variables
-				if(ncol(data) == 1) {
-					data = data[,rep(1,length(Siter))]
-					
-				} else if(ncol(data) > 1) {
-					# if there's more than one, assume we're interested in the first one
-					
-					if(ncol(data)!= nrow(model)){
-						warning("number of columnns in data should be either 1 or equal to number of rows of model")
-					}
-					data = data[,Siter]		
-				}
-			} else {
-				# do something so data[,D] doesn't break
-				data = NULL
-			}
-			if(!is.null(err.model)) {
-				if(is.numeric(err.model)){
-					if(length(err.model)==1) {
-						err.model = rep(err.model, length(Siter))
-					} else if(length(err.model)==nrow(model)){
-						err.model = err.model[Siter]
-					} else {
-						warning("number of values in err.model should be either 1 or equal to number of rows of model")
-					}
-				}
-			} else {
-				err.model= NULL
-			}
-			
-			model= model[Siter,]
-			result = NULL
-			
-			for(D in nrow(model):1) {
-				resultHere = 	callGeneric(
-						model[D,], 
-						x, data= data[,D], 
-						err.model[D], n=1,
-						...)
-				result = brick( 
-						resultHere,result
-				)
-			}
-			
-			if(!is.null(rownames(model)))
-				names(result) = rownames(model)
-			result
-		}
-)
 

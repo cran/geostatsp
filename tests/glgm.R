@@ -18,7 +18,8 @@ if(all(havePackages)) {
 		covariates=swissAltitude, family="gaussian", buffer=20000,
 		priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
 		control.mode=list(theta=c(1.9,0.15,2.6),restart=TRUE),
-		control.family=list(hyper=list(prec=list(prior="loggamma", param=c(.1, .1))))
+		control.family=list(hyper=list(prec=list(prior="loggamma", 
+                param=c(.1, .1))))
 )
 
 swissFit$parameters$summary
@@ -123,7 +124,10 @@ swissFit =  glgm(rain ~ elev + land,swissRain,  Ncell,
 )
 swissFit$parameters$summary
 
+}
 
+# these tests are time consuming, so only patrick will do them
+if(all(havePackages) & Sys.info()['user'] =='patrick') {
 
 data('loaloa')
 rcl = rbind(
@@ -156,7 +160,7 @@ elevHigh = reclassify(elevationLoa, c(-Inf, 0, 0))
 loaFit$par$summary
 
 png("loaFitted.png")
-plot(loaFit$raster[["predict.invlogit"]])
+plot(loaFit$raster[['predict.exp']])
 dev.off()
 
 # prior for observation standard deviation

@@ -3,16 +3,17 @@ data('swissRain')
 
 Ncores = c(1,2)[1+(.Platform$OS.type=='unix')]
 
-swissFit = lgm(data=swissRain, formula=rain~ SRTM_1km,
-		grid=150, covariates=swissAltitude,
-		shape=1,  fixShape=TRUE, 
+swissFit = lgm(data=swissRain, 
+    formula=rain~ SRTM_1km,
+		grid=20, covariates=swissAltitude,
+		shape=2,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE,reml=TRUE,
-		param=c(anisoAngleDegrees=37,anisoRatio=10))
+		param=c(anisoAngleDegrees=37,anisoRatio=10,nugget=0.5))
 
 
 x=profLlgm(swissFit, mc.cores=Ncores,
-		anisoAngleDegrees=seq(30, 43 , len=12)
+		anisoAngleDegrees=seq(30, 43 , len=6)
 )
 
 
@@ -57,6 +58,8 @@ lines(x[[1]],x[[2]])
 
 dev.off()
 
+
+if(interactive()  | Sys.info()['user'] =='patrick') {
 x2d=profLlgm(swissFit, mc.cores=Ncores,
 		anisoAngleDegrees=seq(30, 43 , len=6),
 		anisoRatio = exp(seq(log(3.5),log(18),len=8))
@@ -74,12 +77,11 @@ thisV = swissInf$information[
 thisMean= c(x2d$MLE["anisoAngleDegrees"],
 		log(x2d$MLE['anisoRatio']))
 
-haveEllipse = 'ellipse' %in% installed.packages()[,'Package']
-if(haveEllipse) {
-library('ellipse')
+
+if(requireNamespace("ellipse", quietly=TRUE)) {
 
 for(D in x2d$prob[x2d$prob>0&x2d$prob<1]) {
-	thisE = ellipse(thisV, centre=thisMean,
+	thisE = ellipse::ellipse(thisV, centre=thisMean,
 			level=D)
 	thisE = cbind(thisE,
 			anisoRatio = exp(thisE[,"log(anisoRatio)"]))
@@ -94,13 +96,10 @@ for(D in x2d$prob[x2d$prob>0&x2d$prob<1]) {
 points(x2d$MLE[1],x2d$MLE[2],pch=15) 
 
 
-if('mapmisc' %in% installed.packages()[,'Package']) {
-
-library('mapmisc')
-legendBreaks("topleft",x2d$prob,
+if(requireNamespace('mapmisc', quietly=TRUE)) {
+mapmisc::legendBreaks("topleft",x2d$prob,
 		col=x2d$col)
 }
 
-
-
 dev.off()
+}

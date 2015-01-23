@@ -9,10 +9,11 @@ swissRainR2 = brick(swissRainR[['alt']],
 		sqrt(swissRainR[['prec1']]),
 		anotherx)
 
-swissResR =  lgm( formula=layer ~ alt+ myvar, 
+swissResR =  lgm(
+    formula=layer ~ alt+ myvar, 
 		data=swissRainR2, shape=2,
-		oneminusar=seq(0.05, 0.1, len=6),
-		nugget =  seq(0.0,0.01,len=20),
+		oneminusar=seq(0.05, 0.1, len=4),
+		nugget =  seq(0.0,0.01,len=6),
 		adjustEdges=FALSE,
 		mc.cores=c(1,2)[1+(.Platform$OS.type=='unix')]
 )
@@ -20,10 +21,10 @@ swissResR =  lgm( formula=layer ~ alt+ myvar,
 swissResR$summary[c('oneminusar','range','propNugget',
 				grep("\\.betaHat$", rownames(swissResR$summary), value=TRUE)),]
 
-# profile likelihood plot
 
-# plot map of predicted values
-
+# with edge correction.  
+# time consuming, only run this if Patrick is checking
+if(Sys.info()['user'] =='patrick') {
 swissResR =  lgm( formula=layer ~ alt+ myvar,  
 		data=swissRainR2, shape=2,
 		oneminusar=seq(0.05, 0.1, len=3),
@@ -37,10 +38,7 @@ swissResR$summary[c('oneminusar','range','propNugget',
 
 # range in km
 swissResR$summary[ 'range' ,] * sqrt(mean(values(area(swissRainR))))/mean(res(swissRainR))
-
-# profile likelihood plot
-
-# plot map of predicted values
+}
 
 
 # a simulation

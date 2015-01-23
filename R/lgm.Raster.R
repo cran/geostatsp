@@ -1,15 +1,15 @@
-# 
-# setMethod("lgm", 
-# 		signature("formula", "data.frame", "Raster", "data.frame"), 
-lgm.Raster=	function(formula,data, grid,
+setMethod("lgm", 
+    signature("formula", "data.frame", "Raster", "data.frame"), 
+    function(formula,
+        data, grid,
 				covariates=NULL,
                   shape=1,boxcox=1,nugget=0,
 				  expPred=FALSE, nuggetInPrediction=TRUE,
 				  reml = TRUE,
 				  mc.cores=1,		
 				  oneminusar=seq(0.01, 0.4,len=4), 
-                  range=NULL,  
-                  ...) {
+          range=NULL,  
+          ...) {
 
 	Xmat = model.matrix(formula, data)		  
 
@@ -125,11 +125,5 @@ lgm.Raster=	function(formula,data, grid,
   
   return(thesummary)
 }
-
-
-setMethod("lgm", 
-		signature("formula", "data.frame", "Raster", "data.frame"), 
-		lgm.Raster)
-
-
+)
 

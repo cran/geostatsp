@@ -1,0 +1,19 @@
+citHeader("To cite geostatsp in publications use:")
+
+citEntry(entry = "Article",
+  title        = "Model-Based Geostatistics the Easy Way",
+  author       = personList(as.person("Patrick E. Brown")),
+  journal      = "Journal of Statistical Software",
+  year         = "2015",
+  volume       = "63",
+  number       = "12",
+  pages        = "1--24",
+  url          = "http://www.jstatsoft.org/v63/i12/",
+
+  textVersion  =
+  paste("Patrick E. Brown (2015).",
+        "Model-Based Geostatistics the Easy Way.",
+        "Journal of Statistical Software, 63(12), 1-24.",
+        "URL http://www.jstatsoft.org/v63/i12/.")
+)
+

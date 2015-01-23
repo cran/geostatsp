@@ -27,14 +27,17 @@ informationLgm = function(fit, ...) {
 	
 	
 	oneL = function(param, ...) {
-		param[parToLog] = exp(param[parToLog])
+#    parToExp = grep("^log\\(", names(param))
+#		param[parToExp] = exp(param[parToExp])
+#    names(param) = gsub("^log\\(|\\)$", "", names(param))
+    param[parToLog] = exp(param[parToLog])
 		loglikLgm(param, ...)
 	}
 	
 	baseParam[parToLog] = log(baseParam[parToLog])
 	
 	# get rid of NA's
-	fit$data = fit$data[,]
+	fit$data = na.omit(fit$data)
 	
 	hess = numDeriv::hessian(oneL, baseParam,
 			data=fit$data,formula=fit$model$formula,
@@ -46,7 +49,12 @@ informationLgm = function(fit, ...) {
 			names(baseParam)[whichLogged], ")",sep="")
 	
 	dimnames(hess) = list(names(baseParam),names(baseParam))
-	infmat = solve(hess)*2
+	infmat = try(solve(hess), silent=TRUE)
+  if(class(infmat)=='try-error') {
+#    stuff <<- fit
+    return(list(summary=fit$summary,information=NULL, error=infmat))
+  } 
+    infmat = infmat*2
 	
 	pvec = grep("^ci([[:digit:]]|\\.)+$", colnames(fit$summary),
 			value=TRUE)

@@ -5,15 +5,12 @@
 \alias{lgm,NULL,ANY,ANY,ANY-method}
 \alias{lgm,numeric,ANY,ANY,ANY-method}
 \alias{lgm,character,ANY,ANY,ANY-method}
-\alias{lgm,formula,ANY,numeric,ANY-method}
-\alias{lgm,formula,Raster,Raster,ANY-method}
-\alias{lgm,formula,Raster,missing,missing-method}
-\alias{lgm,formula,Spatial,Raster,Raster-method}
-\alias{lgm,formula,Spatial,Raster,list-method}
-\alias{lgm,formula,Spatial,Raster,NULL-method}
+\alias{lgm,formula,Spatial,ANY,missing-method}
+\alias{lgm,formula,Raster,ANY,ANY-method}
+\alias{lgm,formula,Spatial,numeric,ANY-method}
+\alias{lgm,formula,Spatial,Raster,ANY-method}
 \alias{lgm,formula,Spatial,Raster,data.frame-method}
 \alias{lgm,formula,data.frame,Raster,data.frame-method}
-
 
 \title{
  Linear Geostatistical Models
@@ -24,7 +21,8 @@ Calculate MLE's of model parameters and perform spatial prediction. }
  
 
 \usage{
-\S4method{lgm}{NULL,ANY,ANY,ANY}(formula=NULL, data,
+\S4method{lgm}{NULL,ANY,ANY,ANY}(
+formula=NULL, data,
 		grid,
 		covariates=NULL, 
 		...) 
@@ -36,28 +34,24 @@ Calculate MLE's of model parameters and perform spatial prediction. }
 		grid,
 		covariates=NULL, 
 		...) 
-\S4method{lgm}{formula,ANY,numeric,ANY}(formula, data,
+\S4method{lgm}{formula,Spatial,ANY,missing}(formula, data,
+		grid=NULL,
+		covariates=NULL, 
+		...) 
+\S4method{lgm}{formula,Raster,ANY,ANY}(formula, data,
 		grid,
 		covariates=NULL, 
 		...) 
-\S4method{lgm}{formula,Raster,Raster,ANY}(formula, data,
-		grid,
-		covariates=NULL, buffer=0,
-		...) 
-\S4method{lgm}{formula,Raster,missing,missing}(
+\S4method{lgm}{formula,Raster,ANY,ANY}(
 		formula, data,
+		grid=NULL,
+		covariates=NULL, 
+		...) 
+\S4method{lgm}{formula,Spatial,numeric,ANY}(formula, data,
 		grid,
 		covariates=NULL, 
 		...) 
-\S4method{lgm}{formula,Spatial,Raster,Raster}(formula, data,
-		grid,
-		covariates=NULL, buffer=0,
-		...) 
-\S4method{lgm}{formula,Spatial,Raster,list}(formula, data,
-		grid,
-		covariates=NULL, buffer=0,
-		...) 
-\S4method{lgm}{formula,Spatial,Raster,NULL}(formula, data,
+\S4method{lgm}{formula,Spatial,Raster,ANY}(formula, data,
 		grid,
 		covariates=NULL, buffer=0,
 		...) 
@@ -151,7 +145,7 @@ output from the call to the  \code{\link[stats]{optim}} function.
 data("swissRain")
  
 swissRes =  lgm( formula="rain", 
-	data=swissRain, grid=20,
+	data=swissRain[1:60,], grid=20,
 	covariates=swissAltitude, boxcox=0.5, fixBoxcox=TRUE, 
 	shape=1, fixShape=TRUE,
 	aniso=FALSE, nugget=0, fixNugget=FALSE,

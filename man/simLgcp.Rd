@@ -50,7 +50,9 @@ values(myoffset) = round(seq(-1, 1, len=ncell(myoffset)))
 
 myCovariate = list(a=covA, b=covB, offsetFooBar = myoffset)
 
-myLgcp=simLgcp(mymodel, myCovariate, betas=c(a=-0.1, b=0.25), 
+myLgcp=simLgcp(param=mymodel, 
+	covariates=myCovariate, 
+	betas=c(a=-0.1, b=0.25), 
 	offset='offsetFooBar',
 	rasterTemplate=myraster)
 

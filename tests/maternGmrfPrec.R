@@ -1,7 +1,7 @@
 library('geostatsp')
 matrix(NNmat(7, 7)[,25], 7, 7)
 
-myr = raster(extent(0,600,0,300), nrows=30,ncols=60)
+myr = raster(extent(0,600,0,300), nrows=25,ncols=30)
 theNN = NNmat(myr)
 
 
@@ -93,8 +93,8 @@ if(!interactive()){
 }
 par(mfrow=c(7,2))
 
-mMid = matern(varRast[[1]],xyFromCell(varRast,midcell),param=params)
-mEdge = matern(varRast[[1]],xyFromCell(varRast,edgecell),param=params)
+mMid = matern(varRast[[1]],y=xyFromCell(varRast,midcell),param=params)
+mEdge = matern(varRast[[1]],y=xyFromCell(varRast,edgecell),param=params)
 plot(mMid)
 plot(mEdge)
 

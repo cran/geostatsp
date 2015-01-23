@@ -12,7 +12,7 @@ krigeLgm = function(
 	trend = formula
 	locations = grid
 	coordinates=data
-	
+	theVars = NULL
 	
 	haveBoxCox = any(names(param)=="boxcox")
 	if(haveBoxCox)
@@ -133,7 +133,7 @@ krigeLgm = function(
 	# look for factors in the model formula
 	if(class(trend)=="formula"){
  
-    trendFormula = update.formula(trend, junk~.)
+    trendFormula = update.formula(trend, junk ~ . )
     
     
 		covariatesForData = data@data
@@ -184,9 +184,11 @@ krigeLgm = function(
 		factorsInFormula = factorsInData = NULL
 		
 		# guess at the formula
-		trendFormula = as.formula(paste("junk ~",
-						paste(names(covariatesForData), collapse="+")
-				))
+		trendFormula = as.formula(paste(
+            "junk ~ ",
+						paste(c('1', names(covariatesForData)), collapse="+")
+				)
+    )
 	} # end trend not a formula
 	
 	# we know which variables factors
@@ -195,7 +197,9 @@ krigeLgm = function(
 
  	if(length(grep("^Raster|^list", class(covariates)))) { 
  	# if there's only variable in the model assign it's name to covariates
-	covariateNames = all.vars(update.formula(trendFormula, junk~.))[-1]
+	covariateNames = all.vars(
+      update.formula(trendFormula, junk~ . )
+  )[-1]
 	if(length(covariateNames)==1){
 		# so far only one variable
 		names(covariates)= covariateNames
@@ -441,10 +445,10 @@ krigeLgm = function(
 	} # end old code not called from LGM
 
 	
-	varData = geostatsp::matern(coordinates, param=param)
-	if(haveNugget) Matrix::diag(varData) = Matrix::diag(varData) + param["nugget"]
+  cholVarData = geostatsp::matern(coordinates, param=param, type='chol')
+#	if(haveNugget) Matrix::diag(varData) = Matrix::diag(varData) + param["nugget"]
 	
-	cholVarData = Matrix::chol(varData)
+#	cholVarData = Matrix::chol(varData)
 
 	cholVarDatInvData = Matrix::solve(cholVarData, observations)
 

@@ -16,7 +16,7 @@ matern(c(0, 0.001, 100000), param=param)
 myraster = raster(nrows=40,ncols=60,xmn=-3,xmx=3,ymn=-2,ymx=2)
 
 # plot correlation of each cell with the origin
-myMatern = matern(myraster, c(0,0), param=param)
+myMatern = matern(myraster, y=c(0,0), param=param)
 as.matrix(myMatern)[1:3,1:3]
 
 
@@ -35,22 +35,22 @@ dev.off()
 bob(myMatern)
 
 
-bob(matern(myraster, c(1,-0.5), 
+bob(matern(myraster, y=c(1,-0.5), 
 				param =	c(range=1, shape=1.5,	anisoRatio=2, anisoAngleDegrees=25)			
 						)
 )
 
-bob(matern(myraster, c(0,0), 
+bob(matern(myraster,y= c(0,0), 
 				param =	c(range=1, shape=25.1,	anisoRatio=2, anisoAngleDegrees=-25)			
 		)
 )
 
-bob(matern(myraster, c(0,0), 
+bob(matern(myraster,y= c(0,0), 
 				param =	c(range=0, shape=1.5,	anisoRatio=2, anisoAngleDegrees=-25)			
 		)
 )
 
-bob(matern(myraster, c(0,0), 
+bob(matern(myraster, y=c(0,0), 
 				param =	c(range=100000, shape=1.5,	anisoRatio=2, anisoAngleDegrees=-25)			
 		)
 )

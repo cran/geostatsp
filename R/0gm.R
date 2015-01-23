@@ -1,75 +1,14 @@
+gm.dataRaster = function(
+    formula,
+    data, grid=data,
+    covariates=NULL,
+    buffer=0){
 
-gm.nullFormula = 
-		function(formula=NULL, data, grid, 
-		covariates=NULL, ...) {
-	formula =  1 
-	callGeneric(
-			formula=formula, data=data,
-			grid=grid,
-			covariates=covariates, 
-			...
-	)	
-}
-
-gm.numericFormula = 
-		function(formula, data, grid, 
-				covariates=NULL, ...) {
-	
-formula = names(data)[formula]
-callGeneric(
-		formula=formula, data=data,
-		grid=grid,
-		covariates=covariates, 
-		...
-)	
-}
-
-gm.characterFormula = 
-		function(formula, data, grid, 
-				covariates=NULL, ...) {
-
-
-if(length(names(covariates)))
-	names(covariates) = gsub("[[:punct:]]|[[:space:]]","_", names(covariates))
-if(length(covariates) & !length(names(covariates))) 
-	names(covariates) = paste("c", 1:length(covariates),sep="")			
-
-if(length(formula)==1)
-	formula = unique(c(formula, names(covariates)))
-if(length(formula)==1)
-	formula = c(formula, '1')
-
-formula = paste(formula[1] , "~",
-		paste(formula[-1], collapse=" + ")
-)
-formulaAsFormula = as.formula(formula)
-
-callGeneric(
-		formula=formulaAsFormula, data=data,
-		grid=grid,
-		covariates=covariates, 
-		...)
-}		
-
-
-gm.gridNumeric = function(formula, data, grid, covariates=NULL, ...) {
-		
-
-	gridRaster = squareRaster(data, grid)
-	
-	callGeneric(
-			formula=formula, data=data,
-			grid = gridRaster,
-			covariates=covariates, 
-			...
-	)	
-}
-
-gm.dataRaster = function(formula,data,grid, covariates=NULL, buffer=0,...){
-
-	
-	cellsBoth = cellsBuffer(grid, buffer)			
-	cellsSmall = cellsBoth$small
+  if(abs(diff(res(grid)))>0.000001 )
+    warning("data is not on a square grid")
+  
+  cellsBoth = cellsBuffer(grid, buffer)			
+  cellsSmall = cellsBoth$small
 	
 	# find factors
 	
@@ -100,7 +39,7 @@ gm.dataRaster = function(formula,data,grid, covariates=NULL, buffer=0,...){
 	covFactors = intersect(Sfactor,names(covariates))
 	dataFactors = intersect(Sfactor,names(data))
 	
-	if(length(covariates)) {
+	if(length(names(covariates))) {
 		dataFactors = intersect(Sfactor, names(data))
 		
 		rmethod = rep("bilinear", length(names(covariates)))
@@ -147,25 +86,17 @@ for(D in intersect(Sfactor, names(covariatesDF))) {
 	
 }
 
-	
-	callGeneric(
-			formula=formula, data=dataDF,
-			grid = cellsSmall,
-			covariates=covariatesDF, 
-			buffer=buffer,
-			...
-	)
-	
-	
+  list(
+    data=dataDF,
+    grid=cellsSmall,
+    covariates=covariatesDF
+    )
 }
 
-gm.dataSpatial = 
-function(formula, data,  grid, 
+gm.dataSpatial = function(
+    formula, data,  grid, 
 		covariates=NULL, 
-		buffer=0,
-		...) {
-
- 
+		buffer=0) {
 
 # find factors
 	allterms = colnames(attributes(terms(formula))$factors)
@@ -196,11 +127,9 @@ function(formula, data,  grid,
 	if(length(cantFind))
 		warning("can't find variables", cantFind)
 	
-	
 	# the grid
 	cellsBoth = cellsBuffer(grid, buffer)			
 	cellsSmall = cellsBoth$small
-	
 
 	# 
 	if(length(names(covariates))) {
@@ -263,12 +192,9 @@ function(formula, data,  grid,
 	}
 
 
-	callGeneric(
-			formula=formula, data=data,
-			grid = cellsSmall,
-			covariates=covariatesDF, 
-			...
+list(
+		data=data,
+		grid = cellsSmall,
+		covariates=covariatesDF
 	)
-	
-	
 }

@@ -3,13 +3,12 @@
 \alias{modelRandomFields}
 \alias{RFsimulate}
 \alias{RFsimulate-methods}
-\alias{RFsimulate,numeric,Raster-method}
+\alias{RFsimulate,ANY,Raster-method}
 \alias{RFsimulate,numeric,SpatialGrid-method}
 \alias{RFsimulate,numeric,SpatialPixels-method}
 \alias{RFsimulate,numeric,SpatialPoints-method}
 \alias{RFsimulate,numeric,GridTopology-method}
 \alias{RFsimulate,RMmodel,GridTopology-method}
-\alias{RFsimulate,RMmodel,Raster-method}
 \alias{RFsimulate,RMmodel,SpatialPoints-method}
 \alias{RFsimulate,matrix,Raster-method} 
 \alias{RFsimulate,matrix,Spatial-method} 
@@ -27,7 +26,7 @@
 }
 
 \usage{
-\S4method{RFsimulate}{numeric,Raster}(model, x,	data=NULL,
+\S4method{RFsimulate}{ANY,Raster}(model, x,	data=NULL,
  err.model=NULL, n = 1, ...)
 \S4method{RFsimulate}{numeric,SpatialGrid}(model, x,data=NULL,
  err.model=NULL, n = 1, ...)
@@ -38,8 +37,6 @@ err.model=NULL, n = 1, ...)
 \S4method{RFsimulate}{numeric,GridTopology}(model, x, data=NULL, 
  err.model=NULL, n = 1, ...)
 \S4method{RFsimulate}{RMmodel,GridTopology}(model, x, data=NULL, 
- err.model=NULL, n = 1, ...)
-\S4method{RFsimulate}{RMmodel,Raster}(model, x, data=NULL, 
  err.model=NULL, n = 1, ...)
 \S4method{RFsimulate}{RMmodel,SpatialPoints}(model, x, data=NULL, 
  err.model=NULL, n = 1, ...)
@@ -112,7 +109,7 @@ where a Raster is returned.
 
 model <- c(var=5, range=1,shape=0.5)
 
-\dontrun{
+if(requireNamespace('RandomFields', quietly=TRUE)) {
 	RandomFields::plot(modelRandomFields(model))
 }
 
@@ -123,38 +120,14 @@ set.seed(0)
 
 simu <- RFsimulate(model, x=myraster, n=3)
 
-
 plot(simu[['sim2']])
 
+# same again with SpatialPixels
+myPoints = SpatialPixels(SpatialPoints(myraster))
 
-
-\dontrun{
-data("swissRain")
-swissRain$sqrtrain = sqrt(swissRain$rain)
-
-
-# estimate parameters
-swissRes =  lgm(data=swissRain, newdata=50, formula="sqrtrain",
-	covariates=swissAltitude,  
-	shape=1, fixShape=TRUE,
-	aniso=FALSE, nugget=1, fixNugget=TRUE,
-	nuggetInPrediction=FALSE
-	)
-
-
-# simulate from the random effect conditional on
-#   the observed data
-
-swissSim = RFsimulate(model=swissRes$param,
-	data=swissRes$data[,'resid'],
-	x=swissRes$predict,
-	n=3
-)
-
-# plot the simulated random effect
-plot(swissSim[['sim2']])
-plot(swissBorder, add=TRUE)
-}
+# pass an argument 'cPrintlevel' to RandomFields
+simuPoints <- RFsimulate(model, x=myPoints, n=3, cPrintlevel=8)
+spplot(simuPoints, "sim1")
 
 }
 

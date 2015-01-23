@@ -1,40 +1,69 @@
 
-matern = function(x, y=NULL, param=c(range=1, variance=1, shape=1)) {
+matern = function(x, 
+    param=c(range=1, variance=1, shape=1), 
+    type=c('variance','cholesky','precision','inverseCholesky'),y=NULL) {
 	UseMethod("matern")
-	
 }
 
-matern.dist = function( x, y=NULL, param=c(range=1, variance=1, shape=1)) {
+matern.dist = function(x,
+    param=c(range=1, variance=1, shape=1),
+    type=c('variance','cholesky','precision','inverseCholesky'), y=NULL) {
 
+  type = gsub("iance$|esky$|ision", "", tolower(type)[1])    
+  type = c(var=1,chol=2,prec=3,inversechol=4)[type]    
+  
 	param=fillParam(param)
-	resultVec = matern(as.vector(x), param=param)
-	resultMat = matrix(0, attributes(x)$Size, 
-			attributes(x)$Size)
-	resultMat[lower.tri(resultMat)] = resultVec
-
-	result = new("dsyMatrix", 
-			Dim = dim(resultMat), uplo="L",
-			x=c(resultMat))
-	Matrix::diag(result) = attributes(resultVec)$param["variance"]
+  x = as.matrix(x)
+  cres = .C("matern", 
+      x=as.double(x), 
+      N=as.integer(ncol(x)),
+      result = as.double(rep(-99.9, prod(dim(x)))),
+      as.double(param["range"]), 
+      shape=as.double(param["shape"]),
+      as.double(param["variance"]),
+      as.double(param["nugget"]),
+      type=as.integer(type),
+      halfLogDet=as.double(-9.9))
+  
 	
-	if(attributes(resultVec)$zeros/length(resultVec)>0.5) {
-		result@x[result@x < result[1,1]*1e-06] = 0
-		result = as(result, "dsCMatrix")
-	}
-	
-	attributes(result)$param = attributes(resultVec)$param	
-	
-	result
+  if (type==2 | type==4){
+    result = as(
+        new("dtrMatrix", 
+            Dim = dim(x), 
+            uplo="L",
+            x=cres$result),
+        "Cholesky")
+    attributes(result)$logDetHalf = cres$halfLogDet	
+    attributes(result)$cholInfo = cres$type
+    
+  } else {
+    result = new("dsyMatrix", 
+        Dim = dim(x), 
+        uplo="L",
+        x=cres$result)
+  }
+  
+  attributes(result)$param = param	
+  result
 }
 
-matern.SpatialPointsDataFrame = function( x, y=NULL, param=c(range=1, variance=1, shape=1)) {
-	x = SpatialPoints(x)
-	matern(x=x, y=y, param=param)
+matern.SpatialPointsDataFrame = function(
+    x, 
+    param=c(range=1, variance=1, shape=1), 
+    type=c('variance','cholesky','precision','inverseCholesky'), y=NULL) {
+
+	matern(x=SpatialPoints(x), param=param, type=type, y=y)
 }
 
 
-matern.Raster = function( x, y=NULL, param=c(range=1, variance=1, shape=1))
- {
+matern.Raster = function(x, 
+    param=c(range=1, variance=1, shape=1),
+    type=c('variance','cholesky','precision','inverseCholesky'), 
+    y=NULL) {
+  
+  type = gsub("iance$|esky$|ision", "", tolower(type)[1])    
+  type = c(var=1,chol=2,prec=3,inversechol=4)[type]    
+
 	param = fillParam(param)
 	 if(is.null(y)) {
 		 y=x
@@ -65,32 +94,36 @@ matern.Raster = function( x, y=NULL, param=c(range=1, variance=1, shape=1))
 	if(Ny ==1) {
 		values(x) = resC$result		
 	} else {
-		x = matrix(resC$result, nrow=ncell(x), ncol=Ny)
 		if(symm){
-			if(resC$N / length(x) > 0.5) {
-				x[x < param["variance"]*1e-06] = 0
-				x = as(x, "dsCMatrix")
-			} else {
-			x = as(x, "dsyMatrix")
-			}
-		} else {
-			if(resC$N / length(x) > 0.5) {
-				# convert to sparse matrix
-				x[x < param["variance"]*1e-06] = 0
-				x = as(x, "dgCMatrix")
-			}
-		}
-	} 
-	attributes(x)$param = param	 
+      x = new("dsyMatrix", 
+          Dim = as.integer(rep(Ny,2)), 
+          uplo="L",
+          x=resC$result)
+      if((type==2)){
+        x = chol(x)
+        attributes(x)$logDetHalf = sum(log(diag(x)))
+      }  # chol
+      if(type==3){
+        x = solve(x)
+      }
+		} else { # end symm
+      x = matrix(resC$result, nrow=ncell(x), ncol=Ny)
+    }
+	}
+	attributes(x)$param = param
 	x
-
 }
 
 
 
-matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, shape=1)
+matern.SpatialPoints = function(x,
+    param=c(range=1, variance=1, shape=1),
+    type=c('variance','cholesky','precision','inverseCholesky'), y=NULL
 		){
 
+  type = gsub("iance$|esky$|ision", "", tolower(type)[1])
+  type = c(var=1,chol=2,prec=3,inversechol=4)[type]    
+  
 	param = fillParam(param)		
 			
 	if(!is.null(y)) {	
@@ -125,37 +158,47 @@ matern.SpatialPoints = function(x, y=NULL,param=c(range=1, variance=1, shape=1)
 #					double  *range, double*shape, 
 #	double *variance,
 #				double *anisoRatio, double *anisoAngleRadians) {
-					
- 	resC = .C("maternAniso", 
-			as.double(x@coords[,1]),
+
+    resC = .C("maternAniso", 
+			  as.double(x@coords[,1]),
 				as.double(x@coords[,2]), 
 				N= as.integer(length(x)),
 				result=as.double(rep(-99.9, length(x)^2)),
 				as.double(param["range"]),
-				as.double(param["shape"]),
+				shape=as.double(param["shape"]),
 				as.double(param["variance"]),
 				as.double(param["anisoRatio"]),
-				as.double(param["anisoAngleRadians"])
+				as.double(param["anisoAngleRadians"]),
+        as.double(param["nugget"]),
+        type=as.integer(type),
+        halfLogDet=as.double(-9.9)
 			)
-	result = new("dsyMatrix", 
-				Dim = c(length(x), length(x)), uplo="L",
-						x=resC$result)
-	Matrix::diag(result) = param["variance"]
-				
-	if(resC$N/length(x)^2>0.25) {
-			result@x[result@x < result[1,1]*1e-06] = 0
-			result = as(result, "dsCMatrix")
-	}
-				
-				
+  if(type==2 | type==4){
+    result = as(
+        new("dtrMatrix", 
+        Dim = c(length(x), length(x)), 
+        uplo="L",
+        x=resC$result),
+    "Cholesky")
+      attributes(result)$logDetHalf = resC$halfLogDet
+      attributes(result)$cholInfo = resC$type
+  } else {
+    result = new("dsyMatrix", 
+      Dim = c(length(x), length(x)), 
+      uplo="L",
+      x=resC$result)
+  }
+  
+  } # end y null
+
 	attributes(result)$param = param		
-	}
 		
 	result
 }
 
-matern.default = function( x, y=NULL,param=c(range=1, variance=1, shape=1))
-{
+matern.default = function(x, 
+    param=c(range=1, variance=1, shape=1),
+    type=c('variance','cholesky','precision','inverseCholesky'), y=NULL) {
 	# x is distances (matrix or vector), y is ignored	
 	names(param) = gsub("^var$", "variance", names(param))
 	
@@ -170,46 +213,22 @@ matern.default = function( x, y=NULL,param=c(range=1, variance=1, shape=1))
 		x = as.matrix(x)	
 #	void matern(double *distance, long *N,
 #					double *range, double *shape, double *variance) {
-	resultFull = .C("matern", as.double(x), as.integer(length(x)),
-			as.double(param["range"]), as.double(param["shape"]),
-			as.double(param["variance"]))
-	result = resultFull[[1]]
+	resultFull = .C("matern", 
+      as.double(x), 
+      as.integer(length(x)),
+      result= as.double(rep(-99.9, length(x))),
+			as.double(param["range"]), 
+      as.double(param["shape"]),
+			as.double(param["variance"]),
+      as.double(0), # nugget
+      type=as.integer(0),
+      halfLogDet=as.double(-9.9)
+  )
+	result = resultFull$result
 	if(is.matrix(x)) 
 		result = matrix(result, ncol=ncol(x), nrow=nrow(x))
 	
 	attributes(result)$param = param
-	attributes(result)$zeros = resultFull[[2]]
 	
 	result
-	
 }
-
-
-
-oldmatern = function( x, param=c(range=1, variance=1, shape=1))
-{
-	# R code instead of C
-	# x is distances (matrix or vector), y is ignored, assume isotropic	
-	param = fillParam(param)
-	
-	if(is.data.frame(x))
-		x = as.matrix(x)	
-	# do this bit in C?
-	xscale = abs(x)*(sqrt(8*param["shape"])/ param["range"])
-	result = ( param["variance"]/(gamma(param["shape"])* 2^(param["shape"]-1)  ) ) * 
-			( xscale^param["shape"] *
-				besselK(xscale , param["shape"]) )
-	result[xscale==0] = 
-			param["variance"] 
-	result[xscale==Inf] = 0
-	
-	
-	
-	attributes(result)$param = param
-	attributes(result)$xscale = (sqrt(8*param["shape"])/ param["range"])
-	attributes(result)$varscale =  param["variance"]/(gamma(param["shape"])* 
-					2^(param["shape"]-1)  )
-	result
-	
-}
-

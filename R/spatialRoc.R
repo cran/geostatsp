@@ -152,34 +152,38 @@ spatialRoc = function(fit,
 			naboveP = !aboveP
 			
 			freqMat = abind::abind(cbind(
-							fp = apply(aboveP * x[,belowCols], 2, sum,na.rm=TRUE), 
-							tp = apply(aboveP * x[,aboveCols],2,sum,na.rm=TRUE),
-							fn = apply(naboveP * x[,aboveCols],2,sum,na.rm=TRUE),	
-							tn = apply(naboveP * x[,belowCols],2,sum,na.rm=TRUE)	
+							fp = apply(aboveP * x[,belowCols,drop=FALSE], 2, sum,na.rm=TRUE), 
+							tp = apply(aboveP * x[,aboveCols,drop=FALSE],2,sum,na.rm=TRUE),
+							fn = apply(naboveP * x[,aboveCols,drop=FALSE],2,sum,na.rm=TRUE),	
+							tn = apply(naboveP * x[,belowCols,drop=FALSE],2,sum,na.rm=TRUE)	
 					), freqMat, along=3)
 		}
-		
+
+    
 		resD=
 				abind::abind(
-						sens = t(freqMat[, 'tp', ] / (freqMat[,'tp',] + freqMat[,'fn',])),
-						onemspec = t(1-freqMat[, 'tn', ] / (freqMat[,'fp',] + freqMat[,'tn',])),
-						along=3)
-		dimnames(resD)[[1]]=as.character(prob)
-		dimnames(resD)[[2]] = paste("exc", rr, sep='')
+						sens = (freqMat[, 'tp', ,drop=FALSE] / 
+                    (freqMat[,'tp',,drop=FALSE] + freqMat[,'fn',,drop=FALSE])),
+						onemspec = (1-freqMat[, 'tn', ,drop=FALSE] / 
+                    (freqMat[,'fp',,drop=FALSE] + freqMat[,'tn',,drop=FALSE])),
+						along=4)
+
+    dimnames(resD)[[3]]=as.character(prob)
+		dimnames(resD)[[1]] = paste("exc", rr, sep='')
 		
 		result = abind::abind(result, resD, along=length(dim(resD))+1)
 		
 	} # end loop through fits
-	if(length(fit)>1) {
 		dimnames(result)[[length(dim(result))]] = 
 				paste('sim', 1:length(fit),sep='') 
-		result = abind::abind(result,
+    if(length(fit)>1) {
+      result = abind::abind(result,
 				mean=apply(result, seq(1,length(dim(result))-1), 
 						mean),
 				along=length(dim(result))
 		)	
-	} else {
-		result = drop(result)
 	}
-	result
+	result = drop(result)
+
+    result
 }

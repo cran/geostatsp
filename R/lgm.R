@@ -1,4 +1,5 @@
-setGeneric('lgm', function(formula,data,grid,covariates=NULL, ...) 
+setGeneric('lgm', function(
+        formula,data,grid=NULL,covariates=NULL, ...) 
 			standardGeneric("lgm")
 )
 
@@ -6,88 +7,115 @@ setGeneric('lgm', function(formula,data,grid,covariates=NULL, ...)
 # null formula
 setMethod("lgm", 
 		signature("NULL"), 
-		gm.nullFormula
-)
+    function(formula=NULL, data, grid, 
+        covariates=NULL, ...) {
+    formula =  1 
+  callGeneric(formula, data, grid, covariates, ...)
+  }
+  )
 
 
 setMethod("lgm", 
-		signature("numeric"),  
-		gm.numericFormula
+		signature("numeric"),
+    function(formula, data, grid, 
+        covariates=NULL, ...) {
+      
+      formula = names(data)[formula]
+      callGeneric(formula, data, grid, covariates, ...)
+    }
 )
 
 # change character to formula
 setMethod("lgm", 
 		signature("character"),  
-		gm.characterFormula
+		function(formula, data, grid, 
+        covariates=NULL, ...) {
+      
+      if(length(names(covariates)))
+        names(covariates) = gsub("[[:punct:]]|[[:space:]]","_", names(covariates))
+      if(length(covariates) & !length(names(covariates))) 
+        names(covariates) = paste("c", 1:length(covariates),sep="")			
+      
+      if(length(formula)==1)
+        formula = unique(c(formula, names(covariates)))
+      if(length(formula)==1)
+        formula = c(formula, '1')
+      
+      formula = paste(formula[1] , "~",
+          paste(formula[-1], collapse=" + ")
+      )
+      formula = as.formula(formula)
+      
+      callGeneric(formula, data, grid, covariates, ...)
+    }
+)
+
+
+# missing covariates, create empty list
+setMethod("lgm", 
+    signature("formula", "Spatial", "ANY", "missing"),
+    function(formula, data, grid=NULL, covariates=NULL, ...) {
+      callGeneric(formula, data, grid, 
+          covariates=list(), 
+          ...)
+    }
+)
+
+# data is a raster.  grid is ignored
+setMethod("lgm", 
+    signature("formula", "Raster", "ANY", "ANY"),
+    function(
+        formula, 
+        data,  
+        grid=NULL,
+        covariates=NULL, ...) {
+      
+      dataCov = gm.dataRaster(
+          formula, data,
+          grid=raster(data),
+          covariates=covariates,
+          buffer=0)
+      
+      callGeneric(formula, 
+          dataCov$data, dataCov$grid, 
+          dataCov$covariates, ...)
+    }
 )
 
 
 # numeric cells, create raster from data bounding box
 
 setMethod("lgm", 
-		signature("formula", "ANY", "numeric"),
-		gm.gridNumeric
+		signature("formula", "Spatial", "numeric", "ANY"),
+    function(formula, data, grid, covariates=NULL, ...) {
+      grid = squareRaster(data, grid)
+      callGeneric(formula, data, grid, covariates, ...)
+    }
 )
 
 
+setMethod("lgm",
+			signature("formula", "Spatial", "Raster", "ANY"),
+      function(formula, 
+          data, grid, 
+          covariates=NULL, 
+          buffer=0,...) {
 
-# extrat covariates for data, convert covariates to a stack
-setMethod("lgm", 
-		signature("formula", "Raster", "Raster"),
-		gm.dataRaster
+        dataCov = gm.dataSpatial(
+            formula, data, 
+            grid, covariates, buffer)
+
+        callGeneric(formula, 
+            dataCov$data, dataCov$grid, 
+            dataCov$covariates, ...)
+      }
 )
 
-#setMethod("lgm", 
-#		signature("formula", "Raster", "missing", "ANY"),
-# aggregate the covariates to data, merge covariates into data, call formula, Raster, missing, missing)
-#		gm.dataRaster
-#				
-#)
-
-setMethod("lgm", 
-		signature("formula", "Raster", "missing", "missing"),
-		function(formula, 
-				data,  
-				grid,
-				covariates=NULL, ...) {
-		gridHere = raster(data)
-		if(abs(diff(res(gridHere)))>0.000001 )
-			warning("data is not on a square grid")
-		dataSP = as(data, "SpatialPointsDataFrame")
-		dataDF = dataSP@data
-		
-		callGeneric(
-				formula=formula, data=dataDF,
-				grid=gridHere,
-				covariates=data.frame(), 
-				...
-		)	
-		}
-)
-
-
-setMethod("lgm", 
-			signature("formula", "Spatial", "Raster", "list"),
-			gm.dataSpatial
-	)
-
-	setMethod("lgm", 
-			signature("formula", "Spatial", "Raster", "NULL"),
-			gm.dataSpatial
-	)
-	
-	
-setMethod("lgm", 
-		signature("formula", "Spatial", "Raster", "Raster"),
-		gm.dataSpatial
-)
-
-
-
+# the real work
 setMethod("lgm", 
 		signature("formula", "Spatial", "Raster","data.frame"), 
 		function(formula, 
-				data,  
+				data,
 				grid,
 		covariates=NULL, 
 		shape=1, boxcox=1, nugget = 0, 
@@ -98,7 +126,7 @@ setMethod("lgm",
 		fixBoxcox=TRUE,
 		fixNugget = FALSE,
 		...){
-	
+  
 	locations = grid
 	
 	
@@ -143,9 +171,6 @@ setMethod("lgm",
  
 #	stuff <<- list(formula=formula, data=data, grid=grid, covariates=covariates,
 #			param=likRes$param,expPred=expPred,nuggetInPrediction=nuggetInPrediction)	
-
-
-
 
 
 # call krige	

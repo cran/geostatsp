@@ -1,7 +1,18 @@
-
+loglikGmrfGivenQobjFun = function(
+    propNugget,
+    ...
+    ) {
+      resFull = loglikGmrfGivenQ(
+          propNugget, 
+          ...
+              )
+       res = resFull['logL',1]
+       attributes(res)$full = resFull
+       res
+    }
 
 loglikGmrfGivenQ = function(
-		propNugget,
+	propNugget,
   Ry, Y, 
   Rx, X,
   Q, Qchol=NULL, 
@@ -199,16 +210,19 @@ loglikGmrfGivenQ = function(
 		  c(length(sebeta),dim(constHat)),		
 		  dimnames=c(
 				  list(rownames(betaHat)),
-				  dimnames(constHat)))
+				  dimnames(constHat))) 
+
   
   constHat2 = array(constHat, dim(sebeta)[c(2,3,1)],
 		  dimnames=dimnames(sebeta)[c(2,3,1)])
   constHat2 = aperm(constHat2, c(3,1,2))
   sebeta = sqrt(sebeta *constHat2)
-  names(sebeta)= paste('se',rep(names(betaHat),2), 
-                       names(sebeta),sep='.')
 
-  sebeta = apply(sebeta, 3, function(x) {res = as.vector(x);names(res)=outer(rownames(x),colnames(x),paste,sep='.se.');res})
+  sebeta = apply(sebeta, 3, function(x) {
+        res = as.vector(x)
+        names(res)=outer(rownames(x),colnames(x),paste,sep='.se.')
+        res}
+  )
   									   
 #  varbetahat = abind::abind(
 #    as.matrix(XprecXinv)/constHat[1],
@@ -243,7 +257,8 @@ loglikGmrfOneRange = function(
   shape=1,  boxcoxInterval=NULL,
   reml=TRUE,
   sumLogY = NULL,
-  adjustEdges=FALSE) {
+  adjustEdges=FALSE,
+  optimizer=FALSE) {
     
     Q =  maternGmrfPrec(NN,
                          param=c(shape=as.vector(shape),
@@ -272,6 +287,23 @@ loglikGmrfOneRange = function(
   
 thepar=attributes(Q)$param
    
+  if(optimizer) { # use an optimizer
+
+    
+    res = optimize(
+        loglikGmrfGivenQobjFun,
+        lower=0,upper=100,
+        maximum=TRUE,
+    # arguments passed to loglikGmrfGivenQ
+        Ry=Ry, Y=as.matrix(Yvec), 
+        Rx=Rx, X=Xmat,
+        Q=Q, Qchol=Qchol, 
+        detQ=detQ,
+        boxcoxInterval = boxcoxInterval,
+        reml=reml, sumLogY=sumLogY
+        )
+    res = attributes(res$objective)$full
+  } else { # evaluate for a sequence of propNugget
   if(length(propNugget)==1) {
     
     argList$propNugget=propNugget
@@ -292,8 +324,6 @@ thepar=attributes(Q)$param
 }	  
 
 
-
-
 res = abind::abind(res, 
 		oneminusar=array(oneminusar, dim=dim(res)[-1]), 
 		range = array(thepar$theo['range'],dim=dim(res)[-1]), 
@@ -303,50 +333,12 @@ res = abind::abind(res,
 
 res = drop(res)
 
+}
 attributes(res)$Qinfo = thepar
 
 res
 
 }
-
-#  for(D in c("theo", "optimal")#,"optimalSameShape",
-	if(F
-#		  "optimalInverse", "optimalInverseSameShape",
-#		  "optimalInverseSameRange", 'optimalWithNugget',
-#		  'optimalInverseShape', 'optimalShape')
-  ) {
-	  
-  
-	newres = rbind(range=
-					thepar[[D]]['range'],
-			shape=thepar[[D]]['shape'],
-			sigmasq.ml = res['xisq.ml',] * 
-					thepar[[D]]['variance'],
-			sigmasq.reml = res['xisq.reml',] * 
-					thepar[[D]]['variance']
-	)
-
-	rownames(newres) = paste(rownames(newres),
-			D, sep="_")	
-	  
-	res = rbind(res, newres)
-	  
-  }
-  
-if(F){	res = rbind(res,
-		  tausq.ml_optimalWithNugget = res['tausq.ml',] + 
-				  thepar$optimalWithNugget['nugget'],
-		  tausq.reml_optimalWithNugget = 
-				  res['tausq.reml',] + 
-				  thepar$optimalWithNugget['nugget']
-		  )
-  
-	rownames(res) = gsub("_theo$", "", 
-			rownames(res))		  
-		  
-}
-
-
 
 
 loglikGmrf = function(
@@ -355,6 +347,7 @@ loglikGmrf = function(
   shape=1, boxcox=1,
   reml=TRUE,
   adjustEdges=FALSE,
+  optimizer=FALSE,
   mc.cores=1) {
   	
 	if(length(boxcox)>1) {
@@ -381,7 +374,8 @@ loglikGmrf = function(
                  shape=shape,
                  adjustEdges=adjustEdges,
 		 boxcoxInterval=boxcoxInterval, sumLogY=sumLogY,
-		 reml=reml
+		 reml=reml,
+     optimizer=optimizer
   )
   
   if(mc.cores>1) {
@@ -488,6 +482,6 @@ summaryGmrfFit.matrix = function(x,npar=1) {
   }
   result = abind::abind(result[[1]], result[[2]], along=3)
   dimnames(result)[[3]] = someL
-  return(result)		
+  return(result)
 }
 

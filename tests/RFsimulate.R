@@ -11,46 +11,51 @@ myraster = raster(nrows=20,ncols=20,xmn=100,ymn=100,xmx=110,ymx=110,
 		crs="+init=epsg:2081")
 }
 
-for(Dn in c(1,3)) {
-	set.seed(0) 
-	simu <- RFsimulate(model, x=myraster, n=Dn)
-	set.seed(0) 
-	simu2 <- RFsimulate(model, x=as(myraster,"SpatialPixels"), n=Dn)
-	
-	print(proj4string(simu))
-	print(proj4string(simu2))
-	
-	par(mfrow=c(nlayers(simu),2))
-	for(D in 1:nlayers(simu)) {
-		plot(simu[[D]])
-		plot(raster(simu2,layer=D))
-	}
-}
-
 simu = RFsimulate(rbind(a=model, b=model+0.1), 
 		x=myraster, n=3
 		)
 
-		simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
+simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
 				x=as(myraster,"SpatialPoints")[
 						sample(ncell(myraster), 12)
 						,]
-		)
-		simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
+)
+
+simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
 		x=as(myraster,"SpatialPixels")
 		)
+
 simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
 				x=as(myraster,"SpatialGrid")
 		)
 		
-		
-		par(mfrow=c(nlayers(simu),2))
-		for(D in 1:nlayers(simu)) {
+par(mfrow=c(length(names(simu2)),2))
+for(D in 1:length(names(simu2))) {
 			plot(simu[[D]])
 			plot(raster(simu2,layer=D))
-		}
-		
-		
+    }
+
+
+if(interactive()  | Sys.info()['user'] =='patrick') {
+
+  for(Dn in c(1,3)) {
+    set.seed(0) 
+    simu <- RFsimulate(model, x=myraster, n=Dn)
+    set.seed(0) 
+    simu2 <- RFsimulate(model, x=as(myraster,"SpatialPixels"), n=Dn)
+    
+    print(proj4string(simu))
+    print(proj4string(simu2))
+    
+    par(mfrow=c(nlayers(simu),2))
+    for(D in 1:nlayers(simu)) {
+      plot(simu[[D]])
+      plot(raster(simu2,layer=D))
+    }
+  }
+  
+  
+  
 data("swissRain")
 swissRain$sqrtrain = sqrt(swissRain$rain)
 
@@ -154,3 +159,4 @@ swissLocation = xyFromCell(swissSim, swissLocation)
 plot(swissRes$predict[["predict"]])
 plot(swissBorder, add=TRUE)
 points(swissLocation)
+}

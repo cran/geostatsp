@@ -83,7 +83,7 @@ maternGmrfPrec.dsCMatrix = function(N,
 			}
 		}
 	}
-	
+	param['nugget']=0
 
 	if(!any(names(param)=='cellSize'))
 		param['cellSize']=1
@@ -679,17 +679,9 @@ paramInfo$empirical$optimalShape =
  		
 		paramForM = paramInfo[[adjustEdges]]
 
-		f1=function() {		
-		covMat = matern(outerCoordsCartesian,
-				param= paramForM)
-		
-		if(any(names(paramForM)=='nugget'))
-			diag(covMat) = diag(covMat) + paramForM['nugget']
-		covMatInv = Matrix::solve(covMat)
-		covMatInv	
-	}
-	
-	f2 = function()	{
+    covMatInv = matern(outerCoordsCartesian,
+				param= paramForM,type='precision')
+
 		InnerPrecision = theNNmat[innerCells, innerCells]
 			
 			#A = x[allCells,-allCells]
@@ -705,20 +697,7 @@ paramInfo$empirical$optimalShape =
 
 		AQinvA = forceSymmetric(crossprod(Aic,Aic))
 
-		AQinvA
-		}
-	if(FALSE){
-		j1 <- mcparallel(f1())
-		j2 <- mcparallel(f2())
-# wait for both jobs to finish and collect all results
-		res <- mccollect(list(j1, j2))
-		covMatInv = res[[1]]
-		AQinvA = res[[2]]		
-	} else {
-		covMatInv = f1()
-		AQinvA = f2()
-	}	
-		precOuter = forceSymmetric(covMatInv + AQinvA)
+    precOuter = forceSymmetric(covMatInv + AQinvA)
 
 		theNNmat[outerCells,outerCells] = precOuter
 		theNNmat = forceSymmetric(theNNmat)

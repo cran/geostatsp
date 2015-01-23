@@ -86,7 +86,8 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 	data("nn32")
 	# precision matrix without adjusting for edge effects
 	precMat =maternGmrfPrec(nn32, param=params) 
-\dontrun{
+	
+	if(interactive() | Sys.info()['user'] =='patrick') {	
 	# and with the adjustment
 	precMatCorr =maternGmrfPrec(nn32, param=params, adjustEdges=TRUE) 
 	
@@ -130,12 +131,8 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 
 
 	# construct matern variance matrix
-	Nx = attributes(precMat)$Nx
-	Ny = attributes(precMat)$Ny
-	cellSize = params["cellSize"]
 
-	myraster = raster(nrows=Ny, ncols=Nx,
-		xmn=0,ymn=0, xmx=Nx*cellSize, ymx=Ny*cellSize)
+	myraster = attributes(precMat)$raster
 	covMatMatern = matern(myraster, param=params)
  
  	prodUncor = covMatMatern \%*\% precMat

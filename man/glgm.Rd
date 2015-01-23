@@ -7,10 +7,7 @@
 \alias{glgm,character,ANY,ANY,ANY-method}
 \alias{glgm,formula,ANY,numeric,ANY-method}
 \alias{glgm,formula,Raster,Raster,ANY-method}
-\alias{glgm,formula,Spatial,Raster,Raster-method}
-\alias{glgm,formula,Spatial,Raster,list-method}
-\alias{glgm,formula,Spatial,Raster,NULL-method}
-\alias{glgm,formula,Spatial,Raster,data.frame-method}
+\alias{glgm,formula,Spatial,Raster,ANY-method}
 \alias{glgm,formula,data.frame,Raster,data.frame-method}
 
 
@@ -39,16 +36,12 @@ using \code{inla} }
 \S4method{glgm}{formula,Raster,Raster,ANY}(formula, data,  grid, 
 				covariates=NULL, buffer=0,
 				...)
-\S4method{glgm}{formula,Spatial,Raster,list}(formula, data,  grid, 
+\S4method{glgm}{formula,Spatial,Raster,ANY}(
+	formula, data,  grid, 
 				covariates=NULL, buffer=0,
 				...)
-\S4method{glgm}{formula,Spatial,Raster,NULL}(formula, data,  grid, 
-				covariates=NULL, buffer=0,
-				...)
-\S4method{glgm}{formula,Spatial,Raster,Raster}(formula, data,  grid, 
-				covariates=NULL, buffer=0,
-				...)
-\S4method{glgm}{formula,data.frame,Raster,data.frame}(formula, data,  grid, 
+\S4method{glgm}{formula,data.frame,Raster,data.frame}(
+	formula, data,  grid, 
 				covariates=NULL, 
 				shape=1, priorCI=NULL, 
 				mesh=FALSE,...) 
@@ -126,23 +119,18 @@ swissFit =  glgm(formula="lograin", data=swissRain, grid=30,
 	)
 
 
-
-
-
 if(!is.null(swissFit$parameters) ) {
 	
-	if( require('geostatsp', quietly=TRUE)){
-		swissExc = excProb(swissFit, threshold=log(25))
+	swissExc = excProb(swissFit, threshold=log(25))
 
-		swissExcRE = excProb(swissFit$inla$marginals.random$space, 
-			log(1.5),template=swissFit$raster)
-	}
+	swissExcRE = excProb(swissFit$inla$marginals.random$space, 
+		log(1.5),template=swissFit$raster)
 
 	swissFit$parameters$summary
 
 	plot(swissFit$parameters$range$prior,type="l",
 		ylim=c(0,max(swissFit$parameters$range$posterior[,"y"])),
-		xlim=c(0, swissFit$parameters$range$userPriorCI[2]*1.1))
+		xlim=c(0, 500000))
 	abline(v=swissFit$parameters$range$userPriorCI,col="yellow")
 	abline(v=swissFit$parameters$range$priorCI,col="orange")
 	lines(swissFit$parameters$range$posterior, col='blue')
@@ -150,7 +138,8 @@ if(!is.null(swissFit$parameters) ) {
 
 }
 
-\dontrun{
+
+if(interactive()  | Sys.info()['user'] =='patrick') {
 	plot(swissFit$raster[["predict.exp"]]) 
 
 	mycol = c("green","yellow","orange","red")
@@ -195,7 +184,8 @@ text(thenames, labels=thenames$name,pos=3,
 }
 
 # a log-Gaussian Cox process example
-\dontrun{
+
+if(interactive()  | Sys.info()['user'] =='patrick') {
 myPoints = SpatialPoints(cbind(rbeta(100,2,2), rbeta(100,3,4)))
 myPoints@bbox = cbind(c(0,0), c(1,1))
 
@@ -203,7 +193,7 @@ mycov = raster(matrix(rbinom(100, 1, 0.5), 10, 10), 0, 1, 0, 1)
 names(mycov)="x1"
 
 
-res = lgcp(data=myPoints, cells=20, covariates=mycov,
+res = lgcp(data=myPoints, grid=20, covariates=mycov,
 	formula=~factor(x1),
 	priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
 )

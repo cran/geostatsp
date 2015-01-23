@@ -34,17 +34,22 @@ loglikLgm = function(param,
 			if(length(theNA))
 				coordinates = coordinates[-theNA,]
 			
-		}  else if(	class(coordinates) == "dist")	{
-			if(length(theNA))				
-				coordinates = as.dist(
+		} else if(	class(coordinates) == "dist")	{
+			if(length(theNA)) {
+				coordinates = 
 					as.matrix(coordinates)[-theNA,-theNA]
-				)
-			} else {
-				warning("coordinates must be a SpatialPoints object\n or a dist object.  It's being assumed \n it's a matrix of coordinates")
+      } else {
+        coordinates= as.matrix(coordinates)
+      } 
+    } else if(class(coordinates) == "matrix")	{
+      if(length(theNA)) {
+        coordinates = coordinates[-theNA,-theNA]
+      }
+    } else {
+				warning("coordinates must be a SpatialPoints object\n or matrix a dist object.  It's being assumed \n it's a matrix of coordinates")
 				coordinates = SpatialPoints(coordinates)
 				if(length(theNA))				
 					coordinates = coordinates[-theNA,]
-				
 		}
 
 		# sort out the parameters
@@ -105,92 +110,111 @@ loglikLgm = function(param,
 		} # end have box cox
 		
 		
-		# variance matrix
-		covMat = geostatsp::matern(x=coordinates, param=param)	
+    obsCov = cbind(observations, covariates)
+    if(FALSE){ # old code
+    fromC = maternCholSolve(param, obsCov, coordinates)
 
-		if(haveNugget)
-			Matrix::diag(covMat) = Matrix::diag(covMat) + param["nugget"]
-
-		# matrix operations
-		cholCovMat = Matrix::chol(covMat)
-
-		
-		# cholCovMat %*% t(cholCovMat) = covMat
-		# cholCovInvX = cholCovMat^{-1} %*% covariates
-		cholCovInvX = Matrix::solve(cholCovMat, covariates)
-		# cholCovInvY = cholCovMat^{-1} %*% observations
-		cholCovInvY = Matrix::solve(cholCovMat, observations)
-		
-		cholCovInvXcross = Matrix::crossprod(cholCovInvX)
-		cholCovInvXcrossInv = Matrix::solve(cholCovInvXcross)
+    betaHat = fromC$betaHat
+    
+    useMl = c('ml', 'reml')[1+reml]
+    useVariance = c('estimatedVariance','fixedVariance')[1+haveVariance]
+    minusTwoLogLik = 
+        (fromC$minusTwoLogLik[useMl,useVariance] - twoLogJacobian)
+    varBetaHat = fromC$varBetaHat[,,useVariance, useMl]
+    totalVarHat = fromC$totalVarHat[useMl]
+    
+    if(haveVariance) {
+      varMle = fromC$varMle[useMl,]
+    } else {
+      varMle = param[colnames(fromC$varMle)]
+      param[c("variance","nugget")] = 
+          totalVarHat * param[c("variance","nugget")]
+    }
+    
+  # format the output
+  result = minusTwoLogLik
 	
-		
-		# beta hat = (D'V^{-1}D)^{-1}D'V^{-1}y
-		# V = L L', V^{-1} = t(L^(-1)) %*% L^(-1)
-		# beta hat = (D' Linv' Linv D)^{-1}D'Linv' L y
+} else {
+  
+  Nobs = nrow(obsCov)
+  Ncov = ncol(obsCov)-1
+  Nrep = 1
+  
+  paramFull = fillParam(param)
+  Ltype = c(ml=0, reml=1, mlFixed=2, remlFixed=3)
+  Ltype = reml + 2*haveVariance
 
-		# Covariates and likelihood
-	
-		betaHat = as.vector(
-        cholCovInvXcrossInv %*% 
-				Matrix::crossprod(cholCovInvX, cholCovInvY)
-    ) 
-		
-		resids = observations - as.vector(covariates %*% betaHat)
-		# sigsqhat = resids' %*% Vinv %*% residsx
-		#    =   resids' Linv' Linv resids
-		cholCovInvResid = Matrix::solve(cholCovMat, resids)
-		
-		totalSsq = as.vector(Matrix::crossprod(cholCovInvResid))
+  if(class(coordinates)=='matrix'){
+    xcoord = as.vector(coordinates)
+    ycoord = -99
+    aniso=FALSE
+  } else if(length(grep("^SpatialPoints", class(coordinates)))){
+    xcoord=coordinates@coords[,1] 
+    ycoord=coordinates@coords[,2]
+    aniso=TRUE
+  } else {
+    warning('coordinates should be SpatialPoints or matrix')
+    xcoord=ycoord=aniso=NULL
+  }
+  
+  resultC = .C("maternLogL",
+      xcoord=as.double(xcoord), 
+      ycoord=as.double(ycoord),
+      param=as.double(paramFull[
+              c('nugget','variance','range',
+                  'shape','anisoRatio', 'anisoAngleRadians')]),
+      aniso=as.integer(aniso),
+      obsCov = as.double(obsCov),
+      N= as.integer(c(Nobs,Nrep,Ncov)),
+      boxcox=as.double(-9.9),
+      boxcoxType=as.integer(0),
+      logL=as.double(rep(-9.9, Nrep+1)),
+      totalVarHat=as.double(rep(-9.9, Nrep)),
+      betaHat = as.double(rep(-9.9, Ncov)), 
+      varBetaHat = as.double(rep(-9.9, Ncov* Ncov)),
+      Ltype=as.integer(Ltype)
+  )
 
-		# if reml, use N-p in place of N
-		Nadj=length(observations) - reml*length(betaHat)
-		totalVarHat = totalSsq/Nadj
-		
-	if(!haveVariance) { # profile likelihood with optimal sigma
-			minusTwoLogLik = Nadj * log(2*pi) + 
-				Nadj * log(totalVarHat) +
-				2*Matrix::determinant(cholCovMat)$modulus +
-				Nadj - twoLogJacobian		
-			param[c("variance","nugget")] = 
-					totalVarHat * param[c("variance","nugget")]
-	} else { # a variance was supplied
-		# calculate likelihood with the variance supplied
-		# -2 log lik = n log(2pi) + log(|V|) + resid' Vinv resid
-		minusTwoLogLik = Nadj * log(2*pi) +
-				2*Matrix::determinant(cholCovMat)$modulus +
-				totalSsq - twoLogJacobian
-		totalVarHat = 1
-	}
-	if( reml ) {
-		minusTwoLogLik =  minusTwoLogLik + 
-			2*Matrix::determinant(cholCovInvXcross)$modulus
-	}
-	
-	# format the output
-	names(betaHat) = colnames(covariates)
-	varBetaHat = totalVarHat * as.matrix(cholCovInvXcrossInv) 
-  dimnames(varBetaHat) = list(names(betaHat), names(betaHat))
+  totalVarHat = resultC$totalVarHat
+  betaHat = resultC$betaHat
+  names(betaHat) = colnames(obsCov)[-1]
+  
+  varBetaHat = new("dsyMatrix", 
+      Dim = as.integer(c(Ncov, Ncov)), 
+      uplo="L",
+      x=resultC$varBetaHat)
+  dimnames(varBetaHat) = list(names(betaHat),names(betaHat))
+  varBetaHat = varBetaHat*totalVarHat
 
-	result = minusTwoLogLik
-	if(minustwotimes) {
-			names(result) = "minusTwoLogLik"
-	} else {
-			result = -0.5*result
+  
+  result = resultC$logL[Nrep+1]- twoLogJacobian
+      
+}
 
-			names(result)="logLik"
-	} 
-	if(reml)
-		names(result) = gsub("Lik$", "RestrictedLik", names(result))
-	
-	attributes(result)$param = param
-	attributes(result)$totalVarHat = totalVarHat
-	attributes(result)$betaHat = betaHat
-	attributes(result)$varBetaHat = varBetaHat
- 	attributes(result)$reml=reml
-	attributes(result)$resid = resids
+param[c("variance","nugget")] = 
+    totalVarHat * param[c("variance","nugget")]
 
-  result
+
+
+if(minustwotimes) {
+  names(result) = "minusTwoLogLik"
+} else {
+  result = -0.5*result
+  
+  names(result)="logLik"
+} 
+
+if(reml)
+  names(result) = gsub("Lik$", "RestrictedLik", names(result))
+
+attributes(result)$param = param
+attributes(result)$totalVarHat = totalVarHat
+attributes(result)$betaHat = betaHat
+attributes(result)$varBetaHat = varBetaHat
+attributes(result)$reml=reml
+
+  
+result
 }
 
  
@@ -295,7 +319,7 @@ likfitLgm = function(
 			warning("missing vlaues in data but unclear how to remove them from coordinates")
 		}
 	} else {
-		theRowNames = NULL
+		theRowNames = rownames(data.frame(coordinates))
 	}
 	
 	# if the model's isotropic, calculate distance matrix
@@ -425,7 +449,8 @@ if(any(names(param)=="boxcox") & !any(paramToEstimate=="boxcox")) {
 			optim=fromOptim, 
 			data = data.frame(
 					observations = observations,
-					resid=as.vector(attributes(fromLogLik)$resid)
+					resid=observations -
+              covariates %*% attributes(fromLogLik)$betaHat
 			)
 	)
 	rownames(result$data) = theRowNames
