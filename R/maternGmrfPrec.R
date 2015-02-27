@@ -679,8 +679,10 @@ paramInfo$empirical$optimalShape =
  		
 		paramForM = paramInfo[[adjustEdges]]
 
-    covMatInv = matern(outerCoordsCartesian,
-				param= paramForM,type='precision')
+    covMatInv = matern(
+        outerCoordsCartesian,
+				param= paramForM,
+        type='precision')
 
 		InnerPrecision = theNNmat[innerCells, innerCells]
 			
@@ -695,10 +697,13 @@ paramInfo$empirical$optimalShape =
 					solve(cholInnerPrec,A,system='P'),
 					system='L')
 
-		AQinvA = forceSymmetric(crossprod(Aic,Aic))
-
-    precOuter = forceSymmetric(covMatInv + AQinvA)
-
+    AQinvA = crossprod(Aic)
+    AQinvA = as(AQinvA, class(covMatInv))
+    
+    precOuter = covMatInv + AQinvA
+    precOuter = forceSymmetric(precOuter)
+    precOuter = as.matrix(precOuter)
+    
 		theNNmat[outerCells,outerCells] = precOuter
 		theNNmat = forceSymmetric(theNNmat)
 		} # end edge adjustment 

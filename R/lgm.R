@@ -106,8 +106,9 @@ setMethod("lgm",
             grid, covariates, buffer)
 
         callGeneric(formula, 
-            dataCov$data, dataCov$grid, 
-            dataCov$covariates, ...)
+            data=dataCov$data, 
+            grid=dataCov$grid, 
+            covariates=dataCov$covariates, ...)
       }
 )
 
@@ -144,7 +145,7 @@ setMethod("lgm",
 	Spar = c(shape=shape,nugget=nugget,range=NA,boxcox=boxcox)
 	
 	if(aniso) {
-		Spar = c(Spar, anisoAngleDegrees=NA,anisoRatio=NA)
+		Spar = c(Spar, anisoAngleRadians=NA,anisoRatio=NA)
 		paramToEstimate = c(paramToEstimate,
 				"anisoAngleDegrees","anisoRatio")		
 	}
@@ -152,10 +153,7 @@ setMethod("lgm",
 	Spar = Spar[!names(Spar) %in% names(param)]
 	param = c(param, Spar)
 	
-	
-	
-	
-	# to do: make sure factors in rasters are set up correctly
+# to do: make sure factors in rasters are set up correctly
 	# have baseline as first entry in cov@data@attributes,
 	# NA's for levels without data
 	# have most common level the baseline
@@ -169,9 +167,8 @@ setMethod("lgm",
 
  	likRes = do.call(likfitLgm, dots)
  
-#	stuff <<- list(formula=formula, data=data, grid=grid, covariates=covariates,
-#			param=likRes$param,expPred=expPred,nuggetInPrediction=nuggetInPrediction)	
 
+  
 
 # call krige	
 	krigeRes =  krigeLgm(
@@ -182,24 +179,28 @@ setMethod("lgm",
 			nuggetInPrediction=nuggetInPrediction
 			)
 			
-		#	data$resid = likRes$resid$resid
-#	likRes$data = data
-
-	data@data = cbind(data.frame(data), 
-			likRes$data[rownames(data.frame(data)),])
-	likRes$data = data
-		
 
 	res = c(predict=krigeRes, likRes)
-
-	
-	# add confidence intervals for covariance parameters
+#  stuff <<- res
+  
+  # add confidence intervals for covariance parameters
 	theInf=informationLgm(res)
 	res$varBetaHat = list(beta=res$varBetaHat)
 	names(res) = gsub("varBetaHat", "varParam", names(res))
-	res$summary = 	theInf$summary
 	res$varParam$information = theInf$information
 
+  
+  res$summary = 	theInf$summary
+  
+  if(is.na(res$summary ['anisoAngleDegrees','ci0.05']) &
+      !is.na(res$summary ['anisoAngleRadians','ci0.05']) ){
+    ciCols = grep("^ci0\\.[[:digit:]]+$", colnames(res$summary ))
+    res$summary ['anisoAngleDegrees',ciCols] =
+        (360/(2*pi))*res$summary ['anisoAngleRadians',ciCols]
+  }
+  
+  
+  
 	if(FALSE){
 	for(Dvar in names(covariates)) {
 		theLevels =levels(covariates[[Dvar]])[[1]]
@@ -215,13 +216,13 @@ setMethod("lgm",
 	}
 	}
 	# if range is very big, it's probably in metres, convert to km
-	if(res$summary['range','estimate']>1000) {
-		logicalCol = names(res$summary) == "Estimated"
-		res$summary["range",!logicalCol] = 
-				res$summary["range",!logicalCol] /1000
-		rownames(res$summary) = gsub("^range$", "range/1000", 
-				rownames(res$summary))
-	}
+  	if(res$summary['range','estimate']>1000) {
+  		logicalCol = names(res$summary) == "Estimated"
+  		res$summary["range",!logicalCol] = 
+  				res$summary["range",!logicalCol] /1000
+  		rownames(res$summary) = gsub("^range$", "range/1000", 
+  				rownames(res$summary))
+  	}
 	
 	return(res)
 }

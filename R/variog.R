@@ -26,11 +26,11 @@ variog.SpatialPointsDataFrame = function(geodata,formula, ...) {
 }
 
 
-variog.mc.env = function(geodata, formula, ...) {
-	UseMethod("variog.mc.env")
+variogMcEnv = function(geodata, formula, ...) {
+	UseMethod("variogMcEnv")
 }
 
-variog.mc.env.default = function(geodata, ...) {
+variogMcEnv.default = function(geodata, ...) {
 	if (requireNamespace("geoR", quietly = TRUE)) { 
 		result = geoR::variog.mc.env(geodata,...) 
 	} else {
@@ -39,7 +39,7 @@ variog.mc.env.default = function(geodata, ...) {
 	result
 }
 
-variog.mc.env.SpatialPointsDataFrame = function(geodata,formula, ...) {
+variogMcEnv.SpatialPointsDataFrame = function(geodata,formula, ...) {
 	
 	theResid = lm(formula, data=geodata@data)$resid
 	if (requireNamespace("geoR", quietly = TRUE)) { 

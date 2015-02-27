@@ -1,10 +1,11 @@
-profLlgm = function(fit,mc.cores=NULL, ...) {
+profLlgm = function(fit,mc.cores=1, ...) {
 	
 	dots = list(...)
-	varying = intersect(names(dots), names(fit$param))
+  fit$parameters = fillParam(fit$parameters)
+	varying = intersect(names(dots), names(fit$parameters))
 
 	nonLinearParams = c('boxcox','shape','nugget','variance',
-			'anisoAngleDegrees','anisoRatio','range')
+			'anisoAngleRadians','anisoAngleDegrees','anisoRatio','range')
 	
 	reEstimate = rownames(fit$summary)[
 			fit$summary[,"Estimated"]
@@ -14,77 +15,103 @@ profLlgm = function(fit,mc.cores=NULL, ...) {
 	reEstimate = gsub("range \\(km\\)", "range", reEstimate)
 	reEstimate = intersect(reEstimate, nonLinearParams)
 	reEstimate = reEstimate[!reEstimate %in% varying]
-	
-	parValues = do.call(expand.grid, dots[varying])
-	
-	baseParams = fit$param
+  reEstimate = gsub("/1000", "", reEstimate)
+  
+  
+	baseParams = fit$parameters
 	baseParams = baseParams[names(baseParams)%in%
 					nonLinearParams]
 	
 	baseParams=baseParams[!names(baseParams)%in% varying]
+  if(any(reEstimate=='variance')){
+    baseParams['nugget'] = baseParams['nugget'] / baseParams['variance']
+  }
 	baseParams=baseParams[names(baseParams) != 'variance']
 	
 	
-	
-	oneL = function(...){
-		res=geostatsp::likfitLgm(data=fit$data, 
-				formula=fit$model$formula,
-				param=c(..., 
-						baseParams),
-				paramToEstimate=reEstimate,
-				reml=fit$model$reml)
-		c(..., L = 	res$opt$val,
-				res$param[reEstimate])
-	}
-	
-	forCall = c(
-			as.list(parValues),
-			FUN=oneL,
-			SIMPLIFY=TRUE)
-	
-	if(!is.null(mc.cores)) {
-		resL = do.call(parallel::mcmapply,
-				c(forCall, mc.cores=mc.cores)
+  if(length(grep("^anisoAngle", varying))){
+    reEstimate = grep("^anisoAngle", reEstimate,value=TRUE,invert=TRUE)
+    baseParams = baseParams[
+        grep("^anisoAngle", names(baseParams),value=TRUE,invert=TRUE)
+    ]
+  } 
+  
+  parValues = do.call(expand.grid, dots[varying])
+  
+  parList = apply(parValues,1,list)
+  parList = lapply(parList, function(qq) c(unlist(qq), baseParams))
+  
+ 
+	if(mc.cores>1) {
+		resL = parallel::mcmapply(
+        likfitLgm, 
+        param=parList,
+        MoreArgs=list(
+        data=fit$data, 
+        formula=fit$model$formula,
+        paramToEstimate=reEstimate,
+        reml=fit$model$reml,
+        coordinates=fit$data),
+				mc.cores=mc.cores,
+        SIMPLIFY=FALSE
 		)
 	} else {
-		resL = do.call(mapply,forCall)
-	}
+    resL = mapply(
+        likfitLgm, 
+        param=parList,
+        MoreArgs=list(
+            data=fit$data, 
+            formula=fit$model$formula,
+            paramToEstimate=reEstimate,
+            reml=fit$model$reml,
+            coordinates=fit$data),
+        SIMPLIFY=FALSE
+    )
+  }
+  resL2 = lapply(resL, function(qq) qq$optim$logL)
+  resL = simplify2array(resL2)
 
-	
 	if(length(varying)==1) {
-		dots[[varying]] = c(
+    forNames =  c(
 				dots[[varying]],
 				fit$param[varying]
 		)
-		theorder = order(dots[[varying]])
-		L = c(resL["L",],fit$opt$val)[theorder]
-		dots[[varying]] = dots[[varying]][theorder]
-		
+		theorder = order(forNames)
+		L = c(
+        resL[grep("^m2logL",rownames(resL)),],
+        fit$optim$logL[
+            grep("^m2logL",
+            names(fit$optim$logL))]
+    )[theorder]
+    dots[[varying]] = forNames = forNames[theorder]
+    names(L) = paste(varying, forNames,sep="")
 	} else {
 		thedimnames=dots[varying]
-		for(D in names(thedimnames))
+		for(D in names(thedimnames)) {
 			thedimnames[[D]] = paste(
 					D, thedimnames[[D]],sep='_')
-		L = array(resL["L",], 
+    }
+		L = array(resL[grep("^m2logL",rownames(resL)),], 
 				unlist(lapply(thedimnames, length)),
 				dimnames=thedimnames)	
 	} 
 	
-	Sprob = c(1, 0.999, 0.99, 0.95, 0.9, 0.8, 0.5, 0)
-	Squant = qchisq(Sprob, df=length(varying))
-	Scontour = -fit$opt$val/2 -Squant/2 	
-	
-	
-	res = list(logL=-L/2,
-			full=t(resL),
-			prob=Sprob,
-			breaks=Scontour,
-			MLE=fit$param[varying],
-			maxLogL = -fit$opt$val/2,
-			basepars=baseParams
-	)
 
+  Sprob = c(1, 0.999, 0.99, 0.95, 0.9, 0.8, 0.5, 0)
+  Squant = qchisq(Sprob, df=length(varying))
+  
+  res = list(logL=-L/2,
+      full=t(L),
+      prob=Sprob,
+      quant=Squant,
+      MLE=fit$param[varying],
+      basepars=baseParams
+  )
+  res$maxLogL = max(res$logL)
 
+  res$breaks= res$maxLogL -res$quant/2 	
+ 
+   
 #	dput( rev(
 #			RColorBrewer::brewer.pal(
 #					length(Scontour)-1,
@@ -92,9 +119,10 @@ profLlgm = function(fit,mc.cores=NULL, ...) {
 	res$col=c("#3288BD", "#99D594", 
 			"#E6F598", "#FFFFBF", "#FEE08B", "#FC8D59", 
 			"#D53E4F")
+
+ 
 	
-	
-	res$breaks[1] = res$breaks[2]-abs(min(res$logL))
+	res$breaks[1] = min(c(res$breaks[2],min(res$logL)))-1
 	names(res$col) = as.character(res$prob[-length(res$prob)])
 	
 	res = c(dots[varying],res)
@@ -105,13 +133,19 @@ profLlgm = function(fit,mc.cores=NULL, ...) {
 		Skeep = seq(2, length(Sprob)-1)
 		res$ci = cbind(
 				prob=Sprob[Skeep],
-				lower= approx(res$logL[smaller], 
-						dots[[varying]][smaller],
-						Scontour[Skeep])$y,
-				upper=approx(res$logL[bigger], 
+        lower=NA, upper=NA)
+    if(sum(smaller)>1) 
+				res$ci[,'lower'] =
+             approx(
+            x=res$logL[smaller], 
+						y=dots[[varying]][smaller],
+						xout=res$breaks[Skeep],rule=2)$y
+  if(sum(bigger)>1)
+    res$ci[,'upper']=approx(
+        res$logL[bigger], 
 						dots[[varying]][bigger], 
-						Scontour[Skeep])$y
-		)
+            res$breaks[Skeep],rule=2)$y
+ 
 		
 		res$ciLong = na.omit(
 				reshape(as.data.frame(res$ci), 

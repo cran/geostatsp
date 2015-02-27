@@ -3,7 +3,8 @@ export( lgm, glgm, lgcp,
  krigeLgm,stackRasterList,
   gmrfPrecUncond,simLgcp,simPoissonPP,
  excProb, likfitLgm, loglikLgm,
- profLlgm, informationLgm, conditionalGmrf, spatialRoc
+ profLlgm, informationLgm, conditionalGmrf, spatialRoc,
+ spdfToBrick
 )
 
 
@@ -46,9 +47,9 @@ S3method(variog, SpatialPointsDataFrame)
 S3method(variog, default)
 
 
-export(variog.mc.env)
-S3method(variog.mc.env, SpatialPointsDataFrame)
-S3method(variog.mc.env, default)
+export(variogMcEnv)
+S3method(variogMcEnv, SpatialPointsDataFrame)
+S3method(variogMcEnv, default)
 
 # Import all packages listed as Imports or Depends
 import(

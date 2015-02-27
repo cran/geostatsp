@@ -27,7 +27,9 @@ bob(swissFit)
 
 # specify formula using name of list element
 
-swissFitAgain = lgm(data=swissRain[1:60,], formula=rain~ elev+land,
+swissFitAgain = lgm(
+    data=swissRain[1:60,], 
+    formula=rain~ elev+land,
 		grid=80, covariates=list(elev=swissAltitude,land=swissLandType),
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
@@ -46,7 +48,10 @@ swissFitAgain$param
 bob(swissFitAgain)
 
 
-swissFitAgain = lgm(data=swissRain[1:60,], formula="rain",
+if(interactive()  | Sys.info()['user'] =='patrick') {
+  
+
+swissFitAgain = lgm(data=swissRain, formula="rain",
 		grid=80, covariates=list(elev=swissAltitude,land=swissLandType),
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
@@ -57,7 +62,7 @@ bob(swissFitAgain)
 
 
 # land type, factor covariate
-swissRes2 =  lgm(rain ~ elev + factor(land), swissRain[1:60,], 
+swissRes2 =  lgm(rain ~ elev + factor(land), swissRain, 
 		grid=30, 
 		covariates=list(elev=swissAltitude,land=swissLandType), 
 		boxcox=0.5, fixBoxcox=TRUE, 
@@ -67,7 +72,7 @@ swissRes2$summary
 bob(swissRes2)
 
 
-
+  
 # simulated data (without a CRS)
 # and all covariates are in 'data' object
 myModel = c(intercept=0,variance=2^2,nugget=0.5^2, range=4.5,shape=2, 
@@ -103,7 +108,6 @@ fitLikfit = likfitLgm(y~cov1+cov2, myPoints,
 
 
 
-if(interactive()  | Sys.info()['user'] =='patrick') {
 
 # run lgm without providing covariates
 fitMLE =  lgm(

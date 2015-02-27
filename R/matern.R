@@ -176,7 +176,7 @@ matern.SpatialPoints = function(x,
   if(type==2 | type==4){
     result = as(
         new("dtrMatrix", 
-        Dim = c(length(x), length(x)), 
+        Dim = as.integer(c(length(x), length(x))), 
         uplo="L",
         x=resC$result),
     "Cholesky")
@@ -184,7 +184,7 @@ matern.SpatialPoints = function(x,
       attributes(result)$cholInfo = resC$type
   } else {
     result = new("dsyMatrix", 
-      Dim = c(length(x), length(x)), 
+      Dim = as.integer(c(length(x), length(x))), 
       uplo="L",
       x=resC$result)
   }
@@ -200,15 +200,12 @@ matern.default = function(x,
     param=c(range=1, variance=1, shape=1),
     type=c('variance','cholesky','precision','inverseCholesky'), y=NULL) {
 	# x is distances (matrix or vector), y is ignored	
-	names(param) = gsub("^var$", "variance", names(param))
-	
-	if(!any(names(param)=="variance") & any(names(param)=="sdSpatial"))
-		param["variance"]= param["sdSpatial"]^2
-	
-	haveVariance = any(names(param)=="variance")
-	if(!haveVariance) 
-		param["variance"]=1
 
+  if(!any(names(param)=="variance") & any(names(param)=="sdSpatial"))
+    param["variance"]= param["sdSpatial"]^2
+  
+  param=fillParam(param)
+  
 	if(is.data.frame(x))
 		x = as.matrix(x)	
 #	void matern(double *distance, long *N,

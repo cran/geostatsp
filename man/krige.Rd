@@ -76,19 +76,18 @@ swissFit = likfitLgm(data=swissRain,
 			param=c(range=46500, nugget=0.05,shape=1,  
 					anisoAngleDegrees=35, anisoRatio=12),
 			paramToEstimate = c("range","nugget", 
-				"anisoAngleDegrees", "anisoRatio"),
-			parscale = c(range=5000,nugget=0.01, 
-				anisoRatio=1,anisoAngleDegrees=5)
+				"anisoAngleDegrees", "anisoRatio")
 )
 myTrend = swissFit$formula
 myParams = swissFit$param
 dput(myParams)
 # will give the following
 } else {
-myParams=structure(c(2.26621791403682, 0.00014474608227038, 48928.027588747, 
-0.0973034174963395, 37.2883307364709, 11.5429109094065, 1, 0.736723861095649
-), .Names = c("(Intercept)", "CHE_alt", "range", "nugget", "anisoAngleDegrees", 
-"anisoRatio", "shape", "variance"))
+myParams=structure(c(0.0951677553339405, 0.773131120360615, 49376.366554348, 
+1, 11.6731542330799, 0.649923845971017, 1, 2.26103865436198, 
+0.000146945159199578, 37.2378933790499), .Names = c("nugget", 
+"variance", "range", "shape", "anisoRatio", "anisoAngleRadians", 
+"boxcox", "(Intercept)", "CHE_alt", "anisoAngleDegrees"))
 myTrend =lograin~ CHE_alt
 }
 
@@ -121,10 +120,11 @@ myTrend2 = swissFit2$trend
 myParams2 = swissFit2$param
 dput(myParams2)
 } else {
-myParams2=structure(c(5.1259476451533, 57230.2319794406, 0.878030061109591, 
-37.1176523248768, 7.37809931787162, 1, 0.5, 9.3502154358886), .Names = c("(Intercept)", 
-"range", "nugget", "anisoAngleDegrees", "anisoRatio", "shape", 
-"boxcox", "variance"))
+myParams2=structure(c(0.865530531647866, 8.76993204385615, 54143.5826959284, 
+1, 7.36559089705556, 0.647158492167979, 0.5, 5.16254700135706, 
+37.0794502772753), .Names = c("nugget", "variance", "range", 
+"shape", "anisoRatio", "anisoAngleRadians", "boxcox", "(Intercept)", 
+"anisoAngleDegrees"))
 myTrend2=rain~1
 }
 

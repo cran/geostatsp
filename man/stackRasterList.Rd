@@ -1,5 +1,6 @@
 \name{stackRasterList}
 \alias{stackRasterList}
+\alias{spdfToBrick}
 
 \title{
 Converts a list of rasters, possibly with different projections and resolutions, to a single raster stack.
@@ -11,23 +12,31 @@ for the rasters for all covariates to have the same projection and same resoluti
 }
 \usage{
 stackRasterList(x, template = x[[1]], method = "ngb", mc.cores=NULL)
+spdfToBrick(x, 
+    template,
+    logSumExpected=FALSE,
+    pattern = '^logExpected_surfaceArea_[[:digit:]]+$'
+)
 }
 \arguments{
   \item{x}{
-A list of rasters
+A list of \code{Raster} or \code{SpatialPolygonsDataFrame}s for 
+\code{stackRasterList} and \code{spdfToBrick} respectively
 }
-  \item{template}{
-A raster whose projection and resolution all other rasters will be aligned with.  Defaults to the first raster in \code{x}
+\item{template}{
+A raster whose projection and resolution all other rasters will be aligned with.
 }
-  \item{method}{
+\item{method}{
 The method to use, either "ngb", or "bilinear".  Can be a vector of the same length as x to specify different methods for each raster.  If \code{method} has names 
 which correspond to the names of \code{x}, the names will be used instead of the order to assign methods to rasters.
 }
 \item{mc.cores}{If non-null, \code{\link[parallel]{mcmapply}} is used with this argument specifying the number of cores.}
+\item{logSumExpected}{return the log of the sum of offsets}
+\item{pattern}{expression to identify layers to rasterize in \code{x}}
 }
 
 \value{
-A raster stack.
+A raster brick, with one layer for each variable.
 }
 
 

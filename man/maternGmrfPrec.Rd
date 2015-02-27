@@ -103,12 +103,12 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 	varMatCorr = Matrix::solve(precMatCorr)
 
 # compare covariance matrix to the matern
-	xseq = seq(-20*params["cellSize"], 20*params["cellSize"], len=1000)
+	xseq = seq(-20*params["cellSize"], 
+		20*params["cellSize"], 
+		len=1000)
 	plot(xseq, matern(xseq, param=params),
 	 type = 'l',ylab='cov', xlab='dist',ylim=c(0, params["variance"]),
 	 main="matern v gmrf")
-
-
 
 	# middle cell
 	varMid=matrix(varMat[,midcell], 32, 32, byrow=TRUE)
@@ -135,8 +135,8 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 	myraster = attributes(precMat)$raster
 	covMatMatern = matern(myraster, param=params)
  
- 	prodUncor = covMatMatern \%*\% precMat
- 	prodCor = covMatMatern \%*\% precMatCorr
+ 	prodUncor = crossprod(covMatMatern, precMat)
+ 	prodCor = crossprod(covMatMatern, precMatCorr)
 
 
 

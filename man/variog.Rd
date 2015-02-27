@@ -2,9 +2,9 @@
 \alias{variog}
 \alias{variog.default}
 \alias{variog.SpatialPointsDataFrame}
-\alias{variog.mc.env}
-\alias{variog.mc.env.default}
-\alias{variog.mc.env.SpatialPointsDataFrame}
+\alias{variogMcEnv}
+\alias{variogMcEnv.default}
+\alias{variogMcEnv.SpatialPointsDataFrame}
 
 
 \title{Compute Empirical Variograms and Permutation Envelopes}
@@ -19,8 +19,8 @@ These are wrappers for \code{\link[geoR]{variog}} and \code{\link[geoR]{variog.m
 \usage{
 variog(geodata, \ldots)
 \method{variog}{SpatialPointsDataFrame}(geodata, formula, \ldots)
-\method{variog.mc.env}{default}(geodata, \ldots)
-\method{variog.mc.env}{SpatialPointsDataFrame}(geodata, formula, \ldots)
+\method{variogMcEnv}{default}(geodata, \ldots)
+\method{variogMcEnv}{SpatialPointsDataFrame}(geodata, formula, \ldots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -47,7 +47,7 @@ As \code{\link[geoR]{variog}} or \code{\link[geoR]{variog.mc.env}}
 data("swissRain")
 swissRain$lograin = log(swissRain$rain)
 swissv= variog(swissRain, formula=lograin ~ 1,option="bin")
-swissEnv = variog.mc.env(swissRain, lograin ~ 1, obj.var=swissv,nsim=9) 
+swissEnv = variogMcEnv(swissRain, lograin ~ 1, obj.var=swissv,nsim=9) 
 if(!is.null(swissv)){
 	plot(swissv, env=swissEnv, main = "Swiss variogram")
 }

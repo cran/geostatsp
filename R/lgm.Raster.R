@@ -56,7 +56,7 @@ setMethod("lgm",
   }
   else{
     # $propNugget
-		print(dimnames(thel))
+
     propNug = thel['propNugget',,1]
     propLike =  thel[chooseLike,,1]
     propm2Like =  thel[m2Like,,1]

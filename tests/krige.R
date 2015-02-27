@@ -15,7 +15,8 @@ landTable = table(swissRain$land)
 landTable = as.numeric(names(landTable)[landTable > 5])
 swissRain2 = swissRain [swissRain$land %in% landTable, ]
 
-swissFit3 = likfitLgm(data=swissRain2[1:60,], 
+swissFit3 = likfitLgm(
+    data=swissRain2[1:60,], 
 		formula=lograin~ elevation + factor(land),
 		param=c(range=46500, nugget=0.05,shape=1,  
 				anisoAngleDegrees=35, anisoRatio=12),
@@ -25,7 +26,8 @@ swissFit3 = likfitLgm(data=swissRain2[1:60,],
 				anisoRatio=1,anisoAngleDegrees=5)
 )
 
-swissKrige3 = krigeLgm(data=swissRain2[1:60,], 
+swissKrige3 = krigeLgm(
+    data=swissRain2[1:60,], 
 		formula = swissFit3$model$formula,
 		param=swissFit3$param, 
 		covariates = list(elevation = swissAltitude,land=swissLandType),
@@ -35,6 +37,8 @@ pdf("krige3.pdf")
 plot(swissKrige3[["predict"]])	
 plot(swissBorder, add=TRUE)
 dev.off()
+
+if(interactive()  | Sys.info()['user'] =='patrick') {
 
 # now change land to a factor
 landTypes = swissLandType@data@attributes[[1]]
@@ -67,7 +71,7 @@ plot(swissKrige4[["predict"]])
 plot(swissBorder, add=TRUE)
 dev.off()
 
-
+  
 
 swissRain2$landFac2 = as.character(swissRain2$landFac)
 
@@ -92,3 +96,4 @@ plot(swissKrige5[["predict"]])
 plot(swissBorder, add=TRUE)
 dev.off()
 
+}

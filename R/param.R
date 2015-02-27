@@ -112,18 +112,25 @@ fillParam = function(param) {
 	if(!any(colnames(param)=="anisoRatio"))
 		param = cbind(param, anisoRatio = 1)
 
+  
 	if(!any(colnames(param)=="anisoAngleRadians")){
+    # radians not supplied
 		if(any(colnames(param)=="anisoAngleDegrees")) {
+      # degrees are supplied, convert degrees to radians
 			param = cbind(param, 
 					anisoAngleRadians=
 					param[,"anisoAngleDegrees"]*2*pi/360)
 		} else {
+      # no degrees or radians, set both to zero
 			param = cbind(param,anisoAngleRadians = 0,
 					anisoAngleDegrees = 0)
 		}
 	} else {
-		param[,"anisoAngleDegrees"] = 
-				param[,"anisoAngleRadians"] *360/(2*pi)
+    # radians were supplied
+		param = cbind(param[,grep("^anisoAngleDegrees$", 
+                colnames(param),invert=TRUE),drop=FALSE], 
+				anisoAngleDegrees= param[,"anisoAngleRadians"] *360/(2*pi)
+    )
 	}
 	drop(param)
 }

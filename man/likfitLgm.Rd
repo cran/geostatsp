@@ -15,17 +15,19 @@
 
 
 likfitLgm(formula, data, 
-		coordinates=data,
-		param=c(range=1,nugget=0,shape=1),
-		upper=NULL,lower=NULL, parscale=NULL,
 		paramToEstimate = c("range","nugget"),
-		reml=TRUE)
+		reml=TRUE,
+		coordinates=data,
+		param=NULL,
+		upper=NULL,lower=NULL, parscale=NULL,
+		verbose=FALSE)
+
 		
 loglikLgm(param, 
 		data, formula, coordinates=data,
 		reml=TRUE, 
 		minustwotimes=TRUE,
-		stored=NULL, moreParams=NULL)
+		moreParams=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -39,13 +41,13 @@ a model matrix.
 	or a data frame containing observations and covariates.
 }
 \item{coordinates}{A \code{SpatialPoints} object containing the locations of each observation, 
-which defaults to \code{data}.  Alternately, \code{coordinates} can be a \code{dist} object 
+which defaults to \code{data}.  Alternately, \code{coordinates} can be a
+ \code{\link[Matrix]{symmetricMatrix-class}} or \code{dist} object 
 reflecting the distance matrix of these coordinates (though this is only permitted if the 
-model is isotropic).
-}
+model is isotropic).}
 \item{param}{A vector of model parameters, with named elements being amongst 
 \code{range, nugget, boxcox, shape, anisoAngleDegrees, anisoAngleRadians,
-anisoRatio}, and possibly \code{variance} (see \code{link{matern}}). 
+anisoRatio}, and possibly \code{variance} (see \code{\link{matern}}). 
  When calling \code{likfitLgm} this vector is a 
 combination of starting values for parameters to be estiamated and fixed values of parameters
 which will not be estimated.  For \code{loglikLgm}, it is the covariance parameters 
@@ -61,15 +63,15 @@ used for parameters not specified.}
 \item{parscale}{Named vector of scaling of parameters passed as \code{control=list(parscale=parscale)} 
 to  \code{\link[stats]{optim}}.}
 \item{minustwotimes}{Return -2 times the log likelihood rather than the likelihood}
-\item{stored}{A list of Box-Cox transformed observations and their Jacobian.}
 \item{moreParams}{Vector of additional parameters, combined with \code{param}.  
 Used for passing fixed parameters to \code{loglikLgm} from within \code{\link[stats]{optim}}.
 }
+\item{verbose}{if \code{TRUE} information is printed by \code{\link[stats]{optim}}.}
 }
 
 \value{
 \code{likfitLgm} produces list with elements
-\item{param}{Maximum Likelihood Estimates of model parameters}
+\item{parameters}{Maximum Likelihood Estimates of model parameters}
 \item{varBetaHat}{Variance matrix of the estimated regression parameters}
 \item{optim}{results from \code{\link[stats]{optim}} }
 \item{trend}{Either formula for the fixed effects or names of the columns
@@ -118,7 +120,7 @@ myres = likfitLgm(
 
 
 
-myres$summary
+myres$summary[,1:4]
 
 if(interactive()  | Sys.info()['user'] =='patrick') {
 
@@ -141,11 +143,14 @@ legend("bottomright", fill=c("black","red","blue"),
 }
 
 # without a nugget
-myresNoN = likfitLgm(Y ~ cov1 + cov2, mydat, 
-	param=c(range=0.1,nugget=0,shape=1), paramToEstimate = c("range")	
+myresNoN = likfitLgm(
+	formula=Y ~ cov1 + cov2, 
+	data=mydat, 
+	param=c(range=0.1,nugget=0,shape=1), 
+	paramToEstimate = c("range")
 	)
 
-myresNoN$summary
+myresNoN$summary[,1:4]
 
 
 # plot variograms of data, true model, and estimated model
@@ -205,7 +210,9 @@ plot(mydat, col=as.character(cut(mydat$Y, breaks=50, labels=heat.colors(50))),
 par(mar=oldmar)
 
 
-myres = likfitLgm( Y ~ cov1 + cov2, mydat,
+myres = likfitLgm( 
+	formula=Y ~ cov1 + cov2, 
+	data=mydat,
 	param=c(range=0.1,nugget=0,shape=2, anisoAngleDegrees=0, anisoRatio=2), 
 	paramToEstimate = c("range","nugget","anisoRatio","anisoAngleDegrees") 
 	)

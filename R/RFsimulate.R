@@ -272,7 +272,7 @@ setMethod("RFsimulate",
           warning("data should be a SpatialPointsDataFrame")
         # check data variables
         if(ncol(data) == 1) {
-          data = data[,rep(1,length(Siter))]
+          data = data[,rep(1,max(Siter))]
           
         } else if(ncol(data) > 1) {
           # if there's more than one, assume we're interested in the first one
@@ -280,7 +280,6 @@ setMethod("RFsimulate",
           if(ncol(data)!= nrow(model)){
             warning("number of columnns in data should be either 1 or equal to number of rows of model")
           }
-          data = data[,Siter]		
         }
       } else {
         # do something so data[,D] doesn't break
@@ -300,10 +299,10 @@ setMethod("RFsimulate",
         err.model= NULL
       }
       
-      model= model[Siter,]
+
       result = NULL
       
-      for(D in nrow(model):1) {
+      for(D in rev(Siter)) {
         resultHere = 	callGeneric(
             model[D,], 
             x, data= data[,D], 
@@ -314,8 +313,11 @@ setMethod("RFsimulate",
         )
       }
       
-      if(!is.null(rownames(model)))
-        names(result) = rownames(model)
+      if(n>1) {
+        names(result) = paste('sim', 1:n, sep='')
+      } else {
+        names(result) = 'sim'
+      }
       result
     }
 )
@@ -405,14 +407,15 @@ setMethod("RFsimulate",
 	
  if(is.null(rownames(model)))
 	 rownames(model) = paste("par", 1:nrow(model),sep="") 
- Siter = round(seq(1,nrow(model), len=n))
+
+ Siter = round(seq(from=1, to=nrow(model), len=n))
 
 	if(!is.null(data)) {
 		if(class(data)!= "SpatialPointsDataFrame")
 			warning("data should be a SpatialPointsDataFrame")
 	# check data variables
 	if(ncol(data) == 1) {
-		data = data[,rep(1,length(Siter))]
+		data = data[,rep(1,max(Siter))]
 		
 	} else if(ncol(data) > 1) {
 	# if there's more than one, assume we're interested in the first one
@@ -420,8 +423,8 @@ setMethod("RFsimulate",
 		if(ncol(data)!= nrow(model)){
 			warning("number of columnns in data should be either 1 or equal to number of rows of model")
 		}
-		data = data[,Siter]		
-	}
+
+  }
 	} else {
 		# do something so data[,D] doesn't break
 		data = NULL
@@ -440,27 +443,27 @@ setMethod("RFsimulate",
 		err.model= NULL
 	}
 
-	model= model[Siter,]
-	result = NULL
+  result = NULL
 	
-	for(D in nrow(model):1) {
+	for(D in rev(Siter)) {
 
-
-	resHere = 	callGeneric(
+  resHere = 	callGeneric(
 			model=model[D,], 
 			x, data= data[,D], 
 			err.model= err.model[D], n=1,
 			...)
-	result = cbind( 
-		 resHere@data[,1], result
+
+  result = cbind(
+		 resHere@data[,'sim'],
+     result
 		)
 	}
-	
-	
-	resHere@data	= as.data.frame( result)
 
-	if(!is.null(rownames(model)))
-		names(resHere) = rownames(model)
+  if(n>1)
+    colnames(result) = paste('sim', 1:n, sep='')
+	
+	resHere@data	= as.data.frame(result)
+
 	resHere
 }
 )

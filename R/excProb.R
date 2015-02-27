@@ -38,7 +38,7 @@ elementsColumnwise = FALSE # default is indexes for x[[index]] refer to
 	
 if(is.list(x))	{
  # model is from lgm
-	if(all(c("predict","param", "summary") %in% names(x))){
+	if(length(grep("^predict|^param|^summary", names(x)))>2){
 		template = raster(x$predict)
 		if(!random) {
 			# check for boxcox

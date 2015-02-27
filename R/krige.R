@@ -1,3 +1,82 @@
+
+
+# y is gaussian, w is positive
+# y = (w^lambda - 1)/lambda
+# lambda * y + 1 = w^lambda = exp(lambda * log(w))
+
+meanBoxCox=function(pred, sd, boxcox, Nbc = 100) {
+  
+  # if boxcox is negative, don't let values get closer
+  # than this to zero
+  epsX = exp(12*boxcox)
+  
+  epsBC = 0.001 # check box-cox within this distance
+  # of zero or one
+  if(abs(boxcox)<epsBC){
+    return(
+        exp(pred  + sd^2/2)
+    )
+  } else if (abs(boxcox-1)<epsBC){
+    return(pred)
+  }
+  
+  # normal probabilities for numerical integration
+  SXboxcox = seq(-7,7,len=Nbc)
+  SXboxcox = unique(signif(
+              c(
+              SXboxcox,
+              SXboxcox/SXboxcox[1]
+              ),6)
+              )
+  SXboxcox = sort(SXboxcox)
+  PXboxcox = pnorm(SXboxcox)#, log=TRUE)
+  # probability of normal being in a bin
+  DXboxcox = diff(PXboxcox)/2
+  NDX = length(DXboxcox)
+  DXboxcox = c(
+      DXboxcox[1],
+      DXboxcox[-1] + DXboxcox[-NDX],
+      DXboxcox[NDX]
+      )
+  IXboxcox = log(DXboxcox)  
+
+  x = boxcox * (outer(sd, SXboxcox) +  pred)+1
+  
+  # negatives to zero
+  xneg= which( as.vector(x < 0))
+  
+  if(boxcox<0){
+    # get rid of values very close to zero
+    xneg = c(xneg,
+      which(abs(as.vector(x)) < epsX)
+        )
+  }
+  
+  x[xneg] = NA
+
+  logx = log(x)/boxcox 
+  
+  IXmat = matrix(IXboxcox, nrow(x), ncol(x), byrow=TRUE)
+  
+  result =  rowSums(exp(logx + IXmat),na.rm=TRUE)
+  allNA = rowSums(!is.na(x))==0
+
+  if(length(xneg)) {
+    IXmat[xneg] = NA
+    result = cbind(
+        predict=result,
+        probComplex.boxcox = 
+            1-rowSums(exp(IXmat),na.rm=TRUE)
+            )
+    result[allNA,] = NA        
+  } else {
+    result[allNA] = NA
+  }
+  
+  
+  result
+}
+
 krigeLgm = function(
 		formula, data, 
 		grid,
@@ -15,10 +94,13 @@ krigeLgm = function(
 	theVars = NULL
 	
 	haveBoxCox = any(names(param)=="boxcox")
-	if(haveBoxCox)
-		haveBoxCox = abs(param["boxcox"]-1) > 0.001
-	NsimBoxCox=40
-	
+	NsimBoxCox=50
+  if(haveBoxCox) {
+    haveBoxCox = abs(param["boxcox"]-1) > 0.001
+    if(param['boxcox']<0) NsimBoxCox=100
+    if(param['boxcox']< -0.2) NsimBoxCox=200
+    if(param['boxcox']< -0.5) NsimBoxCox=400
+  }
 	
 	haveNugget = any(names(param)=="nugget")
 	if(haveNugget) { 
@@ -445,7 +527,7 @@ krigeLgm = function(
 	} # end old code not called from LGM
 
 	
-  cholVarData = geostatsp::matern(coordinates, param=param, type='chol')
+  cholVarData = geostatsp::matern(coordinates, param=param, type='cholesky')
 #	if(haveNugget) Matrix::diag(varData) = Matrix::diag(varData) + param["nugget"]
 	
 #	cholVarData = Matrix::chol(varData)
@@ -560,41 +642,29 @@ krigeLgm = function(
 	if(haveBoxCox){ 
 		names(result)[names(result)=="predict"] = "predict.boxcox"
 		
-		themean = values(result[["predict.boxcox"]])
-		thesd = values(result[["krigeSd"]])
-		
-		theNA = is.na(themean)
-		thesd[is.na(thesd)] = 0 
-		themean[is.na(themean)] = 0 
-		
-		invlambda = 1/param["boxcox"]
-		
-		
-		Ndata = length(themean)
-		
-		# if lambda is fractional, truncate transformed values at zero
-		if(is.nan((-1)^param["boxcox"])) {
-			useMax=0
-		} else {
-			useMax = -Inf
-		}
-		
-		bcpred = 0
-		for(D in 1:NsimBoxCox) {
-			bcpred = bcpred + 
-					exp(invlambda*log(
-									pmax(param["boxcox"] *rnorm(Ndata, themean, thesd)+1,useMax)))
-		}
-		bcpred[is.na(themean)] = NA
-		bcpred = bcpred / NsimBoxCox
-		bcpred[theNA] = NA
-		
-		newraster=raster(result[["predict.boxcox"]])
-		names(newraster) = "predict"
-		values(newraster) = bcpred
-		
-		result = addLayer(result, 
-				newraster)
+    bcpred = meanBoxCox(
+          pred=values(result[['predict.boxcox']]), 
+          sd=values(result[['krigeSd']]),
+          boxcox=param['boxcox']
+    )
+    
+    newraster=raster(result[["predict.boxcox"]])
+    names(newraster) = "predict"
+    if(is.matrix(bcpred)){
+      values(newraster) = bcpred[,'predict']
+      result = addLayer(result, 
+          newraster)
+      names(newraster) = 'probComplex.boxcox'
+      values(newraster) = bcpred[,'probComplex.boxcox']
+      result = addLayer(result, 
+          newraster)
+    } else {
+      values(newraster) = bcpred
+      result = addLayer(result, 
+          newraster)
+    }
+    
+
 		
 	} # end have box cox
 	

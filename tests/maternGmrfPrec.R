@@ -21,8 +21,6 @@ precMat =maternGmrfPrec(theNN, param=params,
 precMatAdj =maternGmrfPrec(theNN, param=params, 
 		adjustEdges=TRUE,adjustParam=TRUE) 
 
-#N=theNN;param=params;adjustEdges=TRUE;adjustParam=FALSE;therast = myr
-
 # and with the adjustment
 precMatCorr =maternGmrfPrec(theNN, param=params, 
 		adjustEdges=TRUE,adjustParam=FALSE) 
@@ -38,6 +36,7 @@ edgecell = Nx*5 + 5 # cell near corner
 precMid=matrix(precMat[,midcell], Ny, Nx, byrow=TRUE)
 precMid[round(Ny/2)+seq(-3, 3), round(Nx/2)+seq(-3, +3)]
 
+if(Sys.info()['user'] =='patrick') {
 
 # invert to get variance matrices
 precMatAdjInv = solve(precMatAdj)
@@ -560,3 +559,4 @@ precMatAdjAR =maternGmrfPrec(theNN, param=paramsAR,
 # and with the adjustment
 precMatCorrAR =maternGmrfPrec(theNN, param=paramsAR, 
 		adjustEdges=TRUE,adjustParam=FALSE) 
+}

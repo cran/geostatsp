@@ -9,7 +9,7 @@ Calculates profile likelihoods and approximate joint confidence regions
  for covariance parameters in linear geostatistical models.
 }
 \usage{
-profLlgm(fit, mc.cores = NULL, ...)
+profLlgm(fit, mc.cores = 1, ...)
 informationLgm(fit,  ...)
 }
 

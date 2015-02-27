@@ -15,7 +15,9 @@ if the precision is computed type is info from dpotrfi
 
 #include"geostatsp.h"
 
-void maternArasterBpoints(double *Axmin, double *Axres, int *AxN,
+void maternArasterBpoints(
+		double *Axmin, double *Axres,
+		int *AxN,
 		double *Aymax, double *Ayres, int *AyN,
 		double *Bx, double *By, int *BN,
 		double *result,
@@ -139,6 +141,10 @@ free(bk);
 
 }
 
+// returns an N by N matrix for matern correlation
+// for N points with vectors of coordinates x and y
+// type = 0 or 1 return correlation,
+// type=2 chol, type=3 precision, type 4 chol of precsion
 void maternAniso(
 		const double *x,
 		const double *y,
@@ -157,11 +163,11 @@ void maternAniso(
 	int Drow, Dcol, Nm1, Dcolp1, N2;
 	int Dindex;
 
-	double logxscale, xscale, varscale,  logthisx, thisx;
+	double logxscale, varscale,  logthisx, thisx;
 	double anisoRatioSq, dist[2], distRotate[2], costheta, sintheta;
 
     int nb;
-    double *bk, alpha,truncate;
+    double *bk, alpha,truncate=0.00001;
 
     costheta = cos(*anisoAngleRadians);
     sintheta = sin(*anisoAngleRadians);
@@ -268,8 +274,7 @@ void matern(
 		logthisx, logxscale;
 
     int nb;
-    double *bk, alpha, truncate;
-    double minDist = 1e-10;
+    double *bk, alpha;
 
 	alpha = *shape;
 
@@ -312,7 +317,7 @@ void matern(
 	  rowEnd = Nrow*Dcol+Nrow;
 	  for(D=Dcol*Nrow+Dcol+addToRowStart; D < rowEnd; D++) {
 //		thisx = fabs(distance[D])*xscale;
-		logthisx = log(distance[D]) + logxscale;
+		logthisx = log(fabs(distance[D])) + logxscale;
 		thisx = exp(logthisx);
 
 		if(isnan(thisx) ) {
@@ -373,8 +378,7 @@ void maternForL(
 		double *halfLogDet
 		){
 
-	int zeroI=0;
-	double zero=0.0;
+
 	double nugget;
 
 	if(*withoutNugget){
