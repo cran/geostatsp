@@ -13,11 +13,14 @@ result
 			
 variog.SpatialPointsDataFrame = function(geodata,formula, ...) {
 	
+  rownames(geodata@data) = rownames(geodata@coords) = 1:length(geodata)
+  
 	theResid = lm(formula, data=geodata@data)$resid
  
 	if (requireNamespace("geoR", quietly = TRUE)) { 
 		
-		result = geoR::variog(coords=geodata@coords, data=theResid, ...)
+		result = geoR::variog(coords=geodata@coords[names(theResid),], 
+        data=theResid, ...)
  
 	} else {
 		result = NULL
@@ -40,10 +43,12 @@ variogMcEnv.default = function(geodata, ...) {
 }
 
 variogMcEnv.SpatialPointsDataFrame = function(geodata,formula, ...) {
-	
+  
+  rownames(geodata@data) = rownames(geodata@coords) = 1:length(geodata)
+  
 	theResid = lm(formula, data=geodata@data)$resid
 	if (requireNamespace("geoR", quietly = TRUE)) { 
-		result = geoR::variog.mc.env(coords=geodata@coords, data=theResid, ...)
+		result = geoR::variog.mc.env(coords=geodata@coords[names(theResid),], data=theResid, ...)
 	} else {
 			result = NULL
 	}

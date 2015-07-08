@@ -12,7 +12,6 @@
 
 
 \alias{lgcp}
-\alias{geostatsinla-package}
 
 \title{
 Generalized Linear Geostatistical Models
@@ -104,7 +103,7 @@ for the range and standard deviation parameters respectively,
 }
 
 \seealso{
-http://r-inla.org
+\url{http://r-inla.org}
 }
 \examples{
 # geostatistical model for the swiss rainfall data
@@ -199,8 +198,8 @@ res = lgcp(data=myPoints, grid=20, covariates=mycov,
 )
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
-}
 
+}
 
 }
 

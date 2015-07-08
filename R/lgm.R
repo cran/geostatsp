@@ -51,16 +51,6 @@ setMethod("lgm",
 )
 
 
-# missing covariates, create empty list
-setMethod("lgm", 
-    signature("formula", "Spatial", "ANY", "missing"),
-    function(formula, data, grid=NULL, covariates=NULL, ...) {
-      callGeneric(formula, data, grid, 
-          covariates=list(), 
-          ...)
-    }
-)
-
 # data is a raster.  grid is ignored
 setMethod("lgm", 
     signature("formula", "Raster", "ANY", "ANY"),
@@ -77,10 +67,13 @@ setMethod("lgm",
           buffer=0)
       
       callGeneric(formula, 
-          dataCov$data, dataCov$grid, 
-          dataCov$covariates, ...)
+          data=dataCov$data, 
+          grid=dataCov$grid, 
+          covariates=dataCov$covariates, ...)
     }
 )
+
+
 
 
 # numeric cells, create raster from data bounding box
@@ -93,9 +86,20 @@ setMethod("lgm",
     }
 )
 
+# missing covariates, create empty list
+setMethod("lgm", 
+    signature("formula", "Spatial", "Raster", "missing"),
+    function(formula, data, grid=NULL, covariates=NULL, ...) {
+      callGeneric(formula, data, grid, 
+          covariates=list(), 
+          ...)
+    }
+)
+
+
 
 setMethod("lgm",
-			signature("formula", "Spatial", "Raster", "ANY"),
+			signature("formula", "Spatial", "Raster", "list"),
       function(formula, 
           data, grid, 
           covariates=NULL, 
@@ -104,12 +108,30 @@ setMethod("lgm",
         dataCov = gm.dataSpatial(
             formula, data, 
             grid, covariates, buffer)
-
+        
         callGeneric(formula, 
             data=dataCov$data, 
             grid=dataCov$grid, 
             covariates=dataCov$covariates, ...)
       }
+)
+
+setMethod("lgm",
+    signature("formula", "Spatial", "Raster", "Raster"),
+    function(formula, 
+        data, grid, 
+        covariates=NULL, 
+        buffer=0,...) {
+      
+      dataCov = gm.dataSpatial(
+          formula, data, 
+          grid, covariates, buffer)
+      
+      callGeneric(formula, 
+          data=dataCov$data, 
+          grid=dataCov$grid, 
+          covariates=dataCov$covariates, ...)
+    }
 )
 
 # the real work
@@ -132,17 +154,22 @@ setMethod("lgm",
 	
 	
 	dots <- list(...)  
-	if(any(names(dots)=='param')) {
-		param=dots$param	
-	} else {
+  param=dots$param	
+  if(!length(param)) {
 		param=c()
 	}
 	
 
-	paramToEstimate	= c("range", "shape","nugget","boxcox")[
-			!c(FALSE,fixShape,fixNugget,fixBoxcox)]		
+	paramToEstimate	= c(
+      "variance", "range", "shape","nugget","boxcox"
+          )[c(
+                  TRUE, TRUE, !fixShape, !fixNugget, !fixBoxcox
+          )]		
 	range=NA
-	Spar = c(shape=shape,nugget=nugget,range=NA,boxcox=boxcox)
+	Spar = c(shape=as.numeric(shape),
+      nugget=as.numeric(nugget),
+      range=NA,
+      boxcox=as.numeric(boxcox))
 	
 	if(aniso) {
 		Spar = c(Spar, anisoAngleRadians=NA,anisoRatio=NA)
@@ -164,6 +191,7 @@ setMethod("lgm",
 	dots$formula=formula
 	dots$data=data
 	dots$paramToEstimate=paramToEstimate
+  dots$reml = reml
 
  	likRes = do.call(likfitLgm, dots)
  
@@ -197,6 +225,8 @@ setMethod("lgm",
     ciCols = grep("^ci0\\.[[:digit:]]+$", colnames(res$summary ))
     res$summary ['anisoAngleDegrees',ciCols] =
         (360/(2*pi))*res$summary ['anisoAngleRadians',ciCols]
+    res$summary ['anisoAngleDegrees','Estimated'] = 
+        res$summary ['anisoAngleRadians','Estimated']
   }
   
   
@@ -215,6 +245,15 @@ setMethod("lgm",
 		}
 	}
 	}
+  
+  theOrder = c('sdNugget','sdSpatial', 'range', 'shape','anisoRatio',
+      'anisoAngleRadians','anisoAngleDegrees', 'boxcox')  
+  theOrder = na.omit(match(theOrder, rownames(res$summary)))
+  notInOrder = (1:nrow(res$summary))[-theOrder]
+  res$summary = res$summary[c(notInOrder,theOrder),]
+  
+  
+  
 	# if range is very big, it's probably in metres, convert to km
   	if(res$summary['range','estimate']>1000) {
   		logicalCol = names(res$summary) == "Estimated"
@@ -224,7 +263,38 @@ setMethod("lgm",
   				rownames(res$summary))
   	}
 	
+  class(res) = c('lgm',class(res))    
 	return(res)
 }
 
 )
+AIC.lgm = function(object, ..., k = 2) {
+  
+  AIC(logLik(object, ..., k))
+  
+}
+
+
+logLik.lgm = function(object, ...){
+  res = object$opt$logL
+  res = res[grep('^logL', names(res))]
+  
+  srows = rownames(object$summary)
+  df = sum(
+      object$summary[
+          grep("^anisoAngle", srows, invert=TRUE),
+          'Estimated']
+      ) + any(
+          object$summary[
+              grep("^anisoAngle", srows, invert=FALSE),
+              'Estimated']
+  )
+  attributes(res)$df = df
+  attributes(res)$nobs = nrow(data.frame(object$data))
+  class(res)= 'logLik'
+  res
+}
+
+summary.lgm = function(object, ...) {
+  object$summary
+}

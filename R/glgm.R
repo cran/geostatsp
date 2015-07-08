@@ -160,11 +160,39 @@ setMethod("glgm",
 		sdNames = unique(c(sdNames, "sdNugget"))
 	}
 	
+  # list of prior distributions
+      if(any(names(priorCI)=='distributions')){
+        priorDistributions = priorCI$distributions
+      } else {
+        priorDistributions = list()
+      }
+  
 	precPrior=list()
+  
 	for(Dsd in sdNames) {
-			
-		if(any(names(priorCI)==Dsd)) {
-		obj1 = sort(priorCI[[Dsd]]^-2)
+    Dprec = gsub("^sd","precision",Dsd)
+    if(any(names(priorDistributions)==Dprec)) {
+    # distribution supplied
+      
+    if('scale' %in% names(priorDistributions[[Dprec]])){
+      priorDistributions[[Dprec]]['rate'] = 1/ priorDistributions[[Dprec]]['scale']
+    }
+    
+      if(all(c('shape','rate') %in% names(priorDistributions[[Dprec]]))) {
+
+        precPrior[[Dsd]] = c(
+            shape=as.numeric(priorDistributions[[Dprec]]['shape']), 
+            rate=as.numeric(priorDistributions[[Dprec]]['rate']))
+
+      } else {
+        precPrior[[Dsd]] = c(
+            shape=priorDistributions[[Dprec]][1],
+            rate=priorDistributions[[Dprec]][2])
+      }
+    } else if(any(names(priorCI)==Dsd)) {
+      # find distribution from interval supplied
+
+    obj1 = sort(priorCI[[Dsd]]^-2)
 		cifun = function(pars) {
 				theci = 	pgamma(obj1, shape=pars[1], 
 						rate=pars[2],log.p=T)
@@ -195,7 +223,28 @@ setMethod("glgm",
 		}
 	}
 		
-	if("range" %in% names(priorCI)) {
+  if(any(names(priorDistributions)=='range')) {
+    # distribution supplied
+  
+  if('scale' %in% names(priorDistributions[['range']])){
+    priorDistributions[['range']]['rate'] = 1/ priorDistributions[['range']]['scale']
+  }
+  
+  
+    if(all(c('shape','rate') %in% names(priorDistributions$range))) {
+      
+      ratePrior = c(
+          shape=as.numeric(priorDistributions$range['shape']), 
+          rate=as.numeric(priorDistributions$range['rate']*xres(cells))
+      )
+      
+    } else {
+      ratePrior = c(
+          shape=priorDistributions$range[1],
+          rate = priorDistributions$range[2]*xres(cells)
+      )
+    }
+  } else if("range" %in% names(priorCI)) {
 		if(priorCI$range[1] < xres(cells)/4) {
 			priorCI$range[1] = xres(cells)/4
 			warning("lower bound of range CI too small, setting it to 1/4 cell size")
@@ -216,16 +265,11 @@ setMethod("glgm",
 				lower=c(0.001,0.001),method="L-BFGS-B")
 		ratePrior = ratePrior2$par
 		names(ratePrior ) = c("shape","rate")
-if(FALSE) {
-		ratePrior
-		pgamma(obj1, shape=ratePrior["shape"], rate=ratePrior["rate"])
-		 qgamma(c(0.975,0.025), shape=ratePrior["shape"], rate=ratePrior["rate"])
-		xres(cells)*qgamma(c(0.025,0.975), shape=ratePrior["shape"], rate=ratePrior["rate"])
-	}
 	} else {
 		ratePrior = c(shape=0.01, rate=0.01)
 	}
-	spaceFormula = paste(".~.+ f(space, model='matern2d', ",
+
+  spaceFormula = paste(".~.+ f(space, model='matern2d', ",
 				"nrow=", nrow(cells)+2*buffer, 
 				", ncol=", ncol(cells)+2*buffer,
 				", nu=", shape, 
@@ -398,15 +442,8 @@ formulaForLincombs = gsub("\\+[[:space:]]?$", "", formulaForLincombs)
 			y=dgamma(rangeSeqCells, shape=ratePrior["shape"], 
 					rate=ratePrior["rate"])  / xres(cells)
 	)
-	if(FALSE) {
-		plot(params$range$prior, type='l')
-		
-		sum(params$range$prior[,"y"])*range(diff(params$range$prior[,"x"]))
-	}	
-	
 
-	
-	for(Dsd in names(precPrior)) {
+  for(Dsd in names(precPrior)) {
 		params[[Dsd]] = list(userPriorCI=priorCI[[Dsd]], 
 			priorCI = 1/sqrt(
 				qgamma(c(0.975,0.025), 
@@ -609,7 +646,10 @@ for(Dsd in names(thesd)) {
 	params$summary[Dsd, thecols] = 
 				1/sqrt(inlaResult$summary.hyperpar[
 								thesd[Dsd],rev(thecols)])
-
+    params$summary[Dsd,"mode"] = 
+        1/sqrt(inlaResult$summary.hyperpar[
+            thesd[Dsd],'mode'])
+    
 		
 	params$summary[Dsd,"mean"] =sum(
 		1/sqrt(inlaResult$marginals.hyperpar[[thesd[Dsd]]][,"x"])*

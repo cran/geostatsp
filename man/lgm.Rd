@@ -5,10 +5,11 @@
 \alias{lgm,NULL,ANY,ANY,ANY-method}
 \alias{lgm,numeric,ANY,ANY,ANY-method}
 \alias{lgm,character,ANY,ANY,ANY-method}
-\alias{lgm,formula,Spatial,ANY,missing-method}
 \alias{lgm,formula,Raster,ANY,ANY-method}
 \alias{lgm,formula,Spatial,numeric,ANY-method}
-\alias{lgm,formula,Spatial,Raster,ANY-method}
+\alias{lgm,formula,Spatial,Raster,missing-method}
+\alias{lgm,formula,Spatial,Raster,list-method}
+\alias{lgm,formula,Spatial,Raster,Raster-method}
 \alias{lgm,formula,Spatial,Raster,data.frame-method}
 \alias{lgm,formula,data.frame,Raster,data.frame-method}
 
@@ -34,24 +35,23 @@ formula=NULL, data,
 		grid,
 		covariates=NULL, 
 		...) 
-\S4method{lgm}{formula,Spatial,ANY,missing}(formula, data,
-		grid=NULL,
-		covariates=NULL, 
-		...) 
 \S4method{lgm}{formula,Raster,ANY,ANY}(formula, data,
 		grid,
-		covariates=NULL, 
-		...) 
-\S4method{lgm}{formula,Raster,ANY,ANY}(
-		formula, data,
-		grid=NULL,
 		covariates=NULL, 
 		...) 
 \S4method{lgm}{formula,Spatial,numeric,ANY}(formula, data,
 		grid,
 		covariates=NULL, 
 		...) 
-\S4method{lgm}{formula,Spatial,Raster,ANY}(formula, data,
+\S4method{lgm}{formula,Spatial,Raster,missing}(formula, data,
+		grid=NULL,
+		covariates=NULL, 
+		...) 
+\S4method{lgm}{formula,Spatial,Raster,list}(formula, data,
+		grid,
+		covariates=NULL, buffer=0,
+		...) 
+\S4method{lgm}{formula,Spatial,Raster,Raster}(formula, data,
 		grid,
 		covariates=NULL, buffer=0,
 		...) 
@@ -66,15 +66,15 @@ formula=NULL, data,
 		fixBoxcox=TRUE,
 		fixNugget = FALSE,
 		...) 
-\S4method{lgm}{formula,data.frame,Raster,data.frame}(formula, data,
+\S4method{lgm}{formula,data.frame,Raster,data.frame}(
+formula, data,
 		grid,
 		covariates=NULL, 
 		            shape=1,boxcox=1,nugget=0,
 				  expPred=FALSE, nuggetInPrediction=TRUE,
 				  reml = TRUE,
 				  mc.cores=1,		
-				  oneminusar=seq(0.01, 0.4,len=4), 
-                  range=NULL, 
+fixBoxcox=TRUE,fixNugget=FALSE, 
 		...) 
 }
  
@@ -108,8 +108,6 @@ done in parallel where possible. }
 \item{fixShape}{Set to \code{FALSE} to estimate the Matern order}
 \item{fixBoxcox}{Set to \code{FALSE} to estimate the Box-Cox parameter.}
 \item{fixNugget}{Set to \code{FALSE} to estimate the nugget effect parameter.}
-\item{oneminusar}{Vector of GMRF autoregressive parameters over which the likelihood is computed.}
-\item{range}{Vector of range parameters over which the likelihood is computed, ignored if \code{oneminusar} is non-NULL}
 \item{buffer}{Extra distance to add around \code{grid}.}
 \item{...}{Additional arguments passed to \code{\link{likfitLgm}}.  Starting values can be
 specified with a vector \code{param} of named elements}

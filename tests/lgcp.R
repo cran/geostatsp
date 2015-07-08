@@ -59,5 +59,19 @@ res = lgcp(data=myPoints, grid=20, covariates=mycov,
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 
+data('murder')
+data('torontoPop')
+myCov = list(
+    pop=torontoPdens,
+    inc = log(torontoIncome)
+)
+
+formula = ~ inc + offset(pop, log=TRUE)
+
+lgcp(formula, data=murder, 
+    grid=squareRaster(murder, 30),
+    covariates=myCov,
+    border=torontoBorder)
+
 }	
 }

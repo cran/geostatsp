@@ -153,15 +153,17 @@ loglikLgm = function(param,
       uplo="L",
       x=resultC$varBetaHat)
   dimnames(varBetaHat) = list(names(betaHat),names(betaHat))
-  varBetaHat = varBetaHat*totalVarHat
-
   
+
+    if(!haveVariance) {
+    varBetaHat = varBetaHat*totalVarHat
+    param[c("variance","nugget")] = 
+        totalVarHat * param[c("variance","nugget")]
+  }
+
   result = resultC$logL[1] + jacobian
-
-  if(!haveVariance)
-  param[c("variance","nugget")] = 
-    totalVarHat * param[c("variance","nugget")]
-
+  
+  
 
 if(minustwotimes) {
   names(result) = "minusTwoLogLik"
@@ -236,7 +238,7 @@ likfitLgm = function(
     # convert input data to a model matrix
 		data = data.frame(data)
 		theNA = apply(
-				data[,all.vars(trend)[-1],drop=FALSE],
+				data[,all.vars(trend),drop=FALSE],
 				1, function(qq) any(is.na(qq)))
 		noNA = !theNA
 		
@@ -299,14 +301,14 @@ likfitLgm = function(
   # parameter defaults
   lowerDefaults = c(
       nugget=0,
-      range=maxDist/100,
+      range=maxDist/1000,
       anisoRatio=0.01,
       anisoAngleRadians=-pi/2,
       shape=0.1,boxcox=-1.5,variance=0)
   
   upperDefaults= c(
       nugget=Inf,
-      range=2*maxDist,
+      range=10*maxDist,
       anisoRatio=100,
       anisoAngleRadians=pi/2,
       shape=4,boxcox=2.5,variance=Inf)
@@ -325,12 +327,22 @@ likfitLgm = function(
   
   parscaleDefaults = c(
       range=maxDist/5,
-      nugget=0.02,
+      nugget=0.05,
       boxcox=0.5,
       anisoAngleRadians=0.2,
       anisoRatio=1,
       variance=1,
       shape=0.2)
+  
+  ndepsDefault = c(
+      range=0.01,
+      nugget=0.05,
+      boxcox=0.005,
+      anisoAngleRadians=0.01,
+      anisoRatio=0.01,
+      variance=0.01,
+      shape=0.01
+      )
   
   # replace defaults with user supplied values
   paramDefaults[names(param)] = param
@@ -340,7 +352,7 @@ likfitLgm = function(
   
   
   # don't let nugget start on the boundary
-  if(paramDefaults['nugget'] == lowerDefaults['nugget']){
+  if(any(paramToEstimate=='nugget') & paramDefaults['nugget'] == lowerDefaults['nugget']){
     paramDefaults['nugget'] = min(c(0.5, upperDefaults['nugget']))
   }
   
@@ -351,9 +363,10 @@ likfitLgm = function(
   startingParam[naStarting]= paramDefaults[names(startingParam)[naStarting]]
   
   moreParams = paramDefaults[!names(paramDefaults) %in% paramToEstimate]
-  
+
   allParams = c(startingParam, moreParams)
   allParams = fillParam(allParams)
+  
   paramsForC = allParams[c('nugget','variance','range','shape',
           'anisoRatio','anisoAngleRadians','boxcox')]
   
@@ -361,11 +374,13 @@ likfitLgm = function(
   names(Sparam) = names(paramsForC)
   paramToEstimate = names(Sparam)[Sparam]
 
+  
+  
   parOptions = cbind(
       lower=lowerDefaults[paramToEstimate], 
       upper=upperDefaults[paramToEstimate],
       parscale = parscaleDefaults[paramToEstimate],
-      ndeps=rep(0.001, length(paramToEstimate)) # for derivatives
+      ndeps=ndepsDefault[paramToEstimate] # for derivatives
   )
 
   # parameters for l-bfgs-b
@@ -384,7 +399,7 @@ likfitLgm = function(
           type=-1,lmm=25,
           tmax=-1,temp=-1
       ),
-      pars = parOptions
+      pars = parOptions[,c('lower','upper','parscale','ndeps'),drop=FALSE]
   )
   
   if(verbose){
@@ -461,7 +476,7 @@ likfitLgm = function(
       as.double(ycoord),
       as.integer(aniso),
       N=as.integer(c(nrow(obsCov), 3, ncol(covariates))),
-    Ltype=as.integer(reml+!estimateVariance),
+    Ltype=as.integer(reml+2*!estimateVariance),
     optInt = as.integer(forO$scalarInt),
     optF = as.double(forO$scalarF),
     betas=as.double(forO$pars),
@@ -482,10 +497,8 @@ likfitLgm = function(
         options=cbind(
             start=paramsForC[Sparam],
             opt = fromOptim$start[Sparam],
-            parOptions),
-        detail = fromOptim$optInt[1:3],
-        originalParameters = paramsForC
-      ),
+            parOptions[,c('parscale','lower','upper','ndeps')]),
+        detail = fromOptim$optInt[1:3]      ),
     betaHat = fromOptim$betas[1:ncol(covariates)],
     varBetaHat =  
         new("dsyMatrix", 
@@ -496,8 +509,10 @@ likfitLgm = function(
         )
   )
   
+# names(result$optim$boxcox) = c('param','sumLogY','twoLogJacobian')
+# names(result$optim$determinants) = c('variance','reml')
  
-  result$optim$options = cbind(result$optim$options,
+ result$optim$options = cbind(result$optim$options,
       gradient=fromOptim$betas[
       seq(ncol(covariates)^2+ncol(covariates)+1, 
           len=sum(Sparam))
@@ -520,9 +535,11 @@ likfitLgm = function(
    )
 )
    
+if(estimateVariance) {
    result$parameters[c('nugget', 'variance')] = 
        result$parameters[c('nugget', 'variance')] * 
        result$optim$totalVarHat  
+ }
    
    names(result$optim$logL) = paste(
        names(result$optim$logL),

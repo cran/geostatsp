@@ -12,6 +12,3 @@ inla.models()
 \value{
 a list
 }
-\seealso{
-\code{\link[INLA]{inla.models}}
-}

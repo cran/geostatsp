@@ -4,6 +4,10 @@ profLlgm = function(fit,mc.cores=1, ...) {
   fit$parameters = fillParam(fit$parameters)
 	varying = intersect(names(dots), names(fit$parameters))
 
+  for(D in varying)
+    dots[[D]] = sort(dots[[D]])
+  
+  
 	nonLinearParams = c('boxcox','shape','nugget','variance',
 			'anisoAngleRadians','anisoAngleDegrees','anisoRatio','range')
 	
@@ -13,9 +17,9 @@ profLlgm = function(fit,mc.cores=1, ...) {
 	reEstimate = gsub("sdNugget", "nugget", reEstimate)
 	reEstimate = gsub("sdSpatial", "variance", reEstimate)
 	reEstimate = gsub("range \\(km\\)", "range", reEstimate)
-	reEstimate = intersect(reEstimate, nonLinearParams)
-	reEstimate = reEstimate[!reEstimate %in% varying]
   reEstimate = gsub("/1000", "", reEstimate)
+  reEstimate = intersect(reEstimate, nonLinearParams)
+	reEstimate = reEstimate[!reEstimate %in% varying]
   
   
 	baseParams = fit$parameters
@@ -101,7 +105,6 @@ profLlgm = function(fit,mc.cores=1, ...) {
   Squant = qchisq(Sprob, df=length(varying))
   
   res = list(logL=-L/2,
-      full=t(L),
       prob=Sprob,
       quant=Squant,
       MLE=fit$param[varying],
@@ -128,27 +131,54 @@ profLlgm = function(fit,mc.cores=1, ...) {
 	res = c(dots[varying],res)
 	
 	if(length(varying)==1) {
-		smaller = dots[[varying]] <= res$MLE
-		bigger = dots[[varying]] >= res$MLE
-		Skeep = seq(2, length(Sprob)-1)
-		res$ci = cbind(
-				prob=Sprob[Skeep],
+    Skeep = seq(2, length(Sprob)-1)
+    res$ci = cbind(
+        prob=Sprob[Skeep],
         lower=NA, upper=NA)
-    if(sum(smaller)>1) 
-				res$ci[,'lower'] =
-             approx(
-            x=res$logL[smaller], 
-						y=dots[[varying]][smaller],
-						xout=res$breaks[Skeep],rule=2)$y
-  if(sum(bigger)>1)
-    res$ci[,'upper']=approx(
-        res$logL[bigger], 
-						dots[[varying]][bigger], 
-            res$breaks[Skeep],rule=2)$y
- 
+    
+    
+    smaller = seq(1,which.max(res$logL))
+		bigger = seq(which.max(res$logL), length(res$logL))
+    
+    # make the likelihood unimodal
+    monotoneLik = res$logL
+    
+    if(length(smaller)>1) {
+      for(D in 2:length(smaller)){
+        monotoneLik[D] = max(monotoneLik[c(D-1,D)])
+      }
+      
+      resCi = try(stats::spline(
+          x=monotoneLik[smaller], 
+          y=res[[1]][smaller],
+          xout=res$breaks[Skeep],
+          method= "hyman"), silent=TRUE)
+      
+      if(class(resCi)!='try-error')
+  			res$ci[,'lower'] = resCi$y
+  }
+
+  if(sum(bigger)>1) {
+    for(D in seq(length(smaller)+1, length(monotoneLik)-1)){
+      monotoneLik[D] = min(monotoneLik[c(D-1,D)])
+    }
+
+    resCi = try(stats::spline(
+        x=monotoneLik[bigger], 
+        y=res[[1]][bigger], 
+        xout=res$breaks[Skeep], method='hyman'),
+    silent=TRUE)
+    
+    if(class(resCi)!='try-error')
+      res$ci[,'upper']= resCi$y     
+  }
 		
+  res$ci = cbind(
+      res$ci, 
+      logL = res$breaks[match(res$ci[,'prob'], res$prob)]
+  )
 		res$ciLong = na.omit(
-				reshape(as.data.frame(res$ci), 
+				reshape(as.data.frame(res$ci[,c('prob','upper','lower')]), 
 						direction="long",
 						varying=list(par=c('upper','lower')),
 						v.names='par',

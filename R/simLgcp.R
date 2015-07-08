@@ -31,8 +31,12 @@ simPoissonPP = function(intensity) {
 			runif(dim(eventsD)[1],-yres(intensity)/2, yres(intensity)/2)
 	)
 	
-	events[[D]] = SpatialPoints(eventsD)
-	projection(events[[D]]) = projection(intensity)	
+  if(nrow(eventsD)){
+  	events[[D]] = SpatialPoints(eventsD)
+	  projection(events[[D]]) = projection(intensity)	
+  } else {
+    events[[D]] = NULL
+  }
 	}
 
 	if(length(events)==1) {

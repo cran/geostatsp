@@ -19,7 +19,7 @@ squareRaster.Extent = function(x, cells=NULL) {
 }
 
 squareRaster.BasicRaster = squareRaster.RasterLayer = function(x, cells=NULL) {
-	
+	x=raster(x)
 	if(is.null(cells)) {
 		cells = ncol(x)
 	} else {

@@ -12,7 +12,7 @@ gm.dataRaster = function(
 	
 	# find factors
 	
-	allterms = colnames(attributes(terms(formula))$factors)
+	allterms = rownames(attributes(terms(formula))$factors)[-1]
 	allterms = grep(":", allterms, invert=TRUE, value=TRUE)
 	allterms = gsub("[[:space:]]", "", allterms)
 	
@@ -116,7 +116,7 @@ gm.dataSpatial = function(
 
 	
 	Sfactors = c(
-			names(data)[apply(data@data,2,is.factor)],
+			names(data)[unlist(lapply(data@data, is.factor))],
 			covFactors,
 			theFactors
 	)
@@ -130,7 +130,7 @@ gm.dataSpatial = function(
 	# the grid
 	cellsBoth = cellsBuffer(grid, buffer)			
 	cellsSmall = cellsBoth$small
-
+  
 	# 
 	if(length(names(covariates))) {
  
@@ -167,7 +167,6 @@ gm.dataSpatial = function(
 	}
 	data$space = extract(cellsSmall, data) 
 
-	
 	# loop through spatial covariates which are factors
 	for(D in intersect(Sfactors, names(covariatesDF))) {
 		theTable = sort(table(data[[D]]), decreasing=TRUE)

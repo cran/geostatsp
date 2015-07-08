@@ -78,7 +78,7 @@ swissFit = likfitLgm(data=swissRain,
 			paramToEstimate = c("range","nugget", 
 				"anisoAngleDegrees", "anisoRatio")
 )
-myTrend = swissFit$formula
+myTrend = swissFit$model$formula
 myParams = swissFit$param
 dput(myParams)
 # will give the following

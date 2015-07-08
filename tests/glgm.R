@@ -176,13 +176,14 @@ swissFit =  glgm( formula="lograin",data=swissRain, grid=Ncell,
 # a model with little data, posterior should be same as prior
 
 data2 = SpatialPointsDataFrame(cbind(c(1,0), c(0,1)),
-		data=data.frame(y=c(0,0), offset=c(-50,-50)))
+		data=data.frame(y=c(0,0), offset=c(-50,-50), x=c(-1,1)))
 
-res = glgm(data=data2, grid=20, formula=y~1 + offset(offset), 
+res = glgm(data=data2, grid=20, formula=y~1 + x+offset(offset), 
     covariates=NULL,
 		priorCI = list(sd=c(0.3,0.5), range=c(0.25, 0.4)),
 		family="poisson",buffer=0.5, 
-    control.fixed=list(mean.intercept=0, prec.intercept=1),
+    control.fixed=list(mean.intercept=0, prec.intercept=1,
+        mean=0,prec=4),
     control.mode=list(theta=c(2, 2),restart=TRUE)
 )
 
@@ -197,6 +198,14 @@ xseq = res$inla$marginals.fixed[['(Intercept)']][,'x']
 lines(xseq, dnorm(xseq, 0, 1),col='red',lty=2,lwd=3)
 legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
 
+# beta
+plot(res$inla$marginals.fixed[['x']], col='blue', type='l',
+    xlab='beta',lwd=3)
+xseq = res$inla$marginals.fixed[['x']][,'x']
+lines(xseq, dnorm(xseq, 0, 1/2),col='red',lty=2,lwd=3)
+legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
+
+
 # sd
 plot(res$parameters$sd$prior,type='l', col='blue',xlab='sd',lwd=3)
 lines(res$parameters$sd$post,col='red',lty=2,lwd=3)
@@ -209,6 +218,26 @@ lines(res$parameters$range$post,col='red',lty=2,lwd=3)
 legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
 dev.off()
 
- 
+
+# covariates are in data, interactions
+newdat = swissRain
+newdat$elev = extract(swissAltitude, swissRain)
+swissFit =  glgm(
+    formula = lograin~ elev : land,
+    data=newdat, 
+    grid=squareRaster(swissRain,50), 
+    covariates=list(land=swissLandType),
+    family="gaussian", buffer=0,
+    priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
+    control.mode=list(theta=c(1.9,0.15,2.6),restart=TRUE),
+    control.family=list(hyper=list(prec=list(prior="loggamma", 
+                param=c(.1, .1))))
+)
+swissFit$parameters$summary
+pdf("swissCovInDataInteraction.pdf")
+plot(swissFit$raster[['predict.mean']])
+dev.off()
+
+
 
 }

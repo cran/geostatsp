@@ -337,13 +337,10 @@ setMethod("RFsimulate",
         err.model=err.model, 
         n=n, ... 
 		)
-		res2 = raster(res)			
-		if(length(names(res))>2) {
-			res2 = brick(res2, nl=length(names(res)))
-			for(D in 2:length(names(res))) {
-				res2[[D]] = raster(res,layer=D)
-			}
-		}
+    res2 = brick(res)
+    if(nlayers(res2)==1){
+      res2 = res2[[1]]			
+    }
 		proj4string(res2) = CRS(theproj)
 		names(res2) = gsub("^variable1\\.n","sim", names(res2))
 		

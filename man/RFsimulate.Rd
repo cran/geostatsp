@@ -89,8 +89,7 @@ where a Raster is returned.
  }
 
 
-\author{Patrick Brown \email{patrick.brown@utoronto.ca}
- \url{http://pbrown.ca}
+\author{Patrick E. Brown \email{patrick.brown@utoronto.ca}
 }
 
 \seealso{

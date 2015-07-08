@@ -40,7 +40,7 @@ S3method(maternGmrfPrec, default)
 
 export(NNmat)
 S3method(NNmat, default)
-S3method(NNmat,Raster)
+S3method(NNmat,Raster)	
 
 export(variog)
 S3method(variog, SpatialPointsDataFrame)
@@ -60,7 +60,7 @@ import(
 
 importFrom(numDeriv,hessian)
 importFrom(abind, abind)
-importFrom(pracma, trapz)
+#importFrom(pracma, trapz)
 
 # the following are imports from packages listed as Suggests
 # calls to these functions are made with ::
@@ -72,3 +72,22 @@ importFrom(pracma, trapz)
 
 # only needed because INLA is requireNamespace instead of require
 export(inla.models)
+
+importFrom(utils, installed.packages)
+
+importFrom(stats, as.formula, update.formula, terms)   
+importFrom(stats, model.matrix, lm, model.frame) 
+
+importFrom(stats, approx, na.omit, reshape)
+importFrom(stats, dist, as.dist)
+importFrom(stats, optimize, optim)
+ 
+importFrom(stats, pgamma, dgamma, qgamma)
+importFrom(stats, pnorm, rnorm, qnorm)
+importFrom(stats, runif, rpois)
+importFrom(stats, pchisq, qchisq)
+
+importFrom(stats, logLik, AIC)
+S3method(AIC, 'lgm')
+S3method(logLik, 'lgm')
+S3method(summary, 'lgm')

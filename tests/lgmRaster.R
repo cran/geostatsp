@@ -9,35 +9,33 @@ swissRainR2 = brick(swissRainR[['alt']],
 		sqrt(swissRainR[['prec1']]),
 		anotherx)
 
-swissResR =  lgm(
+    
+swissResRopt =  lgm(
     formula=layer ~ alt+ myvar, 
-		data=swissRainR2, shape=2,
-		oneminusar=seq(0.05, 0.1, len=4),
-		nugget =  seq(0.0,0.01,len=6),
-		adjustEdges=FALSE,
-		mc.cores=c(1,2)[1+(.Platform$OS.type=='unix')]
+    data=swissRainR2, shape=2,
+    adjustEdges=FALSE
 )
 
-swissResR$summary[c('oneminusar','range','propNugget',
-				grep("\\.betaHat$", rownames(swissResR$summary), value=TRUE)),]
+
+swissResRopt$summary
 
 
 # with edge correction.  
 # time consuming, only run this if Patrick is checking
 if(Sys.info()['user'] =='patrick') {
-swissResR =  lgm( formula=layer ~ alt+ myvar,  
-		data=swissRainR2, shape=2,
-		oneminusar=seq(0.05, 0.1, len=3),
-		nugget =  seq(0,0.01,len=5),
-		adjustEdges=TRUE,
-		mc.cores=c(1,2)[1+(.Platform$OS.type=='unix')]
+
+
+# optimize only nugget
+swissResROptNug =  lgm(
+    formula=layer ~ alt+ myvar, 
+    data=swissRainR2, shape=2,
+    oneminusar=seq(0.05, 0.1, len=12),
+    adjustEdges=FALSE,fixNugget=TRUE,
+    mc.cores=c(1,2)[1+(.Platform$OS.type=='unix')]
 )
 
-swissResR$summary[c('oneminusar','range','propNugget',
-				grep("\\.betaHat$", rownames(swissResR$summary), value=TRUE)),]
-
-# range in km
-swissResR$summary[ 'range' ,] * sqrt(mean(values(area(swissRainR))))/mean(res(swissRainR))
-
+plot(swissResROptNug$profL$range, type='l')
 
 }
+
+

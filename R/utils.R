@@ -58,8 +58,8 @@
 }
 
 cellsBuffer = function(cells, buffer) {
-	
 	cells = squareRaster(cells)
+  
 	buffer =  ceiling(buffer/xres(cells))
 	
 	cellsInla = raster::extend(cells, c(buffer, buffer))

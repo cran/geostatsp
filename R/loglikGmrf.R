@@ -1,631 +1,460 @@
-loglikGmrfGivenQobjFun = function(
-    propNugget,
-    reml,
-    ...
-    ) {
-
-      resFull = loglikGmrfGivenQ(
-          propNugget=propNugget,
-          reml=reml, 
-          ...
-              )
-       res = resFull[
-           paste('logL.',c('ml','reml')[1+reml], sep=''),
-           1]
-       attributes(res)$full = resFull
-       res
-    }
-
-loglikGmrfObjFunBc = function(
-    onebc, 
-    Y, X,
-    propNugget,
-    Qchol, Vchol, 
-    Vx,
-    cholXXLxLx,
-    boxcoxInterval=NULL, 
-    sumLogY=NULL,
-    reml=TRUE
-) {
-      if(abs(onebc)<0.001) {
-        Ybc = log(Y) 
-      } else  { #boxcox far from 0 and 1
-        Ybc <- ((Y^onebc) - 1)/ onebc 
-      }
-      if(is.null(sumLogY))
-        sumLogY = sum(log(Y[,1]))
-
-      twoLogJacobian = as.numeric(2*(onebc-1)*sumLogY) 
-      
-      if(propNugget>0){
-        YprimeY = apply(Y^2,2,sum)
-        YprimeX = crossprod(Y,X)
-        Vy = solve(Vchol, Y,system='L')
-        XYLxLy = t(YprimeX) - crossprod(Vx,Vy)/propNugget 
-      } else { # no nugget 
-        Vy = expand(Qchol)$L %*% Y
-        XYLxLy = crossprod(Vx,Vy)
-        YprimeY = XprimeX = 0
-      }
-      
-      Lc = solve(cholXXLxLx, XYLxLy)
-      LcLc = apply(Lc^2, 2, sum)
-      VyVy = apply(Vy^2,2,sum)
-      
-      if(propNugget>0){
-        ssq = YprimeY - VyVy/propNugget  - LcLc
-      } else { # no nugget 
-        ssq = VyVy  - LcLc
-      }
-      
-      N = nrow(Y)
-      if(reml) {
-        N = N - ncol(X)
-      }
-      
-      # return logL + constant, not minus2 log L
-      N * log(ssq[1]) - twoLogJacobian
-}
-    
-loglikGmrfGivenQ = function(
-        propNugget,
-        Y,X,
-        Q, 
-        Qchol=NULL, 
-        detQ=NULL,
-        boxcoxInterval=NULL,
-        reml=TRUE
-    ) {
-      # propNugget =    tau^2/xi^2
-      # if Qchol is specified, 
-      # it is assumed that Y and X have already
-      # been rotated
-      # reml is only used for choosing box-cox parameter
-      if(is.vector(Y))	
-        Y = as.matrix(Y)
-      
-      if(is.null(Qchol)) {
-        Qchol = Cholesky(Q, LDL=FALSE)
-        Y=solve(Qchol, Y, system='P')
-        X=solve(Qchol, X, system='P')
-      }
-      if(is.null(detQ)) {
-        detQ= 2*determinant(Qchol,logarithm=TRUE)$modulus
-      }
-      
-      if(propNugget>0){
-        XprimeX = crossprod(X)
-        
-        xisqtausq = 1/propNugget
-        Vchol = update(Qchol, Q, mult=xisqtausq)
-        detLhalf = determinant(Vchol,logarithm=TRUE)$modulus
-        Vx = solve(Vchol, X,system='L')
-        
-        XXLxLx = XprimeX - xisqtausq * crossprod(Vx) 
-      } else { # no nugget 
-        Vchol = NULL
-        detLhalf = 0
-        Vx = expand(Qchol)$L %*% X
-        XXLxLx = crossprod(Vx)
-      }
-      cholXXLxLx = t(chol(XXLxLx))
-      detXXhalf = Matrix::determinant(
-          cholXXLxLx,logarithm=TRUE)$modulus
-      
-      if(length(boxcoxInterval)==2){ # run an optimizer
-        
-        boxcox = rep(NA, ncol(Y))
-        sumLogY = apply(log(Y), 2, sum)
-        
-        for(Dvar in 1:ncol(Y)) {
-          
-          boxcox[Dvar] =  optimize(
-              loglikGmrfObjFunBc, 
-              range(boxcox),
-              maximum=FALSE, 
-              Y=Y[,Dvar], 
-              X=X,
-              propNugget=propNugget,
-              Qchol=Qchol,
-              Vchol=Vchol, 
-              Vx=Vx,
-              cholXXLxLx=cholXXLxLx,
-              reml=reml,
-              sumLogY=sumLogY[Dvar]
-          )$minimum
-          #found boxcox
-          if(abs(boxcox[Dvar])<0.001) {
-            Y[,Dvar] = log(Y[,Dvar]) 
-          } else  { #boxcox far from 0 and 1
-            Y[,Dvar] <- ((Y[,Dvar]^boxcox[Dvar]) - 1)/ boxcox[Dvar] 
-          }
-        }
-        # Y is now box-cox transfomed
-        twoLogJacobian = as.numeric(2*(boxcox-1)*sumLogY) 
-      } else { # no boxcox
-        boxcox=rep(1, ncol(Y))
-        twoLogJacobian=rep(0, ncol(Y))
-      }
-      
-      if(propNugget>0){
-        YprimeY = apply(Y^2,2,sum)
-        YprimeX = crossprod(Y,X)
-        
-        Vy = solve(Vchol, Y,system='L')
-        XYLxLy = t(YprimeX) - crossprod(Vx,Vy)/propNugget 
-      } else { # no nugget 
-        Vy = expand(Qchol)$L %*% Y
-        XYLxLy = crossprod(Vx,Vy)
-      }
-
-      Lc = solve(cholXXLxLx, XYLxLy)
-      LcLc = apply(Lc^2, 2, sum)
-      VyVy = apply(Vy^2,2,sum)
-      
-      if(propNugget>0){
-        ssq = YprimeY - VyVy/propNugget  - LcLc
-      } else { # no nugget 
-        ssq = VyVy  - LcLc
-      }
-      
-      # prepare the result
-      N = nrow(Y)
-      Ncov = ncol(X)
-      Nreml = N - Ncov
-      result = list(
-          m2logL.ml = N * log(ssq)+ 2*detLhalf - detQ + 
-              N - N*log(N) - twoLogJacobian, 
-          m2logL.reml = Nreml * log(ssq)+ 2*detLhalf - 
-              detQ -2*detXXhalf + Nreml - 
-              Nreml * log(Nreml) - twoLogJacobian
+loglikGmrfOneRange = function(
+    oneminusar,
+    shape, NN,
+    adjustEdges, obsCov, xisqTausq,
+    reml, jacobian, control){
+  
+  Q =  geostatsp::maternGmrfPrec(NN,
+      param=c(
+          shape=as.vector(shape),
+          oneminusar=as.vector(oneminusar),
+          conditionalVariance=1),
+      adjustEdges=adjustEdges)
+  
+  result = .Call('gmrfLik',
+      Q, 
+      obsCov, 
+      as.double(xisqTausq), 
+      reml,
+      as.double(jacobian),
+      as.double(
+          control$logXisqTausq[
+              c('lower','upper','tol')]
       )
-      
-      result$logL.ml = -result$m2logL.ml/2
-      result$logL.reml = -result$m2logL.reml/2
-      
-      const.ml = ssq/N
-      const.reml = ssq/Nreml
-      
-      
-      if(propNugget>0){
-        result$tausq.ml = const.ml
-        result$tausq.reml = const.reml
-        result$xisq.ml = result$tausq.ml/propNugget
-        result$xisq.reml = result$tausq.reml/propNugget
-      } else { # no nugget 
-        result$tausq.ml = result$tausq.reml = 0
-        result$xisq.ml = const.ml
-        result$xisq.reml =const.reml
-      }
-      parInfo = attributes(Q)$param
-      result$sigmasq_theo.ml = result$xisq.ml * parInfo$theo[['variance']]  
-      result$sigmasq_theo.reml = result$xisq.reml * parInfo$theo[['variance']]  
-      
-      result$sigmasq_optimalShape.ml = 
-          result$xisq.ml * parInfo$optimalShape[['variance']]  
-      result$sigmasq_optimalShape.reml = 
-          result$xisq.reml * parInfo$optimalShape[['variance']]  
-      
-      result$betaHat = as.matrix(solve(t(cholXXLxLx),Lc))
-      rownames(result$betaHat ) = paste(
-          rownames(result$betaHat), ".betaHat",sep='')
-      
-      seBetaHat = diag(chol2inv(cholXXLxLx))
-      seBetaHat = matrix(seBetaHat, nrow=length(seBetaHat),
-          ncol=ncol(Y))
-      rownames(seBetaHat) = paste(colnames(X), '.se',sep='')
-      
-      result$seBetaHat.ml = seBetaHat * matrix(
-          const.ml,
-          nrow(seBetaHat), ncol(seBetaHat), 
-          byrow=TRUE)
-      rownames(result$seBetaHat.ml) = paste(
-          rownames(result$seBetaHat.ml), '.ml',sep=''
-      )
-      
-      
-      result$seBetaHat.reml = seBetaHat * matrix(
-          const.reml,
-          nrow(seBetaHat), ncol(seBetaHat), 
-          byrow=TRUE)
-      rownames(result$seBetaHat.reml) = paste(
-          rownames(result$seBetaHat.reml), '.reml',sep=''
-      )
-      
-      result$propNugget = rep(propNugget, ncol(Y))
-      result$boxcox = boxcox
-      
-      result  = do.call(rbind, result)
-      
-      result
-}    
-    
-loglikGmrfGivenQold = function(
-	propNugget,
-  Ry, Y, 
-  Rx, X,
-  Q, Qchol=NULL, 
-  detQ=NULL, 
-  boxcoxInterval=NULL, 
-  reml=TRUE,
-  sumLogY = NULL) {
-  
-  # propNugget =    tau^2/xi^2
-  
-  if(is.vector(Y))	
-		Y = as.matrix(Y)
-	
-  N= nrow(Y) + c(ml=0,reml=-ncol(X))
-
-  if(is.null(Qchol)) {
-	  Qchol = Cholesky(Q, LDL=FALSE)
-  }
-  if(is.null(detQ)) {
-	  detQ= 2*determinant(Qchol,logarithm=TRUE)$modulus
-  }
-  
-  if(propNugget>0){
-
-	xisqtausq = 1/propNugget
-  
-	Vchol = update(Qchol, Q, mult=xisqtausq)
-	  
-	Vx = solve(Vchol, X)
-   	XprecXinv = solve(Matrix::crossprod(Rx,Vx))
-
-	if(length(boxcoxInterval)==2){ # run an optimizer
-
-		boxcox = rep(NA, ncol(Y))
-		for(Dvar in 1:ncol(Y)) {
-			bchere = optimize(oneL, range(boxcox),
-					maximum=TRUE, Y=Y[,Dvar], sumLogY=sumLogY[Dvar])$maximum
-			boxcox[Dvar] = bchere
-		 #found boxcox
-			if(abs(bchere)<0.001) {
-				Y[,Dvar] = log(Y[,Dvar]) 
-			} else  { #boxcox far from 0 and 1
-				Y[,Dvar] <- ((Y[,Dvar]^bchere) - 1)/ bchere 
-			}
-		}
-		Ry = Q %*% Y
-		# Y is now box-cox transfomed
-		twoLogJacobian = as.numeric(2*(boxcox-1)*sumLogY) 
-	} else { # no boxcox
-		boxcox=NULL
-		twoLogJacobian=0
-	}
-	Vy = solve(Vchol, Y)
-    betaHat =  
-      XprecXinv %*% 
-        Matrix::crossprod(Rx,Vy) 
-    rownames(betaHat) = colnames(X)
-
-	R = diag(
-			Matrix::crossprod(Ry,Vy) - 
-					Matrix::crossprod(Ry, Vx) %*% betaHat
-	)
-	constHat=tausq = outer(N,R,"/")
-	xisq = tausq/propNugget
-	
-    logDetVar = as.numeric(
-      2*determinant(Vchol,logarithm=TRUE)$modulus
-	) 
-        
-  } else { # no nugget 
-	  XprecX = Matrix::crossprod(X,Rx)
-	  XprecXinv = solve(XprecX)
-	  
-  	if(length(boxcoxInterval)==2){ # run an optimizer
-	  oneL = function(onebc, Y, sumLogY) {
-		  if(abs(onebc)<0.001) {
-				  Ybc = log(Y) 
-		  } else  { #boxcox far from 0 and 1
-				  Ybc <- ((Y^onebc) - 1)/ onebc 
-		  }
-			  twoLogJacobian = as.numeric(2*(onebc-1)*sumLogY) 
-			  
-			  Rybc = Q %*% Ybc
-			  
-			  betaHat = XprecXinv %*% 
-					  Matrix::crossprod(X , Rybc)
-			  
-			  resids  =  Ybc - X %*% betaHat 
-			  R =  t(Matrix::crossprod(resids,Q)) * resids
-			  R = apply(R, 2,sum)
-			  
-			  logDetVar = - detQ + N - N*log(N)
-			  m2logL = logDetVar + outer(N,log(R), "*") - twoLogJacobian
-			  m2logL[ c('ml','reml')[1+reml] ]
-	  }
-	boxcox = rep(NA, ncol(Y))
-	for(Dvar in 1:ncol(Y)) {
-		bchere = optimize(oneL, range(boxcox),
-				maximum=TRUE, Y=Y[,Dvar], sumLogY=sumLogY[Dvar])$maximum
-		boxcox[Dvar] = bchere
-		  #found boxcox
-		  if(abs(bchere)<0.001) {
-			  Y[,Dvar] = log(Y[,Dvar]) 
-		  } else  { #boxcox far from 0 and 1
-			  Y[,Dvar] <- ((Y[,Dvar]^bchere) - 1)/ bchere 
-		  }
-	}
-	Ry = Q %*% Y
-	twoLogJacobian = as.numeric(2*(boxcox-1)*sumLogY) 	
-  } else {
-	  boxcox=NULL
-	  
-	twoLogJacobian=0  
-  } # end box cox
-  
-	  
-    betaHat = XprecXinv %*% 
-                           Matrix::crossprod(X , Ry)
-    rownames(betaHat) = colnames(X)
-    
-    resids  =  Y - X %*% betaHat 
-    R =  t(Matrix::crossprod(resids,Q)) * resids
-	R = apply(R, 2,sum)
-	
-    logDetVar=0
-	
-    constHat = xisq = t(outer(R,N,"/"))
-	tausq=0*constHat
-	
-    # matrix operations
-    # Qchol, cholCovMat = Matrix::chol(covMat)
-    # XL, cholCovInvX = Matrix::solve(cholCovMat, covariates)
-    # XprecX, cholCovInvXcross = Matrix::crossprod(cholCovInvX)
-    # XprecXinv, cholCovInvXcrossInv = Matrix::solve(cholCovInvXcross)
-  } # end no nugget
-  
-  logDetVar = logDetVar - detQ + N - N*log(N)
-  m2logL = outer(N,log(R), "*")
-  m2logL =  m2logL  + (logDetVar  - c(twoLogJacobian,twoLogJacobian))
-  
-  variances = abind::abind(tausq = tausq, xisq = xisq,
-		  along=3)
-  
-  parInfo = attributes(Q)$param
-  for(D in c('theo', 
-		 grep("^optimal", names(parInfo),value=TRUE))) {
-
-	 sigmasq = xisq * parInfo[[D]]['variance']
-	 variances = abind::abind(variances, sigmasq, along=3)
-	 dimnames(variances)[[3]][dim(variances)[3]] = 
-			 paste('sigmasq_',D,sep='')
- }
-  
-  variances = apply(variances, 2, function(x) {
-			  res = as.vector(x)
-			  names(res)=t(outer(
-					  colnames(x),rownames(x),
-					  paste,sep='.'))
-			  res})
-  
-   
-  
-  m2logL['reml',] =	m2logL['reml',] +  determinant(
-    XprecXinv,logarithm=TRUE)$modulus
-  
-  rownames(m2logL) = paste("m2logL.",
-		  rownames(m2logL),sep='')
-  
-  logL = -m2logL/2
-  rownames(logL) = gsub("^m2","",rownames(logL))
-  
-  sebeta = diag(XprecXinv)
-  sebeta = array(sebeta, 
-		  c(length(sebeta),dim(constHat)),		
-		  dimnames=c(
-				  list(rownames(betaHat)),
-				  dimnames(constHat))) 
-
-  
-  constHat2 = array(constHat, dim(sebeta)[c(2,3,1)],
-		  dimnames=dimnames(sebeta)[c(2,3,1)])
-  constHat2 = aperm(constHat2, c(3,1,2))
-  sebeta = sqrt(sebeta *constHat2)
-
-  sebeta = apply(sebeta, 3, function(x) {
-        res = as.vector(x)
-        names(res)=outer(rownames(x),colnames(x),paste,sep='.se.')
-        res}
   )
-  									   
-#  varbetahat = abind::abind(
-#    as.matrix(XprecXinv)/constHat[1],
-#    as.matrix(XprecXinv)/constHat[2],
-#    along=3)
   
-#  dimnames(varbetahat) = 
-#    list(names(betaHat),names(betaHat),
-#         names(constHat))
-  
-
-  betaHat = as.matrix(betaHat)
-  rownames(betaHat) = paste(rownames(betaHat), "betaHat", sep=".")
-
-   result =rbind(m2logL, logL,
-            variances,
-            as.matrix(betaHat), 
-            sebeta,
-			propNugget=propNugget, boxcox=rep(boxcox,2))#,
-#            logDetVar=as.numeric(logDetVar))
-  
-  
-#  attributes(result)$varbetahat = varbetahat
+  attributes(result)$param = attributes(Q)$param
   
   result
+}  
   
-}
-
-loglikGmrfOneRange = function(
-  oneminusar,
-  Yvec, Xmat, NN, propNugget=0,
-  shape=1,  boxcoxInterval=NULL,
-  reml=TRUE,
-  sumLogY = NULL,
-  adjustEdges=FALSE,
-  optimizer=FALSE) {
-    
-    Q =  maternGmrfPrec(NN,
-                         param=c(shape=as.vector(shape),
-                                 oneminusar=as.vector(oneminusar[1]),
-                                 conditionalVariance=1),
-		adjustEdges=adjustEdges)
-
-  thepar=attributes(Q)$param
-
-if(FALSE){
-  # eventually, this will be done in C
-  xisqtausq = 1/propNugget
-  Nnugget=length(xisqtausq)
-  Nobs = nrow(Xmat)
-  Ncov = ncol(Xat)
-  if(is.vector(Yvec))	
-    Yvec = as.matrix(Yvec)
-  Ny = ncol(Yvec)
-  resC=.C(
-      'logLikGmrfGivenQ',
-      xisqtausq, Nnugget,
-      Yvec, as.matrix(Xmat), 
-      Nobs, Ny, Ncov,
-      Q,
-      betaHat = rep(0.0, Ncov*Ny*Nnugget),
-      cholXVX = rep(0.0, Ncov*Ncov*Nnugget),
-      determinants = rep(0.0,3*Nnugget),
-      ssq = rep(0.0, Ny*Nnugget)
-  )
-}
-  
-	Qchol = Cholesky(Q,LDL=FALSE)
-  detQ = 2*as.numeric(determinant(Qchol,
-                                    logarithm=TRUE)$modulus)
-  argList = list(
-    Y=solve(Qchol, as.matrix(Yvec), system='P'),
-    X=solve(Qchol, as.matrix(Xmat), system='P'),
-    Q=Q, Qchol=Qchol, 
-    detQ=detQ,
-    boxcoxInterval=boxcoxInterval)
-
-  if(optimizer) { # use an optimizer
-
-    
-    res = optimize(
-        loglikGmrfGivenQobjFun,
-        lower=0,upper=100,
-        maximum=TRUE,
-    # arguments passed to loglikGmrfGivenQ
-        Y=argList$Y, 
-        X=argList$X,
-        Q=argList$Q, 
-        Qchol=argList$Qchol, 
-        detQ=argList$detQ,
-       boxcoxInterval = boxcoxInterval,
-        reml=reml#, sumLogY=sumLogY
-        )
-    res = attributes(res$objective)$full
-  } else { # evaluate for a sequence of propNugget
-  
-  
-  if(length(propNugget)==1) {
-    
-    argList$propNugget=propNugget
-    
-    res = do.call(loglikGmrfGivenQ,argList)
-    
-  } else {
-    
-    res = mapply(loglikGmrfGivenQ,
-                 propNugget=propNugget,			
-                 MoreArgs=argList,SIMPLIFY=FALSE
-    )
-    names(res) = paste("propNugget=", propNugget,sep="")
-	res = simplify2array(res)    
-
-}	  
-
-
-res = abind::abind(res, 
-		oneminusar=array(oneminusar, dim=dim(res)[-1]), 
-		range = array(thepar$theo['range'],dim=dim(res)[-1]), 
-		shape = array(thepar$theo['shape'],dim=dim(res)[-1]), 
-		shape_optimal = array(thepar$optimal['shape'],dim=dim(res)[-1]), 
-		along=1)
-
-res = drop(res)
-
-}
-attributes(res)$Qinfo = thepar
-
-res
-
-}
-
-
 loglikGmrf = function(
-  oneminusar,
-  Yvec, Xmat, NN, propNugget=0,
-  shape=1, boxcox=1,
-  reml=TRUE,
-  adjustEdges=FALSE,
-  optimizer=FALSE,
-  mc.cores=1) {
-  	
-	if(length(boxcox)>1) {
-		boxcoxInterval = range(boxcox)
-		sumLogY = apply(as.matrix(Yvec), 2, function(qq) sum(log(qq)))	
-		if(is.nan(sumLogY))
-			warning("boxcox shouldnt be used with negative data")
-	} else { # a single boxcox parameter (perhaps 1)
-		boxcoxInterval=NULL
-		sumLogY=NULL
-		if(abs(boxcox-  1 ) > 0.001) {
-			if(abs(boxcox<0.001)) {
-				Yvec = log(Yvec) 
-			} else  { #boxcox far from 0 and 1
-				Yvec <- ((Yvec^boxcox) - 1)/boxcox
-			}
-		}
-	}
-	
-  	argList = list(Yvec=as.matrix(Yvec), 
-                 Xmat=as.matrix(Xmat), 
-				 NN=NN,
-                 propNugget=propNugget,
-                 shape=shape,
-                 adjustEdges=adjustEdges,
-		 boxcoxInterval=boxcoxInterval, sumLogY=sumLogY,
-		 reml=reml,
-     optimizer=optimizer
+    Yvec, Xmat, NN, 
+    oneminusar = NULL,
+    propNugget=NULL,
+    boxcox=1,
+    fixBoxcox=TRUE,
+    seqBoxcox=outer(c(0.01, 0.02, 0.05, 0.1), c(-1,1)),
+    shape=1,
+    reml=TRUE,
+    adjustEdges=FALSE,
+    jacobian = 0,
+    control=list(
+        oneminusar = c(lower=1e-3, upper=0.8, tol= .Machine$double.eps^0.25),
+        propNugget = c(lower=1e-3, upper=1e3, tol= .Machine$double.eps^0.25)
+    ),
+    mc.cores=1
+) {
+
+  Yvec = as.matrix(Yvec)
+  Ny = ncol(Yvec)
+  Nobs = nrow(Yvec)
+  Lcol = c('m2logLml', 'm2logLreml')[reml+1]
+  
+  # boxcox
+  if(!fixBoxcox){
+    seqBoxcox = sort(unique(c(0, seqBoxcox)))
+    if(Ny>1) warning("need fixBoxcox=TRUE if Y has more than one column")
+    bcStuff = forBoxCox(Yvec,Xmat,seqBoxcox)
+    Ny = ncol(bcStuff$y)
+    Yvec = bcStuff$y
+    jacobian = bcStuff$jacobian
+    boxcox=bcStuff$boxcox
+  } else {
+    if(length(jacobian)==1)
+      jacobian = rep(jacobian, Ny)
+    if(length(boxcox)==1){
+      boxcox = rep(boxcox, Ny)
+    } 
+  }
+  
+  if(length(jacobian)!= Ny | length(boxcox)!= Ny)
+    warning('length of jacobian or boxcox must be same as columns of Y')
+  
+  obsCov = as.matrix(cbind(Yvec, Xmat))
+
+  if(length(propNugget))
+    propNugget = sort(unique(c(0, propNugget)))
+  xisqTausq = 1/propNugget 
+  
+  
+  Nxysq = ncol(obsCov)^2
+  mlColNames = c(
+      'det','detReml','m2logLml', 'm2logLreml',
+      'varMl', 'varReml', 'xisqTausq','junk')
+  Ncols = length(mlColNames)*Ny+Nxysq
+  
+  if(!length(control$xisqTausq)){
+    control$xisqTausq = c(
+        lower=as.vector(1/control$propNugget['upper']),
+        upper=as.vector(1/control$propNugget['lower']),
+        control$propNugget['tol']
+        )
+  }
+  
+  if(!length(control$logXisqTausq)){
+    control$logXisqTausq = c(
+        log(control$xisqTausq[c('lower','upper')]),
+        control$xisqTausq['tol']
+    )
+  }
+  
+
+#  dyn.unload('../src/gmrfLik.so')
+#  dyn.load('../src/gmrfLik.so')
+  
+  if(length(oneminusar)){
+    # not optimizing
+    
+  fromC = parallel::mcmapply(
+      loglikGmrfOneRange,
+      oneminusar=oneminusar,
+      MoreArgs=list(
+          shape=shape, NN=NN,
+      adjustEdges=adjustEdges, 
+      obsCov=obsCov, 
+      xisqTausq=xisqTausq,
+      reml=reml, 
+      jacobian=jacobian, control=control),
+  mc.cores=mc.cores, SIMPLIFY=FALSE
+  )
+
+  parInfo = lapply(fromC, function(qq) attributes(qq)$param)
+  fromC = simplify2array(fromC)
+  
+  NxysqTausq = nrow(fromC)/(8*Ny+ncol(obsCov)^2)
+  logLstart = NxysqTausq*Nxysq
+  Lseq = 1:logLstart
+  
+  ml = fromC[-Lseq,]
+  ml = array(
+      as.vector(ml), 
+      dim=c(Ny, NxysqTausq, length(mlColNames), ncol(fromC)),
+      dimnames=list(
+          colnames(obsCov)[1:Ny], 
+          NULL, mlColNames, oneminusar
+      )
+  )
+  dimnames(ml)[[2]] = as.character(1/ml[1,,'xisqTausq',1])
+  
+  ssq = fromC[Lseq,]
+  ssq=array(ssq, 
+      dim=c(ncol(obsCov),ncol(obsCov),NxysqTausq, ncol(fromC)),
+      dimnames=list(colnames(obsCov), colnames(obsCov), 
+          dimnames(ml)[[2]], oneminusar))
+  
+  
+  covDim = seq(Ny+1, ncol(obsCov))
+  
+  # retain only the best box-cox parameter for each pair
+# of oneminusar and propNugget
+  if(length(boxcox)>1 & !fixBoxcox){
+    dimnames(ml)[[3]] = gsub("^junk$", "boxcox",dimnames(ml)[[3]])
+    
+    ml[,,'boxcox',] = boxcox
+    
+      # only get rid of BC
+      bestBcList = apply(ml[,,Lcol,], c(2,3), which.min)
+      bestBc = array(as.double(bestBcList),
+          dim(bestBcList))
+
+      newml = array(NA, c(1,dim(ml)[-1]),
+          dimnames=c(list('y'),dimnames(ml)[-1]))
+      newssq =array(NA, 
+          c(1+ncol(Xmat),
+              1+ncol(Xmat), dim(ssq)[-(1:2)]),
+             dimnames=c(
+                 list(
+                     c('y',colnames(Xmat)),
+                     c('y',colnames(Xmat))
+         ),
+         dimnames(ssq)[-(1:2)]
+        )
+         )
+      
+      for(Dar in 1:dim(newml)[4]){
+        for(Dnugget in 1:dim(newml)[2]){
+          thisBc = bestBc[Dnugget,Dar]
+          if(!is.na(thisBc)){
+            newml[1,Dnugget,,Dar] =
+              ml[thisBc,Dnugget,,Dar]
+            newssq[,,Dnugget,Dar] = 
+                ssq[c(thisBc,covDim),c(thisBc,covDim),Dnugget,Dar]
+            }
+        }
+      }
+      ml = newml
+      ssq=newssq
+    } # end boxcox
+    
+    if( !length(propNugget)){
+   # retain only propNugget with best likelihood
+    bestN = apply(ml[,,Lcol,,drop=FALSE],c(1,3,4),which.min)
+
+    newml = array(NA, 
+        c(dim(ml)[1],1,dim(ml)[-(1:2)]),
+          dimnames=c(dimnames(ml)[1],
+              list('y'),dimnames(ml)[-(1:2)])
+      )
+
+      newssq =array(NA, 
+          c(dim(ssq)[1:2],1,dim(ssq)[4]),
+        dimnames=list(
+          dimnames(ssq)[[1]],dimnames(ssq)[[2]],
+            NULL, dimnames(ssq)[[4]])
+    )
+      
+    for(Dbc in 1:dim(newml)[1]){
+      for(Dar in 1:dim(newml)[4]){
+        newml[Dbc,1,,Dar] = ml[
+            ,
+            bestN[Dbc,1,Dar],
+            ,Dar] 
+        newssq[,,1,Dar]=ssq[
+          ,,
+          bestN[Dbc,1,Dar],
+          Dar]    
+      }
+    }
+    ml = newml
+    ssq=newssq
+    } # end no propNugget
+    
+    theInf = ml[,,'xisqTausq',,drop=FALSE] != Inf
+    
+    forml = abind::abind(
+        propNugget = 1/ml[,,'xisqTausq',,drop=FALSE],
+        tausqMl=ml[,,'varMl',,drop=FALSE]*theInf,
+        tausqReml=ml[,,'varReml',,drop=FALSE]*theInf,
+        xisq.ml = theInf*ml[,,'varMl',,drop=FALSE]*ml[,,'xisqTausq',,drop=FALSE],
+        xisq.reml = theInf*ml[,,'varMl',,drop=FALSE]*ml[,,'xisqTausq',,drop=FALSE],
+        oneminusar = aperm(
+            array(oneminusar, dim(ml)[c(4,2,1)]),3:1
+    ),
+        along=3
+    )
+    dimnames(forml)[[3]] = c(
+        'propNugget','tausqMl', 'tausqReml', 
+        'xisqMl','xisqReml', 'oneminusar')
+    
+    Ny = dim(ml)[1]
+    betaHat = ssq[-(1:Ny),1:Ny,,,drop=FALSE]
+    dimnames(betaHat)[[1]] = paste(
+        dimnames(betaHat)[[1]], 'BetaHat',sep=''
+    )
+    betaHat = aperm(betaHat, c(2,3,1,4))
+
+    
+    seBetaHat = apply(ssq[-(1:Ny),-(1:Ny),,,drop=FALSE],c(3,4),diag)
+    seBetaHat = array(seBetaHat, c(dim(ml)[1],dim(seBetaHat)),
+        dimnames=c(dimnames(ml)[1], dimnames(seBetaHat)))
+    
+    
+    seBetaHat = aperm(seBetaHat, c(1,3,2,4))
+    
+    seBetaHatMl = seBetaHatReml = seBetaHat
+    
+    for(D in dimnames(seBetaHat)[[3]]){
+      seBetaHatMl[,,D,] = seBetaHatMl[,,D,,drop=FALSE] * 
+          ml[,,'varMl',,drop=FALSE]
+      seBetaHatReml[,,D,] = seBetaHatReml[,,D,,drop=FALSE] * 
+          ml[,,'varReml',,drop=FALSE]
+    }
+    dimnames(betaHat)[[3]] = paste(dimnames(seBetaHatMl)[[3]],'BetaHat',sep='')
+    dimnames(seBetaHatMl)[[3]] = paste(dimnames(seBetaHatMl)[[3]],'SeMl',sep='')
+    dimnames(seBetaHatReml)[[3]] = paste(dimnames(seBetaHatReml)[[3]],'SeReml',sep='')
+    
+    logLml = -ml[,,c('m2logLreml','m2logLml'),,drop=FALSE]/2
+    dimnames(logLml)[[3]] = gsub("^m2","", dimnames(logLml)[[3]])
+
+    
+    parMat = lapply(parInfo, function(qq){
+          c(
+          qq$theo[c('range','shape','variance')], 
+          optimalShape=qq$optimalShape['shape'],
+          optimal=qq$optimal[c('shape','variance')]
+      )
+        })
+    parMat = simplify2array(parMat)
+    parArray = aperm(
+        array(parMat,c(dim(parMat),dim(ml)[1:2])),
+        c(length(dim(parMat))+c(1,2), 1:length(dim(parMat))))
+    dimnames(parArray)[[3]] = rownames(parMat)
+
+    res = abind::abind(ml, logLml,forml, betaHat, seBetaHatMl, seBetaHatReml, parArray,
+        along=3)
+    
+    mleIndex = arrayInd(
+        which.min(res[,,Lcol,,drop=FALSE]),
+        dim(res)[-3])
+    mle = res[mleIndex[1],mleIndex[2],,mleIndex[3]]
+    
+
+    getRid = paste('(^det|logL|^var|tausq|xisq|Se)',
+        c('[Mm]l$','[Rr]eml$'),sep='')[1+reml]
+    mle = mle[grep(getRid,names(mle),invert=TRUE)]
+    
+    res = list(
+        mle=mle[names(mle)!='junk'], 
+        mlArray = res
+    )
+    
+  } else {
+    #oneminusar is NULL
+    # optimizing
+    resEnv = new.env()
+    assign('allPar', list(), envir=resEnv)
+    assign('allFromC',  NULL, envir=resEnv)
+    assign('oneminusar',  NULL, envir=resEnv)
+    
+    oneL = function(x){
+      
+      Q =  geostatsp::maternGmrfPrec(NN,
+          param=c(
+              shape=as.vector(shape),
+              oneminusar=as.vector(x),
+              conditionalVariance=1),
+          adjustEdges=adjustEdges)
+      
+      fromC = .Call('gmrfLik',
+          Q, 
+          obsCov, 
+          as.double(xisqTausq), 
+          reml,
+          as.double(jacobian),
+          as.double(
+              control$logXisqTausq[
+                  c('lower','upper','tol')]
+          )
+      )
+      
+      assign('allFromC',
+          cbind(get('allFromC', resEnv), fromC),
+          resEnv)
+      assign('oneminusar',
+          c(get('oneminusar', resEnv), x),
+          resEnv)
+      assign('allPar', 
+          c(get('allPar', resEnv), 
+              list(attributes(Q)$param)),
+          resEnv
+      )
+      
+      NxysqTausq = length(fromC)/Ncols
+      
+      logLstart = NxysqTausq*(
+            Nxysq+Ny*(2 + reml)
+            )
+      # get the likelihood column
+      ml = fromC[seq(
+              logLstart, by=1, len=NxysqTausq
+          )]
+      # 
+      ml = min(ml, na.rm=TRUE)
+      
+      ml
+    }
+    
+    optimize(oneL, 
+        lower=control$oneminusar['lower'], 
+        upper=control$oneminusar['upper'], 
+        tol=control$oneminusar['tol']
+    )
+
+  oneminusarRes = get('oneminusar', resEnv)
+  fromC = as.matrix(get('allFromC', resEnv))
+  NxysqTausq = nrow(fromC)/(8*Ny+ncol(obsCov)^2)
+  logLstart = NxysqTausq*Nxysq
+  Lseq = 1:logLstart
+  
+  ssq = fromC[Lseq,]
+  ssq=array(ssq, 
+      dim=c(ncol(obsCov),ncol(obsCov),NxysqTausq, ncol(fromC)),
+      dimnames=list(colnames(obsCov), colnames(obsCov), NULL, oneminusarRes))
+
+  ml = fromC[-Lseq,,drop=FALSE]
+  ml = array(
+      as.vector(ml), 
+      dim=c(Ny, NxysqTausq, length(mlColNames), ncol(fromC)),
+      dimnames=list(
+          colnames(Yvec), 
+          NULL, mlColNames, oneminusarRes
+      )
+  )
+
+  minMl = min(ml[,,Lcol,],na.rm=TRUE)
+  mleIndex = arrayInd(
+          which((ml[,,Lcol,,drop=FALSE]-minMl) < 10),
+          dim(ml)[-3])
+  
+  mlMat = NULL
+  for(D in 1:nrow(mleIndex)){
+    mlMat = rbind(mlMat,
+        ml[mleIndex[1],mleIndex[2],,mleIndex[3]])
+  }
+  
+  mlMat = cbind(
+      mlMat, 
+      boxcox=boxcox[mleIndex[1]],
+      oneminusar = oneminusarRes[mleIndex[,3]],
+      propNugget = 1/mlMat[,'xisqTausq']
+  )
+
+
+  mle = mlMat[which.min(mlMat[,Lcol]),]
+  
+  
+  Qinfo = get('allPar', resEnv)
+  thepar = Qinfo[[
+      which.min(abs(oneminusarRes-mle['oneminusar']))
+  ]]
+  
+  parMat =
+        c(
+            thepar$theo[c('range','shape','variance')], 
+            optimalShape=thepar$optimalShape['shape'],
+            optimal=thepar$optimal[c('shape','variance')]
+        )
+  
+  varMat =   parMat[grep('variance', names(parMat))]
+  varMle = varMat * mle[c('varMl','varReml')[1+reml]]
+  nuggetMle = c(nugget=as.numeric(
+          mle['propNugget'] * mle[c('varMl','varReml')[1+reml]]
+      ))
+  
+  mle = c(mle, 
+      varMle, nuggetMle,
+      parMat[grep('variance', names(parMat), invert=TRUE)])       
+  
+  
+  
+  mleIndex = drop(arrayInd(
+      which.min(ml[,,Lcol,,drop=FALSE]-minMl),
+      dim(ml)[-3]))
+  
+  toKeep = c(mleIndex[1], seq(Ny+1, ncol(obsCov)))
+  mleSsq = ssq[toKeep[-1],toKeep,
+      mleIndex[2],
+      mleIndex[3]
+  ]
+  colnames(mleSsq)[1] = 'mle'
+  
+  betaHat = mleSsq[,'mle']
+  seBetaHat = diag(mleSsq[,-1])
+  seBetaHat = seBetaHat * mle[c('varMl','varReml')[1+reml]]
+  names(seBetaHat) = paste('stdErr',names(seBetaHat), sep='.')
+  
+  res = list(
+      mle=c(mle[names(mle)!='junk'], 
+      betaHat, 
+      seBetaHat),
+      mlMat = mlMat,
+      Qinfo = thepar
   )
   
-  if(mc.cores>1) {
-    myapply= function(...){
-      parallel::mcmapply(...,
-                         mc.cores=mc.cores)
-    }
-  } else {
-    myapply= mapply
-  }
-  
-    res=myapply(loglikGmrfOneRange,
-                oneminusar=oneminusar,
-                MoreArgs=argList,
-                SIMPLIFY=FALSE
-    )
-    names(res) = 
-      paste("oneminusar=",oneminusar,sep="")
-  
-  if(class(res[[1]])!= 'character'){
-    Qinfo = attributes(res[[1]])$Qinfo
-    
-    res= simplify2array(res)
-    
-    attributes(res)$Qinfo = Qinfo
-    
-  }
+}
   res
+  
 }
 
 

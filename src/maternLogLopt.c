@@ -381,7 +381,7 @@ void maternLogLOpt(
 			optimEx
 	);
 
-	maternLogLObj(*N,paramArg, optimEx);
+	scalarsF[0] = maternLogLObj(*N,paramArg, optimEx);
 
 	for(Dparam=0;Dparam<SparamOpt[0];++Dparam){
 		paramArg[Dparam] = paramArg[Dparam]*parscale[Dparam];
@@ -392,7 +392,7 @@ void maternLogLOpt(
 	scalarsInt[0] = optimFail;
 	scalarsInt[1] = fncount;
 	scalarsInt[2] = grcount;
-	scalarsF[0] = result;
+
 	scalarsF[1] = totalSsqOpt[1];
 	scalarsF[2] = boxcoxParamOpt[6];
 	scalarsF[3] = boxcoxParamOpt[7];

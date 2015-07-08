@@ -15,8 +15,13 @@ excFunQQ = function(themat, threshold) {
 		toInt = rbind(c(threshold, approx(themat[,"x"], themat[,"y"], threshold)$y),
 				themat[over,]
 		)
-		
-		prob = pracma::trapz(toInt[,"x"], toInt[,"y"])
+		if(requireNamespace('pracma', quietly=TRUE)){
+	  	prob = pracma::trapz(toInt[,"x"], toInt[,"y"])
+    } else {
+      theDiff = diff(toInt[,'x'])/2
+      theDiff = c(0,theDiff) + c(theDiff,0)
+      prob = sum(theDiff * toInt[,"y"])
+    }
 	} else {
 		prob = 0
 	} 

@@ -43,7 +43,7 @@ void computeBoxCox(
 		// to be subtracted from likelihood
 		for(D=0;D<Nrep;++D){
 			boxcox[D+Nrep] = sumLogY;
-			boxcox[D+2*Nrep] = 2*(boxcox[D]-1)*sumLogY;
+			boxcox[D+2*Nrep] = -2*(boxcox[D]-1)*sumLogY;
 		}
 	} else {
 		sumLogY = boxcox[Nrep+1];
@@ -86,7 +86,7 @@ void maternLogLGivenChol(
 		const double *cholVariance,
 		double *totalSsq, // an Nrep by 2 matrix
 		// first column Y Vinv Y
-		// second column beta X Vinv X beta
+		// second column Y Vinv X beta
 		double *betaHat, // an Ncov by Nrep matrix
 		double *varBetaHat, // an Ncov by Ncov by Nrep array
 		double *determinants, // detVarHalf, detCholCovInvXcrossHalf
@@ -203,7 +203,7 @@ void maternLogLGivenChol(
 
 
 	// totalSsq Y Vinv Y and
-	// betaHat X Vinv X betaHat  = Ly' Lx betaHat
+	// Y Vinv X betaHat  = Ly' Lx betaHat
 
 
 	for(D=0;D<*Nrep;++D) {
@@ -273,7 +273,7 @@ void logLfromComponents(
 		const int boxcoxType,
 		double *totalSsq,// length 2*Nrep,
 		// on entry, Y Vinv Y in first column
-		//   and betaHat' X Vinv X' betaHat in second
+		//   and Y Vinv X' betaHat in second
 		// on exit logL in first column
 		//  and totalVarHat in second column
 		const double *determinants,
@@ -287,7 +287,7 @@ void logLfromComponents(
 	int Nadj, D;
 	double *logL, detOne, Lstart, *totalVarHat, ssqXY;
 
-	logL = totalSsq;
+	logL = totalSsq; // Y Vinv Y
 	totalVarHat = &totalSsq[Nrep];
 
 	if( (*Ltype==1) | (*Ltype == 3) ){// reml
@@ -313,7 +313,7 @@ void logLfromComponents(
 		for(D=0;D<Nrep;++D) {
 			ssqXY = logL[D] - totalVarHat[D];
 			logL[D] = Lstart + ssqXY;
-			totalVarHat[D] = ssqXY/Nadj; // should be 1
+			totalVarHat[D] = 1; // should be 1
 		}
 	}
 	if(boxcoxType){
@@ -371,7 +371,7 @@ void maternLogL(
 		obsCov,
 		N,  // Nobs, Nrep, Ncov,
 		corMat,
-		totalSsq, // a 1 by Nrep matrix
+		totalSsq, // a Nrep by 2 matrix
 		betaHat, // an Ncov by Nrep matrix
 		varBetaHat, // an Ncov by Ncov by Nrep array
 		determinants, // detVarHalf, detCholCovInvXcrossHalf
