@@ -12,8 +12,13 @@ gm.dataRaster = function(
 	
 	# find factors
 	
-	allterms = rownames(attributes(terms(formula))$factors)[-1]
-	allterms = grep(":", allterms, invert=TRUE, value=TRUE)
+	alltermsFull = rownames(attributes(terms(formula))$factors)[-1]
+  if(!length(alltermsFull)){
+    # maybe there's offsets
+    # this thing works if that's the case
+    alltermsFull = as.character(attributes(terms(formula))$variables)[-(1:2)]
+  }
+	allterms = grep(":", alltermsFull, invert=TRUE, value=TRUE)
 	allterms = gsub("[[:space:]]", "", allterms)
 	
 	theFactors = grep("^factor", allterms, value=T)
@@ -31,6 +36,23 @@ gm.dataRaster = function(
 			dataFactors = c(D, dataFactors)
 	}
 	
+  inModel = gsub("^[[:alnum:]]+\\(",
+      "",
+      alltermsFull)
+  inModel = gsub(
+      "(,([[:alnum:]]|=|[[:space:]])+)?\\)$",#+?[[:space:]]?\\)[[:space:]]?$",
+      "", inModel)
+  
+  offsetToLogOrig = grep(
+      "^offset\\([[:print:]]+,log=TRUE\\)$", 
+      gsub("[[:space:]]+", "", alltermsFull))
+  offsetToLogOrig = alltermsFull[offsetToLogOrig]
+  if(length(offsetToLogOrig)) {
+  names(offsetToLogOrig) = gsub(
+      "^[[:space:]]?offset\\(|,[[:space:]]?log[[:space:]]?=[[:space:]]?TRUE[[:space:]]?\\)[[:space:]]?$",
+      '', offsetToLogOrig)
+  }
+  
 	Sfactor = c(
 		dataFactors,
 		covFactors,
@@ -39,23 +61,101 @@ gm.dataRaster = function(
 	covFactors = intersect(Sfactor,names(covariates))
 	dataFactors = intersect(Sfactor,names(data))
 	
-	if(length(names(covariates))) {
-		dataFactors = intersect(Sfactor, names(data))
-		
+  inModel = intersect(inModel, names(covariates))
+  covariates = covariates[inModel]
+	if(length(inModel)) {		
+    dataFactors = intersect(Sfactor, names(data))
+    notInData = setdiff(names(covariates), names(data))
+    
 		rmethod = rep("bilinear", length(names(covariates)))
 		names(rmethod) = names(covariates)
 		rmethod[covFactors] = "ngb"
 		
-		covariatesStack = stackRasterList(covariates, cellsSmall, method=rmethod)
-		
- 		covariatesStack = stack(cellsSmall, covariatesStack)
-		covariatesSP = as(covariatesStack, "SpatialPointsDataFrame")
-		covariatesDF = covariatesSP@data
-		
-		notInData = setdiff(names(covariates), names(data))
-		covData = stackRasterList(covariates, data, method=rmethod[notInData])
-		data = stack(data, covData)			
- 		
+    notLogOffset = ! names(covariates) %in% names(offsetToLogOrig)
+    if(any(notLogOffset)){
+		covariatesStack = stackRasterList(
+        covariates[notLogOffset],
+        cellsSmall, method=rmethod)
+
+    covariatesStack = stack(cellsSmall, covariatesStack)
+    covData = stackRasterList(covariates[notInData], data, method=rmethod)
+    
+  } else {
+    covariatesStack = cellsSmall
+    covData = NULL
+  }
+  
+    
+    for(D in names(offsetToLogOrig)) {
+      # loop through offsets which should
+      # be aggregated before taking logs
+      offsetToLog = covariates[[D]]
+      
+      toCrop = merge(
+          projectExtent(covariatesStack, 
+            crs(offsetToLog)
+    ),
+          projectExtent(data, 
+              crs(offsetToLog)
+          )
+      )
+      
+      
+      offsetToLogCrop = raster::crop(
+          offsetToLog, 
+          toCrop
+      )
+      
+      offsetToLogCrop = projectRaster(
+          offsetToLogCrop,
+          crs=crs(covariatesStack))
+
+      # aggregate for covariates
+      toAggregate = floor(min(res(covariatesStack)/res(offsetToLogCrop)))
+      if(toAggregate > 1){
+        offsetToLogAgg = aggregate(offsetToLogCrop, fact=toAggregate, fun=sum)
+      }
+      offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
+      offsetToLogLogged = log(offsetToLogAgg) + 
+          sum(log(res(covariatesStack))) -
+          sum(log(res(offsetToLogCrop)))
+      names(offsetToLogLogged) = paste('log',D,sep='')
+      covariatesStack = stack(covariatesStack, offsetToLogLogged)
+      toDrop = which(alltermsFull==offsetToLogOrig[D])
+#      drop.terms(terms(formula), toDrop, keep.response=TRUE)
+    # doesn't work, will drop other offsets
+
+    formula = as.formula(gsub(offsetToLogOrig[D],
+        paste("offset(log",D,")",sep=''),
+        format(formula),
+        fixed=TRUE))
+    
+    rmethod[paste('log',D,sep='')] = 'bilinear'
+
+    # aggregate for data
+toAggregateData = floor(min(res(data)/res(offsetToLogCrop)))
+if(toAggregateData != toAggregate & toAggregateData > 1 ){
+  offsetToLogAgg = aggregate(offsetToLogCrop, fact=toAggregateData, fun=sum)
+  offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
+  offsetToLogLogged = log(offsetToLogAgg) + 
+      sum(log(res(covariatesStack))) -
+      sum(log(res(offsetToLogCrop)))
+  names(offsetToLogLogged) = paste('log',D,sep='')
+}
+
+
+    covData = stack(
+        covData,
+        offsetToLogLogged
+        )
+    
+    } # end in names(offsetToLogOrig)
+    covariatesSP = as(covariatesStack, "SpatialPointsDataFrame")
+    covariatesDF = covariatesSP@data
+    
+    data = stack(data, covData)			
+    
+    
 	} else {
 		covariatesDF = data.frame()
 	}
@@ -89,7 +189,8 @@ for(D in intersect(Sfactor, names(covariatesDF))) {
   list(
     data=dataDF,
     grid=cellsSmall,
-    covariates=covariatesDF
+    covariates=covariatesDF,
+    formula = formula
     )
 }
 

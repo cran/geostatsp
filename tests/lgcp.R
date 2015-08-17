@@ -34,17 +34,7 @@ plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 
 if(interactive()  | Sys.info()['user'] =='patrick') {
-	# dodgy formula
 
-res = lgcp(data=myPoints, grid=20, covariates=mycov,
-		formula=shouldntBeHere~1,
-		priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
-)
-
-plot(res$raster[["predict.exp"]])
-plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
-
-	
 # some missing values
 
 temp = values(mycov)
@@ -68,10 +58,19 @@ myCov = list(
 
 formula = ~ inc + offset(pop, log=TRUE)
 
-lgcp(formula, data=murder, 
+resL=lgcp(formula, data=murder, 
     grid=squareRaster(murder, 30),
     covariates=myCov,
     border=torontoBorder)
+
+resO = lgcp( ~ inc + pop, 
+    data=murder, 
+    grid=squareRaster(murder, 30),
+    covariates=list(inc=myCov$inc, pop=log(myCov$pop)),
+    border=torontoBorder)
+
+rbind(resL$param$summary, resO$param$summary)
+
 
 }	
 }

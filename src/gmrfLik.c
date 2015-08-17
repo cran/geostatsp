@@ -313,7 +313,7 @@ SEXP gmrfLik(
 
 	// get some stuff ready
 
-	// allocate Lx
+	/* .. now allocate Lx .. */
 	Lx = M_cholmod_copy_dense(obsCov,&c);
 
 	// likelihood without nugget

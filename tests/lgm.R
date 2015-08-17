@@ -21,7 +21,7 @@ swissFit = lgm(data=swissRain[1:60,], formula=rain~ CHE_alt,
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
 names(swissFit)
-swissFit$param
+swissFit$summary[,1:4]
 bob(swissFit)
 
 
@@ -36,6 +36,7 @@ swissFitAgain = lgm(
 		aniso=TRUE)	
 names(swissFitAgain)
 swissFitAgain$param
+swissFitAgain$summary[,c('estimate','stdErr','Estimated')]
 bob(swissFitAgain)
 
 swissFitAgain = lgm(data=swissRain[1:60,], formula="rain",

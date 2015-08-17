@@ -47,14 +47,12 @@ if(is.list(x))	{
 		template = raster(x$predict)
 		if(!random) {
 			# check for boxcox
-			lowertail=FALSE	
-			elementsColumnwise = FALSE
 			if(any(names(x$predict)=="predict.boxcox")) {
 				resp = x$predict[["predict.boxcox"]]	
 				if(x$param["boxcox"]!=0) {
 					threshold = (threshold^x$param["boxcox"] - 1) /
 						x$param["boxcox"]
-					lowertail = x$param["boxcox"] < 0
+#					lowertail = x$param["boxcox"] < 0
 				} else {
 					threshold = log(threshold)
 				}

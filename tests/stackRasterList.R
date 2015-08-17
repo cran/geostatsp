@@ -21,4 +21,4 @@ thebrick = spdfToBrick(
     pattern='^stuff[[:digit:]]$'
     )
     
-plot(thebrick[['stuff1']])    
+plot(thebrick[[1]])    

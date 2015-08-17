@@ -234,6 +234,7 @@ likfitLgm = function(
   }
 
   trend = formula
+  theFactors = NULL
 	if(class(trend)=="formula") {
     # convert input data to a model matrix
 		data = data.frame(data)
@@ -241,6 +242,12 @@ likfitLgm = function(
 				data[,all.vars(trend),drop=FALSE],
 				1, function(qq) any(is.na(qq)))
 		noNA = !theNA
+	
+		theFactors = model.frame(trend, data[noNA,])
+		whichFactors = unlist(lapply(theFactors, is.factor))
+		theFactors = theFactors[,whichFactors,drop=FALSE]
+		theFactors = lapply(theFactors, levels)
+		theFactors = unlist(lapply(theFactors, function(qq) qq[1]))
 		
 		covariates = model.matrix(trend, data[noNA,])
 		observations = all.vars(trend)[1]
@@ -576,11 +583,13 @@ if(estimateVariance) {
    
 
  if(length(grep("^Spatial", class(coordinatesOrig)))){
-   theDf = matrix(NA, length(coordinatesOrig), ncol(result$data),
-       dimnames=list(NULL, colnames(result$data)))
-   theDf = as.data.frame(theDf)
-   theDf[noNA,] = result$data
-   result$data = SpatialPointsDataFrame(
+	 
+	forDf = rep(NA, length(noNA))
+	forDf[noNA] = seq(1, sum(noNA))
+
+	theDf = result$data[forDf,] 
+
+	result$data = SpatialPointsDataFrame(
        coords=SpatialPoints(coordinatesOrig),
        data=theDf)
    
@@ -588,7 +597,7 @@ if(estimateVariance) {
  }
    
    
-   result$model = list(reml=reml)
+   result$model = list(reml=reml, baseline=theFactors)
 	if(class(trend)=="formula") {
 		result$model$formula = trend
     result$data[[all.vars(formula)[1]]] =
@@ -597,6 +606,36 @@ if(estimateVariance) {
 		result$model$formula= names(trend)
 	}
 
+	
+	if(length(result$model$baseline)){
+		
+		rparams = result$parameters
+		
+		baseParams =data.frame(
+				var = names(result$model$baseline),
+				base = result$model$baseline,
+				pasted = paste(names(result$model$baseline), result$model$baseline, sep='')
+				)
+				
+		for(D in which(! baseParams$pasted %in% names(rparams)) ) {
+			
+			sameFac = grep(paste("^",baseParams[D,'var'],sep=""),
+					names(rparams))
+			pseq = 1:length(rparams)
+			if(length(sameFac)){
+				
+				minFac = min(sameFac)
+				toAdd = 0
+				names(toAdd) = baseParams[D,'pasted']
+				rparams = c(
+						rparams[pseq < minFac],
+						toAdd,
+						rparams[pseq >= minFac]
+						)
+			}
+		}
+		result$parameters = rparams
+	}
 	
 	parameterTable = data.frame(estimate=result$parameters)
 	rownames(parameterTable) =  names(result$parameters)

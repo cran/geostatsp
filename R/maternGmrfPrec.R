@@ -61,6 +61,8 @@ maternGmrfPrec.dsCMatrix = function(N,
 		adjustEdges=FALSE,
 		...) {
 
+	param['nugget']=0
+	
 	names(param) = gsub("^var$", "variance", names(param))
 	if(!any(names(param)=='variance')) {		
 		if ('conditionalVariance' %in% names(param)){
@@ -83,13 +85,14 @@ maternGmrfPrec.dsCMatrix = function(N,
 			}
 		}
 	}
-	param['nugget']=0
 
-	if(!any(names(param)=='cellSize'))
-		param['cellSize']=1
+
 	
 	
 	if(is.null(attributes(N)$raster)) {
+		if(!any(names(param)=='cellSize')){
+			param['cellSize']=1
+		}
 		if(!all(c("Nx","Ny")%in% names(attributes(N)))) {
 			Nx = Ny = sqrt(ncol(N))
 			if(Nx!=round(Nx)){
@@ -251,6 +254,7 @@ maternGmrfPrec.dsCMatrix = function(N,
 	} else {
 		warning("param must have elements named shape  and either oneminusar or range")
 		print(param)
+		a = NULL
 	}
  	
 	# build the matrix

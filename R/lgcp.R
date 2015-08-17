@@ -49,7 +49,11 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 		covariates = list( logCellSize, covariates)
 		names(covariates) = unlist(lapply(covariates, names))
 	} else {
-		covariates = c(covariates, logCellSize=logCellSize)
+    if(length(covariates)){
+		  covariates = c(covariates, logCellSize=logCellSize)
+    } else {
+      covariates = logCellSize
+    }
 	}
 	
 	dots = list(...)
