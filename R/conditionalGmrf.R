@@ -33,7 +33,7 @@ conditionalGmrf = function(param,
   rownames(param) = gsub("tausq","nugget", rownames(param))
   
 
-  fixed= Xmat %*% param[paste(colnames(Xmat), "betaHat", sep="."),]
+  fixed= Xmat %*% param[colnames(Xmat),]
  
   residsOrig = Yvec -	fixed
 		

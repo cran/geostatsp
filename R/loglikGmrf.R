@@ -34,7 +34,7 @@ loglikGmrf = function(
     propNugget=NULL,
     boxcox=1,
     fixBoxcox=TRUE,
-    seqBoxcox=outer(c(0.01, 0.02, 0.05, 0.1), c(-1,1)),
+    seqBoxcox=outer(c(0.01, 0.02, 0.05, 0.1, 0.2, 0.5), c(-1,1)),
     shape=1,
     reml=TRUE,
     adjustEdges=FALSE,
@@ -47,7 +47,13 @@ loglikGmrf = function(
 ) {
 
   Yvec = as.matrix(Yvec)
+	if(is.null(colnames(Yvec)))
+		colnames(Yvec) = paste("y", 1:ncol(Yvec), sep='')
   Ny = ncol(Yvec)
+	
+	if(Ny > 1 & !(length(oneminusar) & length(propNugget)))
+		stop("specify oneminusar and propNugget if there is more than one dataset in Y")
+	
   Nobs = nrow(Yvec)
   Lcol = c('m2logLml', 'm2logLreml')[reml+1]
   
@@ -55,7 +61,7 @@ loglikGmrf = function(
   if(!fixBoxcox){
     seqBoxcox = sort(unique(c(0, seqBoxcox)))
     if(Ny>1) warning("need fixBoxcox=TRUE if Y has more than one column")
-    bcStuff = forBoxCox(Yvec,Xmat,seqBoxcox)
+    bcStuff = forBoxCox(y=Yvec,x=Xmat,seqBoxCox=seqBoxcox)
     Ny = ncol(bcStuff$y)
     Yvec = bcStuff$y
     jacobian = bcStuff$jacobian
@@ -67,6 +73,8 @@ loglikGmrf = function(
       boxcox = rep(boxcox, Ny)
     } 
   }
+	
+	profBC = NULL # store profile likelihood of box-cox parameter
   
   if(length(jacobian)!= Ny | length(boxcox)!= Ny)
     warning('length of jacobian or boxcox must be same as columns of Y')
@@ -81,7 +89,7 @@ loglikGmrf = function(
   Nxysq = ncol(obsCov)^2
   mlColNames = c(
       'det','detReml','m2logLml', 'm2logLreml',
-      'varMl', 'varReml', 'xisqTausq','junk')
+      'profiledVarianceHatMl', 'profiledVarianceHatReml', 'xisqTausq','junk')
   Ncols = length(mlColNames)*Ny+Nxysq
   
   if(!length(control$xisqTausq)){
@@ -98,11 +106,8 @@ loglikGmrf = function(
         control$xisqTausq['tol']
     )
   }
-  
 
-#  dyn.unload('../src/gmrfLik.so')
-#  dyn.load('../src/gmrfLik.so')
-  
+
   if(length(oneminusar)){
     # not optimizing
     
@@ -135,8 +140,14 @@ loglikGmrf = function(
           NULL, mlColNames, oneminusar
       )
   )
-  dimnames(ml)[[2]] = as.character(1/ml[1,,'xisqTausq',1])
+	if(length(xisqTausq))
+	  dimnames(ml)[[2]] = paste('propNugget=',as.character(1/xisqTausq),sep='')
+
+  dimnames(ml)[[3]] = gsub("^junk$", "boxcox",dimnames(ml)[[3]])
   
+  ml[,,'boxcox',] = boxcox
+	
+	
   ssq = fromC[Lseq,]
   ssq=array(ssq, 
       dim=c(ncol(obsCov),ncol(obsCov),NxysqTausq, ncol(fromC)),
@@ -145,33 +156,75 @@ loglikGmrf = function(
   
   
   covDim = seq(Ny+1, ncol(obsCov))
-  
+
+  if( !length(propNugget)){
+    # retain only propNugget with best likelihood
+    bestN = apply(ml[,,Lcol,,drop=FALSE],c(1,3,4),which.min)
+		
+    newml = array(NA, 
+        c(dim(ml)[1],1,dim(ml)[-(1:2)]),
+        dimnames=c(dimnames(ml)[1],
+            list('propNugget'),dimnames(ml)[-(1:2)])
+    )
+		
+    newssq =array(NA, 
+        c(dim(ssq)[1:2],1,dim(ssq)[4]),
+        dimnames=list(
+          	dimnames(ssq)[[1]],dimnames(ssq)[[2]],
+            NULL, dimnames(ssq)[[4]])
+    )
+    
+    for(Dbc in 1:dim(newml)[1]){
+      for(Dar in 1:dim(newml)[4]){
+        newml[Dbc,1,,Dar] = ml[
+            ,
+            bestN[Dbc,1,Dar],
+            ,Dar] 
+        newssq[,,1,Dar]=ssq[
+          	,,
+          	bestN[Dbc,1,Dar],
+          	Dar]    
+      }
+    }
+    ml = newml
+    ssq=newssq
+  } # end no propNugget
+	
+	
   # retain only the best box-cox parameter for each pair
 # of oneminusar and propNugget
   if(length(boxcox)>1 & !fixBoxcox){
-    dimnames(ml)[[3]] = gsub("^junk$", "boxcox",dimnames(ml)[[3]])
     
-    ml[,,'boxcox',] = boxcox
-    
-      # only get rid of BC
-      bestBcList = apply(ml[,,Lcol,], c(2,3), which.min)
-      bestBc = array(as.double(bestBcList),
-          dim(bestBcList))
+		
+		profBC = cbind(
+				boxcox=boxcox,
+#				xisqTausq = ml[1,profBCind[,1],'xisqTausq',1],
+#				oneminusar = oneminusar[profBCind[,2]], 
+				logLstuff = -apply(ml[,,Lcol,,drop=FALSE], 1, min)/2
+		)
+		colnames(profBC) = gsub("logLstuff", 
+				gsub("^m2", "", Lcol), 
+				colnames(profBC))
 
-      newml = array(NA, c(1,dim(ml)[-1]),
-          dimnames=c(list('y'),dimnames(ml)[-1]))
-      newssq =array(NA, 
-          c(1+ncol(Xmat),
-              1+ncol(Xmat), dim(ssq)[-(1:2)]),
-             dimnames=c(
-                 list(
-                     c('y',colnames(Xmat)),
-                     c('y',colnames(Xmat))
-         ),
-         dimnames(ssq)[-(1:2)]
-        )
-         )
-      
+		
+      # only keep best box-cox
+  	profBCind = arrayInd(
+			apply(ml[,,Lcol,,drop=FALSE], 1, which.min),
+			dim(ml)[c(2,4)])
+	
+		bestBcList = apply(ml[,,Lcol,,drop=FALSE], c(2,4), which.min)
+		newml = ml[bestBcList[1,1],,,,drop=FALSE]
+    newssq = ssq[c(bestBcList[1,1], covDim),
+				c(bestBcList[1,1], covDim),,,drop=FALSE]
+		
+		
+		if(length(unique(as.vector(bestBcList)))>=1){
+			# no one box-cox parameter maximizes every likelihood
+			# retain only the best box-cox for each par of parameters
+  		bestBc = array(as.double(bestBcList), dim(bestBcList))
+			dimnames(newml)[[1]] = dimnames(newssq)[[1]][1] = 
+					dimnames(newssq)[[2]][1] = 'y'
+			
       for(Dar in 1:dim(newml)[4]){
         for(Dnugget in 1:dim(newml)[2]){
           thisBc = bestBc[Dnugget,Dar]
@@ -185,57 +238,29 @@ loglikGmrf = function(
       }
       ml = newml
       ssq=newssq
-    } # end boxcox
+			} # end retain best box cox
+		
+    } # end have boxcox
     
-    if( !length(propNugget)){
-   # retain only propNugget with best likelihood
-    bestN = apply(ml[,,Lcol,,drop=FALSE],c(1,3,4),which.min)
-
-    newml = array(NA, 
-        c(dim(ml)[1],1,dim(ml)[-(1:2)]),
-          dimnames=c(dimnames(ml)[1],
-              list('y'),dimnames(ml)[-(1:2)])
-      )
-
-      newssq =array(NA, 
-          c(dim(ssq)[1:2],1,dim(ssq)[4]),
-        dimnames=list(
-          dimnames(ssq)[[1]],dimnames(ssq)[[2]],
-            NULL, dimnames(ssq)[[4]])
-    )
-      
-    for(Dbc in 1:dim(newml)[1]){
-      for(Dar in 1:dim(newml)[4]){
-        newml[Dbc,1,,Dar] = ml[
-            ,
-            bestN[Dbc,1,Dar],
-            ,Dar] 
-        newssq[,,1,Dar]=ssq[
-          ,,
-          bestN[Dbc,1,Dar],
-          Dar]    
-      }
-    }
-    ml = newml
-    ssq=newssq
-    } # end no propNugget
     
     theInf = ml[,,'xisqTausq',,drop=FALSE] != Inf
     
     forml = abind::abind(
         propNugget = 1/ml[,,'xisqTausq',,drop=FALSE],
-        tausqMl=ml[,,'varMl',,drop=FALSE]*theInf,
-        tausqReml=ml[,,'varReml',,drop=FALSE]*theInf,
-        xisq.ml = theInf*ml[,,'varMl',,drop=FALSE]*ml[,,'xisqTausq',,drop=FALSE],
-        xisq.reml = theInf*ml[,,'varMl',,drop=FALSE]*ml[,,'xisqTausq',,drop=FALSE],
+        tausqHatMl=ml[,,'profiledVarianceHatMl',,drop=FALSE]*theInf,
+        tausqHatReml=ml[,,'profiledVarianceHatReml',,drop=FALSE]*theInf,
+        xisqHatMl = theInf*ml[,,'profiledVarianceHatMl',,drop=FALSE]*ml[,,'xisqTausq',,drop=FALSE],
+        xisqHatReml = theInf*ml[,,'profiledVarianceHatReml',,drop=FALSE]*ml[,,'xisqTausq',,drop=FALSE],
         oneminusar = aperm(
             array(oneminusar, dim(ml)[c(4,2,1)]),3:1
-    ),
+    		),
+				boxcox = ml[,,'boxcox',,drop=FALSE],
         along=3
     )
     dimnames(forml)[[3]] = c(
-        'propNugget','tausqMl', 'tausqReml', 
-        'xisqMl','xisqReml', 'oneminusar')
+        'propNugget','tausqHatMl', 'tausqHatReml', 
+        'xisqHatMl','xisqHatReml', 'oneminusar',
+				'boxcox')
     
     Ny = dim(ml)[1]
     betaHat = ssq[-(1:Ny),1:Ny,,,drop=FALSE]
@@ -256,11 +281,11 @@ loglikGmrf = function(
     
     for(D in dimnames(seBetaHat)[[3]]){
       seBetaHatMl[,,D,] = seBetaHatMl[,,D,,drop=FALSE] * 
-          ml[,,'varMl',,drop=FALSE]
+          ml[,,'profiledVarianceHatMl',,drop=FALSE]
       seBetaHatReml[,,D,] = seBetaHatReml[,,D,,drop=FALSE] * 
-          ml[,,'varReml',,drop=FALSE]
+          ml[,,'profiledVarianceHatReml',,drop=FALSE]
     }
-    dimnames(betaHat)[[3]] = paste(dimnames(seBetaHatMl)[[3]],'BetaHat',sep='')
+
     dimnames(seBetaHatMl)[[3]] = paste(dimnames(seBetaHatMl)[[3]],'SeMl',sep='')
     dimnames(seBetaHatReml)[[3]] = paste(dimnames(seBetaHatReml)[[3]],'SeReml',sep='')
     
@@ -270,9 +295,10 @@ loglikGmrf = function(
     
     parMat = lapply(parInfo, function(qq){
           c(
-          qq$theo[c('range','shape','variance')], 
-          optimalShape=qq$optimalShape['shape'],
-          optimal=qq$optimal[c('shape','variance')]
+          qq$theo[c('range','shape')],
+					sigmasqXisq = as.numeric(qq$theo['variance']), 
+          optimalShape=as.numeric(qq$optimalShape['shape']),
+          optimalVarianceAndShape=qq$optimal[c('shape','variance')]
       )
         })
     parMat = simplify2array(parMat)
@@ -281,28 +307,42 @@ loglikGmrf = function(
         c(length(dim(parMat))+c(1,2), 1:length(dim(parMat))))
     dimnames(parArray)[[3]] = rownames(parMat)
 
-    res = abind::abind(ml, logLml,forml, betaHat, seBetaHatMl, seBetaHatReml, parArray,
+		sigmasqHat = forml[,,c('xisqHatMl', 'xisqHatReml'),,drop=FALSE] *
+				parArray[,,rep('sigmasqXisq',2),,drop=FALSE]
+		dimnames(sigmasqHat)[[3]] = gsub("^xi", "sigma", 
+				dimnames(sigmasqHat)[[3]])
+		
+    res = abind::abind(logLml, forml, sigmasqHat,
+				betaHat, seBetaHatMl, seBetaHatReml, parArray,
         along=3)
-    
-    mleIndex = arrayInd(
-        which.min(res[,,Lcol,,drop=FALSE]),
-        dim(res)[-3])
-    mle = res[mleIndex[1],mleIndex[2],,mleIndex[3]]
-    
+		
 
-    getRid = paste('(^det|logL|^var|tausq|xisq|Se)',
-        c('[Mm]l$','[Rr]eml$'),sep='')[1+reml]
-    mle = mle[grep(getRid,names(mle),invert=TRUE)]
+		theMle = apply(res[,,gsub("^m2","",Lcol),,drop=FALSE], 
+				1, which.max)
+		mleIndex = arrayInd(theMle, dim(res)[-c(1,3)])
+		
+		mle = NULL
+		for(D in 1:nrow(mleIndex))
+	    mle = cbind(mle, res[D,mleIndex[D,1],,mleIndex[D,2]])
+    
+		colsToKeep = grep(paste(c('Reml','Ml')[1+reml],'$',sep=''),
+				rownames(mle), invert=TRUE)
+		mle = mle[colsToKeep,,drop=FALSE]
+		mle = mle[grep("^logL", rownames(mle), invert=TRUE),,drop=FALSE]
+		rownames(mle) = gsub("(Beta)?(Hat)?(Reml|Ml)?$", "", rownames(mle))
+
     
     res = list(
-        mle=mle[names(mle)!='junk'], 
+        mle=mle, 
         mlArray = res
     )
     
   } else {
     #oneminusar is NULL
+	########################
     # optimizing
-    resEnv = new.env()
+	######################################################
+	resEnv = new.env()
     assign('allPar', list(), envir=resEnv)
     assign('allFromC',  NULL, envir=resEnv)
     assign('oneminusar',  NULL, envir=resEnv)
@@ -327,6 +367,7 @@ loglikGmrf = function(
                   c('lower','upper','tol')]
           )
       )
+			
       
       assign('allFromC',
           cbind(get('allFromC', resEnv), fromC),
@@ -409,12 +450,23 @@ loglikGmrf = function(
       which.min(abs(oneminusarRes-mle['oneminusar']))
   ]]
   
-  parMat =
+
+  parMat = lapply(Qinfo, function(qq){
         c(
-            thepar$theo[c('range','shape','variance')], 
-            optimalShape=thepar$optimalShape['shape'],
-            optimal=thepar$optimal[c('shape','variance')]
-        )
+          	qq$theo[c('range','shape')],
+						sigmasqXisq = as.numeric(qq$theo['variance']), 
+          	optimalShape=as.numeric(qq$optimalShape['shape']),
+          	optimalVarianceAndShape=qq$optimal[c('shape','variance')]
+      	)
+      })
+	
+	parMat =
+        c(
+            thepar$theo[c('range','shape')], 
+						sigmasqXisq = as.numeric(thepar$theo['variance']), 
+          	optimalShape=as.numeric(thepar$optimalShape['shape']),
+          	optimalVarianceAndShape=thepar$optimal[c('shape','variance')]
+		)
   
   varMat =   parMat[grep('variance', names(parMat))]
   varMle = varMat * mle[c('varMl','varReml')[1+reml]]
@@ -449,10 +501,12 @@ loglikGmrf = function(
       betaHat, 
       seBetaHat),
       mlMat = mlMat,
-      Qinfo = thepar
-  )
+      Qinfo = thepar)
   
 }
+
+	res$profileBoxCox = profBC
+
   res
   
 }

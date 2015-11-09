@@ -20,7 +20,7 @@ measurements made in Switzerland on the 8th of May 1986.
 of land cover types.
 }
 \source{
-\url{http://www.ai-geostats.org/bin/view/AI_GEOSTATS/EventsSIC97} and  \url{http://srtm.csi.cgiar.org} and
+\code{www.ai-geostats.org/bin/view/AI_GEOSTATS/EventsSIC97} and  \url{http://srtm.csi.cgiar.org} and
 \url{https://lpdaac.usgs.gov/products/modis_overview/modis_products_table/mcd12q1}
 }
 

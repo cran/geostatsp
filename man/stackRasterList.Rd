@@ -15,7 +15,7 @@ stackRasterList(x, template = x[[1]], method = "ngb", mc.cores=NULL)
 spdfToBrick(x, 
     template,
     logSumExpected=FALSE,
-    pattern = '^logExpected_surfaceArea_[[:digit:]]+$'
+    pattern = '^expected_[[:digit:]]+$'
 )
 }
 \arguments{

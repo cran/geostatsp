@@ -66,7 +66,7 @@ if(interactive() | Sys.info()['user'] =='patrick') {
 library('geostatsp')
 data('swissRain')
 
-swissFit = lgm(data=swissRain, formula=rain~ SRTM_1km,
+swissFit = lgm(data=swissRain, formula=rain~ CHE_alt,
 		grid=10, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
@@ -93,7 +93,7 @@ axis(2,at=x$breaks,labels=x$prob,line=-1.2,
 abline(v=x$ciLong$par,
 		lty=2,
 		col=x$col[as.character(x$ciLong$prob)])
-lines(x[[1]],x[[2]])
+lines(x[[1]],x[[2]], col='black')
 
 
 

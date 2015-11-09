@@ -75,7 +75,7 @@ export(inla.models)
 
 importFrom(utils, installed.packages)
 
-importFrom(stats, as.formula, update.formula, terms)   
+importFrom(stats, as.formula, update.formula, terms, drop.terms)   
 importFrom(stats, model.matrix, lm, model.frame) 
 
 importFrom(stats, approx, na.omit, reshape)

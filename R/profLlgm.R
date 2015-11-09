@@ -103,32 +103,31 @@ profLlgm = function(fit,mc.cores=1, ...) {
 
   Sprob = c(1, 0.999, 0.99, 0.95, 0.9, 0.8, 0.5, 0)
   Squant = qchisq(Sprob, df=length(varying))
-  
-  res = list(logL=-L/2,
-      prob=Sprob,
-      quant=Squant,
-      MLE=fit$param[varying],
-      basepars=baseParams
-  )
-  res$maxLogL = max(res$logL)
 
-  res$breaks= res$maxLogL -res$quant/2 	
- 
-   
+  # get Scol from RColorBrewer
 #	dput( rev(
 #			RColorBrewer::brewer.pal(
 #					length(Scontour)-1,
 #					'Spectral')	))
-	res$col=c("#3288BD", "#99D594", 
-			"#E6F598", "#FFFFBF", "#FEE08B", "#FC8D59", 
-			"#D53E4F")
+  Scol=c("#3288BD", "#99D594", 
+		  "#E6F598", "#FFFFBF", "#FEE08B", "#FC8D59", 
+		  "#D53E4F")
+  names(Scol) = as.character(Sprob[-length(Sprob)])
+  
+  res = list(
+	  logL=-L/2,
+	  legend = list(breaks=Sprob, col=Scol),
+	  prob = Sprob,
+	  col=Scol,
+	  MLE=fit$param[varying],
+	  basepars=baseParams
+  )
+  
+  res$maxLogL = max(res$logL)
+  res$breaks= res$maxLogL - Squant/2 	
+  res$breaks[1] = min(c(res$breaks[2],min(res$logL)))-1
 
- 
-	
-	res$breaks[1] = min(c(res$breaks[2],min(res$logL)))-1
-	names(res$col) = as.character(res$prob[-length(res$prob)])
-	
-	res = c(dots[varying],res)
+  res = c(dots[varying],res)
 	
 	if(length(varying)==1) {
     Skeep = seq(2, length(Sprob)-1)
@@ -199,6 +198,6 @@ profLlgm = function(fit,mc.cores=1, ...) {
 		
 		res$ciLong = res$ciLong[order(res$ciLong$par),]
 	}
-	
+
 	res
 }

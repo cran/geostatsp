@@ -48,9 +48,10 @@ gm.dataRaster = function(
       gsub("[[:space:]]+", "", alltermsFull))
   offsetToLogOrig = alltermsFull[offsetToLogOrig]
   if(length(offsetToLogOrig)) {
-  names(offsetToLogOrig) = gsub(
+  	names(offsetToLogOrig) = gsub(
       "^[[:space:]]?offset\\(|,[[:space:]]?log[[:space:]]?=[[:space:]]?TRUE[[:space:]]?\\)[[:space:]]?$",
-      '', offsetToLogOrig)
+      '', offsetToLogOrig
+	)
   }
   
 	Sfactor = c(
@@ -63,7 +64,7 @@ gm.dataRaster = function(
 	
   inModel = intersect(inModel, names(covariates))
   covariates = covariates[inModel]
-	if(length(inModel)) {		
+  if(length(inModel)) {		
     dataFactors = intersect(Sfactor, names(data))
     notInData = setdiff(names(covariates), names(data))
     
@@ -80,10 +81,10 @@ gm.dataRaster = function(
     covariatesStack = stack(cellsSmall, covariatesStack)
     covData = stackRasterList(covariates[notInData], data, method=rmethod)
     
-  } else {
-    covariatesStack = cellsSmall
-    covData = NULL
-  }
+    } else {
+      covariatesStack = cellsSmall
+      covData = NULL
+    }
   
     
     for(D in names(offsetToLogOrig)) {
@@ -111,24 +112,44 @@ gm.dataRaster = function(
           crs=crs(covariatesStack))
 
       # aggregate for covariates
-      toAggregate = floor(min(res(covariatesStack)/res(offsetToLogCrop)))
-      if(toAggregate > 1){
-        offsetToLogAgg = aggregate(offsetToLogCrop, fact=toAggregate, fun=sum)
-      }
+		toAggregate = floor(min(res(covariatesStack)/res(offsetToLogCrop)))
+	
+      if(any(toAggregate > 1)){
+        offsetToLogAgg = aggregate(offsetToLogCrop, fact=toAggregate, 
+				fun=sum, na.rm=TRUE)
+      } else {
+		  toAggregate = 1
+	  }
       offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
-      offsetToLogLogged = log(offsetToLogAgg) + 
-          sum(log(res(covariatesStack))) -
-          sum(log(res(offsetToLogCrop)))
+      offsetToLogLogged = log(offsetToLogAgg) - 
+			  sum(log(rep_len(toAggregate,2)))
       names(offsetToLogLogged) = paste('log',D,sep='')
       covariatesStack = stack(covariatesStack, offsetToLogLogged)
       toDrop = which(alltermsFull==offsetToLogOrig[D])
-#      drop.terms(terms(formula), toDrop, keep.response=TRUE)
-    # doesn't work, will drop other offsets
 
-    formula = as.formula(gsub(offsetToLogOrig[D],
-        paste("offset(log",D,")",sep=''),
-        format(formula),
-        fixed=TRUE))
+	  # the offsets
+	  allOffsets = grep(
+			  "^offset\\([[:print:]]+\\)$", 
+			  gsub("[[:space:]]+", "", alltermsFull), value=TRUE)
+	  offsetNotLogged = grep(
+			  "^offset\\([[:print:]]+,log=TRUE\\)$", 
+			  gsub("[[:space:]]+", "", allOffsets), 
+			  invert=TRUE, value=TRUE)
+	  
+	  
+	  # any other offsets would also have been removed
+	  # by drop.terms
+
+	  formula = update.formula(
+			drop.terms(terms(formula), dropx=toDrop, keep.response=TRUE),
+			as.formula(
+					paste(".~.", 
+							paste("offset(log", D, ")", sep=''),
+							offsetNotLogged, 
+							sep = '+')
+	) 	
+	)
+	
     
     rmethod[paste('log',D,sep='')] = 'bilinear'
 
@@ -194,6 +215,11 @@ for(D in intersect(Sfactor, names(covariatesDF))) {
     )
 }
 
+
+#############
+# data is a SpatialPointsDataFrame
+#############
+
 gm.dataSpatial = function(
     formula, data,  grid, 
 		covariates=NULL, 
@@ -201,10 +227,23 @@ gm.dataSpatial = function(
 
 # find factors
 	allterms = colnames(attributes(terms(formula))$factors)
-	allterms = grep(":", allterms, invert=TRUE, value=TRUE)
+	if(length(allterms)) allterms = unique(unlist(strsplit(allterms, ":")))
 	allterms = gsub("[[:space:]]", "", allterms)
+	# remove offset( or factor(
+	alltermsPlain = gsub("^[[:alpha:]]+\\(|\\)$", "", allterms)
+	
 
-
+	# remove covariates not in the model
+	keepCovariates = intersect(alltermsPlain, names(covariates))
+	if(is.list(covariates)) {
+		covariates = covariates[keepCovariates]
+	} else {
+		if(length(keepCovariates)) {
+			covariates = covariates[[keepCovariates]]	
+		} else {
+			covariates = list()
+		}
+	}
 	
 	theFactors = grep("^factor", allterms, value=T)
 	theFactors = gsub("^factor\\(|\\)$", "", theFactors)
@@ -242,7 +281,9 @@ gm.dataSpatial = function(
 		rmethod[covFactors] = "ngb"
 		
 		
-		covariatesStack = stackRasterList(covariates, template=cellsSmall, method=rmethod)
+		covariatesStack = stackRasterList(covariates, 
+				template=cellsSmall, 
+				method=rmethod)
 		covariatesStack = stack(cellsSmall, covariatesStack)
  
 		

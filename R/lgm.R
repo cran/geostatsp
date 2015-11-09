@@ -51,28 +51,6 @@ setMethod("lgm",
 )
 
 
-# data is a raster.  grid is ignored
-setMethod("lgm", 
-    signature("formula", "Raster", "ANY", "ANY"),
-    function(
-        formula, 
-        data,  
-        grid=NULL,
-        covariates=NULL, ...) {
-      
-      dataCov = gm.dataRaster(
-          formula, data,
-          grid=raster(data),
-          covariates=covariates,
-          buffer=0)
-      
-      callGeneric(formula, 
-          data=dataCov$data, 
-          grid=dataCov$grid, 
-          covariates=dataCov$covariates, ...)
-    }
-)
-
 
 
 

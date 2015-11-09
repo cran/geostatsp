@@ -73,7 +73,8 @@ lines(x[[1]],x[[2]])
 abline(h=x$breaks[-1],
 		col=x$col,
 		lwd=1.5)
-axis(2,at=x$breaks,labels=x$prob,line=-1.2,tick=F,
+axis(2,at=x$breaks,labels=x$prob,
+		line=-1.2,tick=F,
 		las=1,padj=1.2,hadj=0,col.axis='red')
 
 abline(v=x$ciLong$par,

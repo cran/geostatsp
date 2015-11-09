@@ -88,7 +88,6 @@ maternGmrfPrec.dsCMatrix = function(N,
 
 
 	
-	
 	if(is.null(attributes(N)$raster)) {
 		if(!any(names(param)=='cellSize')){
 			param['cellSize']=1
@@ -135,9 +134,6 @@ maternGmrfPrec.dsCMatrix = function(N,
 		optimal = NULL
 )
 	
- 
-
-
 	
 	midcellCoord = c(round(Nx*0.4),round(Ny*0.4)) # the middle cell
 	midcell = c(Nx*(Ny-midcellCoord[2]) + midcellCoord[1])

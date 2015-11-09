@@ -23,20 +23,22 @@ if(all(havePackages)) {
 )
 
 swissFit$parameters$summary
-pdf("swissGlgmExc.pdf")
+if(!interactive()) pdf("swissGlgmExc.pdf")
 swissExc = excProb(swissFit$inla$marginals.random$space, 0, template=swissFit$raster)
 plot(swissExc, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
 		col=c('green','yellow','orange','red'))	
 plot(swissBorder, add=TRUE)		
-dev.off()
-pdf("swissGlgmExc2.pdf")
+if(!interactive()) dev.off()
+if(!interactive()) pdf("swissGlgmExc2.pdf")
 swissExcP = excProb(swissFit$inla$marginals.predict, 3, template=swissFit$raster)
 plot(swissExcP, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
 		col=c('green','yellow','orange','red'))	
 plot(swissBorder, add=TRUE)		
-dev.off()
-# intercept only
-swissFit =  glgm(lograin~1,swissRain, Ncell, 
+if(!interactive()) dev.off()
+
+# intercept only, add a covariate just to confuse it
+swissFit =  glgm(formula=lograin~1, 
+		data=swissRain, grid=Ncell, 
 		covariates=swissAltitude, family="gaussian", buffer=20000,
 		priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
 		control.mode=list(theta=c(1.9,0.15,2.6),restart=TRUE),
@@ -45,12 +47,12 @@ swissFit =  glgm(lograin~1,swissRain, Ncell,
 
 swissFit$parameters$summary
 
-
+if(!interactive()) pdf("swissGlgmExc3.pdf")
 	swissExc = excProb(swissFit$inla$marginals.random$space, 0, template=swissFit$raster)
 	plot(swissExc, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
 		col=c('green','yellow','orange','red'))	
 	plot(swissBorder, add=TRUE)		
- 
+if(!interactive()) dev.off()
 
 
 # now with formula
@@ -80,9 +82,9 @@ swissFit =  glgm(lograin~ elev + land,
 								param=c(.1, .1))))
 )
 swissFit$parameters$summary
-pdf("swissCovInData.pdf")
+if(!interactive()) pdf("swissCovInData.pdf")
 plot(swissFit$raster[['predict.mean']])
-dev.off()
+if(!interactive()) dev.off()
 # formula, named list elements
 swissFit =  glgm(lograin~ elev,
 		swissRain, Ncell, 
@@ -96,8 +98,9 @@ swissFit =  glgm(lograin~ elev,
 swissFit$parameters$summary
 
 # categorical covariates
-swissFit =  glgm(lograin ~ elev + factor(land),
-		swissRain, Ncell, 
+swissFit =  glgm(
+		formula = lograin ~ elev + factor(land),
+		data = swissRain, grid = Ncell, 
 covariates=list(elev=swissAltitude,land=swissLandType), 
 family="gaussian", buffer=20000,
 priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
@@ -107,14 +110,15 @@ control.family=list(hyper=list(prec=list(prior="loggamma",
 )
 swissFit$parameters$summary
 table(swissFit$inla$.args$data$land)
+if(!interactive()) pdf("swissFitCategorical.pdf")
 plot(swissFit$raster[['predict.mean']])
-
+if(!interactive()) dev.off()
 # put some missing values in covaritates
 # also don't put factor() in formula
 temp = values(swissAltitude)
 temp[seq(10000,12000)] = NA
 values(swissAltitude) = temp
-swissFit =  glgm(rain ~ elev + land,swissRain,  Ncell, 
+swissFitMissing =  glgm(rain ~ elev + land,swissRain,  Ncell, 
 		covariates=list(elev=swissAltitude,land=swissLandType), 
 		family="gaussian", buffer=20000,
 		priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
@@ -122,7 +126,7 @@ swissFit =  glgm(rain ~ elev + land,swissRain,  Ncell,
 		control.family=list(hyper=list(prec=list(prior="loggamma", 
 								param=c(.1, .1))))
 )
-swissFit$parameters$summary
+swissFitMissing$parameters$summary
 
 }
 
@@ -159,9 +163,9 @@ elevHigh = reclassify(elevationLoa, c(-Inf, 0, 0))
 
 loaFit$par$summary
 
-png("loaFitted.png")
+if(!interactive()) png("loaFitted.png")
 plot(loaFit$raster[['predict.exp']])
-dev.off()
+if(!interactive()) dev.off()
 
 # prior for observation standard deviation
 swissFit =  glgm( formula="lograin",data=swissRain, grid=Ncell,
@@ -187,9 +191,9 @@ res = glgm(data=data2, grid=20, formula=y~1 + x+offset(offset),
     control.mode=list(theta=c(2, 2),restart=TRUE)
 )
 
-pdf("nodata.pdf")
+if(!interactive()) pdf("nodata.pdf")
 
-par(mfrow=c(3,1))
+if(!interactive()) par(mfrow=c(3,1))
 
 # intercept
 plot(res$inla$marginals.fixed[['(Intercept)']], col='blue', type='l',
@@ -216,7 +220,7 @@ legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
 plot(res$parameters$range$prior,type='l', col='blue', xlab='range',lwd=3)
 lines(res$parameters$range$post,col='red',lty=2,lwd=3)
 legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
-dev.off()
+if(!interactive()) dev.off()
 
 
 # covariates are in data, interactions
@@ -234,9 +238,9 @@ swissFit =  glgm(
                 param=c(.1, .1))))
 )
 swissFit$parameters$summary
-pdf("swissCovInDataInteraction.pdf")
+if(!interactive()) pdf("swissCovInDataInteraction.pdf")
 plot(swissFit$raster[['predict.mean']])
-dev.off()
+if(!interactive()) dev.off()
 
 
 

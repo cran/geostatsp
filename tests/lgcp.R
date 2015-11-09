@@ -72,5 +72,41 @@ resO = lgcp( ~ inc + pop,
 rbind(resL$param$summary, resO$param$summary)
 
 
+
 }	
 }
+
+
+# check spdfToBrock
+
+if(require('diseasemapping', quiet=TRUE)){
+	
+	
+	data('kentucky')
+	
+	popList = list(
+			'2002' = kentucky[,c('M.50', 'M.55', 'M.60')],
+			'2005' = kentucky[,c('F.50', 'F.55', 'F.60')]
+			)
+	for(D in names(popList))
+		names(popList[[D]]) = paste('expected_', seq(as.numeric(D)-1, len=3), sep='')
+	
+	popBrick = spdfToBrick(
+			x=popList,
+			template=squareRaster(kentucky, 10),
+    	logSumExpected=FALSE
+			)
+	sum(popList[['2002']]$expected_2001, na.rm=TRUE)		
+	sum(values(popBrick[['expected_2001']]), na.rm=TRUE)*prod(res(popBrick))
+	
+	popBrick2 = spdfToBrick(
+			x=popList,
+			template=squareRaster(kentucky, 10),
+    	logSumExpected=TRUE
+	)
+	
+	sum(unlist(lapply(popList, function(qq) apply(qq@data, 2, sum, na.rm=TRUE))))
+	sum(exp(values(popBrick2)), na.rm=TRUE)*prod(res(popBrick2))
+			
+}
+	
