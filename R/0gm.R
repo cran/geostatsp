@@ -119,6 +119,7 @@ gm.dataRaster = function(
 				fun=sum, na.rm=TRUE)
       } else {
 		  toAggregate = 1
+			offsetToLogAgg = offsetToLogCrop
 	  }
       offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
       offsetToLogLogged = log(offsetToLogAgg) - 

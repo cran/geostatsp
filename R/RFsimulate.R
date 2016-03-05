@@ -26,7 +26,7 @@ setMethod("RFsimulate",
 		function(model, x,  data = NULL, 
 		err.model=NULL, n = 1, ...)  {
 
-
+	
 	if (requireNamespace("RandomFields", quietly = TRUE)) { 
 		
 	# convert data to an RFspdf (it might be a vanilla spdf)	
@@ -51,9 +51,10 @@ setMethod("RFsimulate",
 	if(!is.null(err.model))
 		theArgs$err.model = err.model
 	theArgs$n = n
+
 	theArgs$spConform=TRUE
 	
-	res= try(do.call(RandomFields::RFsimulate, theArgs))
+	res= try(do.call(RandomFields::RFsimulate, theArgs), silent=TRUE)
 
 } else {
 	warning("RandomFields package not available")

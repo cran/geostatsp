@@ -1,23 +1,25 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistical Modelling with Likelihood and Bayes
-Version: 1.3.10
-Date: 2015-11-06
+Version: 1.4.0
+Date: 2016-03-03
 Depends: Matrix (>= 1.2.0), raster, sp, R (>= 3.0.0)
 Imports: abind, numDeriv, methods, stats
-Suggests: geoR, RandomFields, rgdal, parallel, mapmisc, ellipse, pracma
+Suggests: geoR, RandomFields, rgdal, parallel, mapmisc, ellipse,
+        pracma, knitr
 Enhances: spatstat, INLA, diseasemapping
 LinkingTo: Matrix
-Additional_repositories: http://www.math.ntnu.no/inla/R/stable/
+Additional_repositories: https://www.math.ntnu.no/inla/R/stable
 Author: Patrick Brown <patrick.brown@utoronto.ca>[aut, cre], Robert Hijmans [ctb]
 Maintainer: Patrick Brown <patrick.brown@utoronto.ca>
 Description: Geostatistical modelling facilities using Raster and SpatialPoints objects are provided.  Non-Gaussian models are fit using INLA, and Gaussian geostatistical models use Maximum Likelihood Estimation.
 URL: http://r-forge.r-project.org/projects/diseasemapping/
 License: GPL
+VignetteBuilder: knitr
 Repository: CRAN
 Repository/R-Forge/Project: diseasemapping
-Repository/R-Forge/Revision: 1288
-Repository/R-Forge/DateTimeStamp: 2015-11-09 14:42:19
-Date/Publication: 2015-11-09 18:31:08
+Repository/R-Forge/Revision: 1333
+Repository/R-Forge/DateTimeStamp: 2016-03-03 14:29:33
+Date/Publication: 2016-03-05 00:14:31
 NeedsCompilation: yes
-Packaged: 2015-11-09 15:10:33 UTC; rforge
+Packaged: 2016-03-03 14:45:37 UTC; rforge

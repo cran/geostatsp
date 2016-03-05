@@ -17,9 +17,7 @@ if(all(havePackages)) {
   swissFit =  glgm("lograin", swissRain, Ncell, 
 		covariates=swissAltitude, family="gaussian", buffer=20000,
 		priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
-		control.mode=list(theta=c(1.9,0.15,2.6),restart=TRUE),
-		control.family=list(hyper=list(prec=list(prior="loggamma", 
-                param=c(.1, .1))))
+		control.mode=list(theta=c(1.9,0.15,2.6),restart=TRUE)
 )
 
 swissFit$parameters$summary
