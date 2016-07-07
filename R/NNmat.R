@@ -42,7 +42,7 @@ NNmat.Raster = function(N,Ny=N,nearest=3) {
 NNmat.default = function(N, Ny=N,nearest=3) {
   
   if(nearest<3){
-    nbMat = nbMat[nbMat[,1]<=nearest,] 
+    nbMat = nbMat[nbMat[,1]<=c(2,4)[nearest],] 
   }
   
   Nx = N

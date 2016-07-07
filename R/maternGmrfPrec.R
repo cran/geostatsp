@@ -270,7 +270,7 @@ maternGmrfPrec.dsCMatrix = function(N,
  
  ######### optimization to see if there are better matern
  # parameters than the theoretical values
- 
+
  varMid = solve(theNNmat,midVec)
  
  theX = distVecFull * paramInfo$theo['cellSize']
@@ -290,7 +290,9 @@ maternGmrfPrec.dsCMatrix = function(N,
  ]
 
  # optimal parameters so product of gmrf precision with matern is identity
- 
+# don't do it if shape parameter is zero 
+if(paramInfo$theo['shape'] > 0) {
+  
  ndist = c('1'=0, '2'=1, '3'=sqrt(2), '4'=2, '5'=sqrt(5), '6'=3) 
  numbn = c('1'=1,'2'=4,'3'=4,'4'=4,'5'=8,'6'=4)
  
@@ -374,288 +376,19 @@ maternGmrfPrec.dsCMatrix = function(N,
 				param=paramInfo[[D]])
 
 }
+
+} # end if shape>0
  
- 
- if(FALSE) { # unused parameter optimizations
- startparam = paramInfo$theo[c('shape',
-				 'range',
-				 'variance')]
- scaleparam = pmax(startparam,0.0001)
- scaleparam['shape'] = 0.1
- 
- newPar = optim(
-		 startparam, 
-		 function(param){
-			 sum((
-								 (matern(paramInfo$empirical$x,param=param)) -
-								 (paramInfo$empirical$y)
-								 )^2)
-		 },
-		 lower=startparam*0.75,
-		 upper=startparam*1.5,
-		 method='L-BFGS-B',
-		 control=list(parscale=
-						 scaleparam)
- )
- 
- paramInfo$optimal = 
-		 newPar$par
- 
- paramInfo$empirical$optimal =
-		 matern(paramInfo$empirical$x,
-				 param=paramInfo$optimal)
- 
- 
- # optimal with same shape
-startparam = paramInfo$theo[c('range',
-				'variance')]
-scaleparam = pmax(startparam,0.0001)
-newPar = optim(
-		startparam, 
-		function(param){
-			param = c(param, paramInfo$theo['shape'])
-			sum((
-								(matern(paramInfo$empirical$x,param=param)) -
-								(paramInfo$empirical$y)
-								)^2)
-		},
-		lower=startparam*0.75,
-		upper=startparam*1.5,
-		method='L-BFGS-B',
-		control=list(parscale=
-						scaleparam)
-)
-
-paramInfo$optimalSameShape = 
-		c(newPar$par, paramInfo$theo['shape'])
-
-
-paramInfo$empirical$optimalSameShape =
-		matern(paramInfo$empirical$x,
-				param=paramInfo$optimalSameShape)
-
-
- 
- 
- thezero = which(paramInfo$empirical$x!=0)
- thisx = paramInfo$empirical$x[thezero]
- thisy = paramInfo$empirical$y[thezero]
- startparam = paramInfo$optimal
- scaleparam = pmax(startparam,0.0001)
- scaleparam['shape'] = 0.1
- 
- newPar = optim(
-		 startparam, 
-		 function(param){
-			 sum((
-								 matern(thisx,param=param) -
-								 thisy)^2)
-		 },
-		 lower=startparam*0.75,
-		 upper=startparam*1.5,
-		 method='L-BFGS-B',
-		 control=list(parscale=
-						 scaleparam)
- )
- 
- paramInfo$optimalWithNugget = 
-		 newPar$par
- paramInfo$optimalWithNugget['nugget'] =
-		 mean(paramInfo$empirical[paramInfo$empirical$x==0,'y']-
-						 paramInfo$optimalWithNugget['variance']								
-		 )
- 
- paramInfo$empirical$nugget =
-		 matern(paramInfo$empirical$x,
-				 param=paramInfo$optimalWithNugget)
- 
- paramInfo$empirical[paramInfo$empirical$x==0,'nugget'] =
-		 sum(paramInfo$optimalWithNugget[c('variance','nugget')])
-
- 
- 
- # optimal parameters so product of gmrf precision with matern is identity
-
-ndist = c('1'=0, '2'=1, '3'=sqrt(2), '4'=2, '5'=sqrt(5), '6'=3) 
-numbn = c('1'=1,'2'=4,'3'=4,'4'=4,'5'=8,'6'=4)
-
-nbcells = as.vector(outer((-3):3, 1i*(-3):3,"+"))
-nbcells = nbcells[signif(Mod(nbcells),3)%in%signif(ndist,3)]
-nbn = names(ndist)[match(signif(Mod(nbcells),3), signif(ndist,3))]
-
-nbprec = precEntries[nbn]
-
-othercells = as.vector(outer(0:12, 1i*1:12,"+"))
-othercells = othercells[Re(othercells) <= Im(othercells)]
-otherdist = Mod(outer(othercells, nbcells, '-')) * param['cellSize']
-ndist = ndist * param['cellSize']
-
-
-objfun = function(qq) {
-
-	othermatern = matern(otherdist, param= qq)
-	
-	nmatern = matern(ndist, param=qq)
- 
-	nbprod = as.vector(othermatern %*% nbprec)
-	thediag = sum(nmatern * precEntries * numbn)
- 	sum(nbprod^2) + 2*length(othercells)*(thediag-1)^2
-	
-}
-
-startparam = paramInfo$optimal[c('variance','range','shape')]
-scaleparam = pmax(startparam,0.0001)
-scaleparam['shape'] = 0.1
-
-optInv = optim(startparam, objfun,
-		lower=0.75*startparam,
-		upper=1.5*startparam,
-		control=list(parscale=scaleparam)
-						,
-				method='L-BFGS-B')
-		
-paramInfo$optimalInverse = optInv$par
-
-paramInfo$empirical$optimalInverse =
-		matern(paramInfo$empirical$x,
-				param=paramInfo$optimalInverse)
-
-# inverse, keep shape
-
-startparam = paramInfo$optimalSameShape[c('variance','range')]
-scaleparam = pmax(startparam,0.0001)
- 
-
-objfun = function(qq) {
-	qq['shape'] = paramInfo$theo['shape']
-	
-	othermatern = matern(otherdist, param= qq)
-	
-	nmatern = matern(ndist, param=qq)
-	
-	nbprod = as.vector(othermatern %*% nbprec)
-	thediag = sum(nmatern * precEntries * numbn)
-	sum(nbprod^2) + 2*length(othercells)*(thediag-1)^2
-	
-}
-
-optInv = optim(startparam, objfun,
-		lower=0.75*startparam,
-		upper=1.5*startparam,
-		control=list(parscale=scaleparam)
-		,
-		method='L-BFGS-B')
-
-paramInfo$optimalInverseSameShape = 
-		c(optInv$par, paramInfo$theo['shape'])
-
-paramInfo$empirical$optimalInverseSameShape =
-		matern(paramInfo$empirical$x,
-				param=paramInfo$optimalInverseSameShape)
-
-# inverse keep range
-# inverse, keep shape
-
-startparam = paramInfo$theo[c('variance','shape')]
-scaleparam = pmax(startparam,0.0001)
-
-
-objfun = function(qq) {
-	qq['range'] = paramInfo$theo['range']
-	
-	othermatern = matern(otherdist, param= qq)
-	
-	nmatern = matern(ndist, param=qq)
-	
-	nbprod = as.vector(othermatern %*% nbprec)
-	thediag = sum(nmatern * precEntries * numbn)
-	sum(nbprod^2) + 2*length(othercells)*(thediag-1)^2
-	
-}
-
-optInv = optim(startparam, objfun,
-		lower=0.5*startparam,
-		upper=2*startparam,
-		control=list(parscale=scaleparam)
-		,
-		method='L-BFGS-B')
-
-paramInfo$optimalInverseSameRange = 
-		c(optInv$par, paramInfo$theo['range'])
-
-paramInfo$empirical$optimalInverseSameRange =
-		matern(paramInfo$empirical$x,
-				param=paramInfo$optimalInverseSameRange)
-
-# inverse only vary shape
-startparam = paramInfo$theo['shape']
-scaleparam = pmax(startparam,0.0001)
-
-objfun = function(qq) {
-	qq = c(qq,paramInfo$theo[c('variance','range')])
-	
-	othermatern = matern(otherdist, param= qq)
-	
-	nmatern = matern(ndist, param=qq)
-	
-	nbprod = as.vector(othermatern %*% nbprec)
-	thediag = sum(nmatern * precEntries * numbn)
-	sum(nbprod^2) + 2*length(othercells)*(thediag-1)^2
-	
-}
-		
-optInv = optim(startparam, objfun,
-		lower=0.5*startparam,
-		upper=2*startparam,
-		control=list(parscale=scaleparam)
-		,
-		method='L-BFGS-B')
-
-paramInfo$optimalInverseShape = 
-		c(optInv$par, paramInfo$theo[c('variance','range')])
-
-paramInfo$empirical$optimalInverseShape =
-		matern(paramInfo$empirical$x,
-				param=paramInfo$optimalInverseShape)
-
-
-# only shape
-startparam = paramInfo$theo['shape']
-scaleparam = pmax(startparam,0.0001)
-newPar = optim(
-		startparam, 
-		function(param){
-			param = c(param, 
-					paramInfo$theo[c('variance','range')])
-			sum((
-								(matern(paramInfo$empirical$x,param=param)) -
-								(paramInfo$empirical$y)
-								)^2)
-		},
-		lower=startparam*0.5,
-		upper=startparam*2,
-		method='L-BFGS-B',
-		control=list(parscale=
-						scaleparam)
-)
-
-paramInfo$optimalShape = 
-		c(newPar$par, 
-				paramInfo$theo[c('variance','range')])
-
-
-paramInfo$empirical$optimalShape =
-		matern(paramInfo$empirical$x,
-				param=paramInfo$optimalShape)
-
-}
-
  # edge correction
 		
 		
 	if(adjustEdges!=FALSE){
 		if(is.logical(adjustEdges)) {
-			adjustEdges='optimalShape'
+			if(paramInfo$theo['shape'] > 0) {
+				adjustEdges='optimalShape'
+			} else {
+				adjustEdges='theo'
+			}
 		}
 		
 		distVecFull =  expand.grid(x=seq(1, Nx),

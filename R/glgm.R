@@ -99,7 +99,7 @@ setMethod("glgm",
           grid,
           covariates,
           buffer)
-      
+  
       callGeneric(
 			  formula = dataCov$formula, 
           data = dataCov$data, 
@@ -424,7 +424,7 @@ formulaForLincombs = gsub("\\+[[:space:]]?$", "", formulaForLincombs)
 			)
 		}
 		names(thelincombs) = paste("c", values(cells),sep="")
-		}
+	}
 
 	# get rid of observations with NA's in covariates
 	allVars = all.vars(formula)
@@ -458,8 +458,6 @@ formulaForLincombs = gsub("\\+[[:space:]]?$", "", formulaForLincombs)
 	# get rid of some elements of forInla that aren't required
 	forInla = forInla[grep("^buffer$", names(forInla), invert=TRUE)]
 
-#	return(forInla)
- 
 
 	if(requireNamespace("INLA", quietly=TRUE)) {
 		inlaResult = do.call(INLA::inla, forInla) 
@@ -777,25 +775,28 @@ if(length(grep("gammaShape", names(thesd))) ) {
 	Dsd = 'gammaShape'
 params[[Dsd]]$posterior=
 		inlaResult$marginals.hyperpar[[thesd[Dsd]]]
-params[[Dsd]]$posterior[,"y"] = params[[Dsd]]$posterior[,"y"] *  
-		params[[Dsd]]$posterior[,"x"]^2 
-params[[Dsd]]$posterior[,"x"] = 1/params[[Dsd]]$posterior[,"x"]  
-params[[Dsd]]$posterior = params[[Dsd]]$posterior[
-		seq(dim(params[[Dsd]]$posterior)[1],1),]		
+#params[[Dsd]]$posterior[,"y"] = params[[Dsd]]$posterior[,"y"] *  
+#		params[[Dsd]]$posterior[,"x"]^2 
+#params[[Dsd]]$posterior[,"x"] = 1/params[[Dsd]]$posterior[,"x"]  
+#params[[Dsd]]$posterior = params[[Dsd]]$posterior[
+#		seq(dim(params[[Dsd]]$posterior)[1],1),]		
 
-params$summary[Dsd, thecols] = 
-		1/(inlaResult$summary.hyperpar[
-						thesd[Dsd],rev(thecols)])
-params$summary[Dsd,"mode"] = 
-    1/(inlaResult$summary.hyperpar[
-            thesd[Dsd],'mode'])
+params$summary[Dsd, colnames(inlaResult$summary.hyperpar)] = 
+		inlaResult$summary.hyperpar[thesd[Dsd],]
+	
+#params$summary[Dsd, thecols] = 
+#		1/(inlaResult$summary.hyperpar[
+#						thesd[Dsd],rev(thecols)])
+#params$summary[Dsd,"mode"] = 
+#    1/(inlaResult$summary.hyperpar[
+#            thesd[Dsd],'mode'])
 
 
-params$summary[Dsd,"mean"] =sum(
-		1/(inlaResult$marginals.hyperpar[[thesd[Dsd]]][,"x"])*
-				c(0,diff(inlaResult$marginals.hyperpar[[thesd[Dsd]]][,"x"]))*
-				inlaResult$marginals.hyperpar[[thesd[Dsd]]][,"y"]
-)
+#params$summary[Dsd,"mean"] =sum(
+#		1/(inlaResult$marginals.hyperpar[[thesd[Dsd]]][,"x"])*
+#				c(0,diff(inlaResult$marginals.hyperpar[[thesd[Dsd]]][,"x"]))*
+#				inlaResult$marginals.hyperpar[[thesd[Dsd]]][,"y"]
+#)
 }
 
 

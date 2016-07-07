@@ -22,9 +22,14 @@ if(all(havePackages)) {
 
 swissFit$parameters$summary
 if(!interactive()) pdf("swissGlgmExc.pdf")
-swissExc = excProb(swissFit$inla$marginals.random$space, 0, template=swissFit$raster)
+
+swissExc = excProb(
+		x=swissFit, 
+		threshold=0)
+
 plot(swissExc, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
 		col=c('green','yellow','orange','red'))	
+
 plot(swissBorder, add=TRUE)		
 if(!interactive()) dev.off()
 if(!interactive()) pdf("swissGlgmExc2.pdf")

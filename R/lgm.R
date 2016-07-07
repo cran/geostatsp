@@ -164,7 +164,7 @@ setMethod("lgm",
 	# have most common level the baseline
 	
 # call likfit
-	
+
 	dots$param = param
 	dots$formula=formula
 	dots$data=data

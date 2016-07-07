@@ -108,9 +108,6 @@ where a Raster is returned.
 
 model <- c(var=5, range=1,shape=0.5)
 
-if(requireNamespace('RandomFields', quietly=TRUE)) {
-	RandomFields::plot(modelRandomFields(model))
-}
 
 myraster = raster(nrows=20,ncols=30,xmn=0,ymn=0,xmx=6,ymx=4, 
 		crs="+init=epsg:2081")
@@ -127,6 +124,11 @@ myPoints = SpatialPixels(SpatialPoints(myraster))
 # pass an argument 'cPrintlevel' to RandomFields
 simuPoints <- RFsimulate(model, x=myPoints, n=3, cPrintlevel=8)
 spplot(simuPoints, "sim1")
+
+# convert the model to RandomFields format and plot
+if(requireNamespace('RandomFields', quietly=TRUE)) {
+	RandomFields::plot(modelRandomFields(model))
+}
 
 }
 

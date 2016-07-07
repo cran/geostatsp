@@ -95,7 +95,7 @@ gm.dataRaster = function(
       toCrop = merge(
           projectExtent(covariatesStack, 
             crs(offsetToLog)
-    ),
+    			),
           projectExtent(data, 
               crs(offsetToLog)
           )
@@ -109,7 +109,8 @@ gm.dataRaster = function(
       
       offsetToLogCrop = projectRaster(
           offsetToLogCrop,
-          crs=crs(covariatesStack))
+          crs=crs(covariatesStack),
+					method='ngb')
 
       # aggregate for covariates
 		toAggregate = floor(min(res(covariatesStack)/res(offsetToLogCrop)))
@@ -122,6 +123,12 @@ gm.dataRaster = function(
 			offsetToLogAgg = offsetToLogCrop
 	  }
       offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
+			
+			offsetToLogAgg = reclassify(
+					offsetToLogAgg, 
+					t(c(-Inf,0,NA)) 
+			)
+			
       offsetToLogLogged = log(offsetToLogAgg) - 
 			  sum(log(rep_len(toAggregate,2)))
       names(offsetToLogLogged) = paste('log',D,sep='')
@@ -155,17 +162,21 @@ gm.dataRaster = function(
     rmethod[paste('log',D,sep='')] = 'bilinear'
 
     # aggregate for data
-toAggregateData = floor(min(res(data)/res(offsetToLogCrop)))
-if(toAggregateData != toAggregate & toAggregateData > 1 ){
-  offsetToLogAgg = aggregate(offsetToLogCrop, fact=toAggregateData, fun=sum)
-  offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
-  offsetToLogLogged = log(offsetToLogAgg) + 
-      sum(log(res(covariatesStack))) -
-      sum(log(res(offsetToLogCrop)))
-  names(offsetToLogLogged) = paste('log',D,sep='')
-}
-
-
+			toAggregateData = floor(min(res(data)/res(offsetToLogCrop)))
+			if(toAggregateData != toAggregate & toAggregateData > 1 ){
+  			offsetToLogAgg = aggregate(offsetToLogCrop, fact=toAggregateData, fun=sum)
+  			offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
+				offsetToLogAgg = reclassify(
+						offsetToLogAgg, 
+						t(c(-Inf,0,NA)) 
+				)
+				
+  			offsetToLogLogged = log(offsetToLogAgg) + 
+      			sum(log(res(covariatesStack))) -
+      			sum(log(res(offsetToLogCrop)))
+  			names(offsetToLogLogged) = paste('log',D,sep='')
+			}
+			
     covData = stack(
         covData,
         offsetToLogLogged
@@ -186,6 +197,8 @@ if(toAggregateData != toAggregate & toAggregateData > 1 ){
 		warning("data is coarser than grid")
 	
 	data = stack(data, resample(cellsSmall, data, method='ngb'))	
+
+	
 	dataSP = as(data, "SpatialPointsDataFrame")
 	dataDF =dataSP@data
 

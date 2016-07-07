@@ -3,6 +3,7 @@ excFunQQ = function(themat, threshold) {
 
 	
 	if(length(themat)) {
+		
 	over = themat[,"x"]>threshold
 	
 	if(any(is.na(over))) {
@@ -42,7 +43,7 @@ elementsColumnwise = FALSE # default is indexes for x[[index]] refer to
 	lowertail=FALSE	
 	
 if(is.list(x))	{
- # model is from lgm
+  # if model is from lgm
 	if(length(grep("^predict|^param|^summary", names(x)))>2){
 		template = raster(x$predict)
 		if(!random) {
@@ -71,29 +72,28 @@ if(is.list(x))	{
 			theSD = sqrt(theSD^2 + x$param["nugget"])
 		} 
 		
-		
 		excProbAll = pnorm( threshold , mean=values(resp), sd= theSD,
 				lower.tail=lowertail)
 
-		
-	} else { # isn't from lgm but is a list
-	
-	# check if it's from glgm
-	 if(all(c("inla", "raster","parameters") %in% names(x))) {
+		# isn't from lgm, is from glgm
+	} else if(all(c("inla", "raster","parameters") %in% names(x))) {
+
 		template = x$raster[['space']]
 		if(!random ) {
-			x = x$inla$marginals.lincomb.derived
+			x = x$inla$marginals.predict
 		} else {
 			x = x$inla$marginals.random$space
 		}
 	
-	 }
 	 excProbAll = unlist(lapply(x, excFunQQ, threshold=threshold))
 	 names(excProbAll) = names(x)
 	 
 	 
-	 } # end not from lgm	
-		
+	 } else { # not from lgm or glgm, a plain list	
+		 excProbAll = unlist(lapply(x, excFunQQ, threshold=threshold))
+	   names(excProbAll) = names(x)
+		 
+	 }
 	} else { # not a list, must be a matrix or data frame with two columns.
 		excProbAll = excFunQQ(x, threshold)
 		

@@ -29,7 +29,7 @@ if(Sys.info()['user'] =='patrick') {
 	myResR = lgm(formula = sim ~ x, 
   	data=raster::stack(myY, myCov), 
   	oneminusar = seq(0.02, 0.25,len=24),
-  	nugget = seq(0, 2,len=40), shape=2, mc.cores=4)		
+  	nugget = seq(0, 2,len=40), shape=2, mc.cores=2)		
 
 	myCol = mapmisc::colourScale(
 		breaks = Sbreaks,

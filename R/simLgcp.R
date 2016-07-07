@@ -53,15 +53,20 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 		...) {
 	
 	randomEffect = RFsimulate(model=param, x=rasterTemplate, n=n, ...)
-	
-	if(!is.null(covariates))
-		covariates = stackRasterList(covariates, randomEffect)
 
+	if(length(offset)==length(names(covariates)))
+    offset = names(covariates)
+	
 	if(is.null(names(betas)) & (!length(offset)))
 		names(betas) = names(covariates)
-  if(length(offset)==length(names(covariates)))
-    offset = names(covariates)
-  
+	
+	if(!is.null(covariates)){
+		covariates = stackRasterList(covariates, randomEffect)
+	}
+	
+	if(length(betas) & is.null(names(betas))) {
+		names(betas) = names(covariates)[1:length(betas)]
+	}
 	
 	betas = c(rep(1, length(offset)), betas)
 	names(betas)[seq(1, len=length(offset))] = offset

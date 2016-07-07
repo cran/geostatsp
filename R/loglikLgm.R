@@ -219,6 +219,7 @@ likfitLgm = function(
     coordinates = SpatialPoints(coordinates)
     maxDist = dist(t(bbox(coordinates)))
   } else { # isotropic
+		
     if(is.matrix(coordinates)){
       if(ncol(coordinates)== 2) {# assume the columns are x and y coordinates
         coordinates = dist(coordinates)
@@ -226,13 +227,18 @@ likfitLgm = function(
         coordinates = as(coordinates, 'dsyMatrix')
       }
     }
+		
     if(class(coordinates)=='dist')
       coordinates = as(as.matrix(coordinates), 'dsyMatrix')
-    if(length(grep("^Spatial", class(coordinates))))
-      coordinates = as(spDists(coordinates), 'dsyMatrix')
+
+		
+    if(length(grep("^Spatial", class(coordinates)))) {
+		  coordinates = as(Matrix(spDists(coordinates),sparse=FALSE), 'dsyMatrix')
+		}
+		
+		
     maxDist = max(coordinates,na.rm=TRUE)
   }
-
   trend = formula
   theFactors = NULL
 	if(class(trend)=="formula") {
@@ -304,6 +310,7 @@ likfitLgm = function(
   lower = degToRad(lower)
   upper = degToRad(upper)
   parscale = degToRad(parscale)
+
   
   # parameter defaults
   lowerDefaults = c(

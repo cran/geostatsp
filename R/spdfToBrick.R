@@ -9,6 +9,9 @@ spdfToBrick = function(x,
   
   
   if(class(x)=='SpatialPolygonsDataFrame'){
+		if(ncol(x)==1) {
+			pattern=names(x)
+		}
     x = list(x) 
   }
   if(is.null(names(x)))
@@ -56,7 +59,7 @@ spdfToBrick = function(x,
 		dataHere[is.na(dataHere)] = 0
 
 		# assign expected counts to raster cells
-		forRasterHere = dataHere[values(Sid), ]
+		forRasterHere = dataHere[values(Sid), ,drop=FALSE]
 		colnames(forRasterHere) = colnames(dataHere)
 		forRasterHere[is.na(forRasterHere)] = 0
 		
@@ -67,12 +70,12 @@ spdfToBrick = function(x,
 			polyCell = cellFromXY(template, polyCentres@coords)
 			
 			dataNotInRaster = aggregate(
-					dataHere[notInRaster,], 
+					dataHere[notInRaster,,drop=FALSE], 
 					list(cell=polyCell), 
 					FUN=sum, na.rm=TRUE)
 			forRasterHere[dataNotInRaster$cell, ] = 
-					forRasterHere[dataNotInRaster$cell, ] + 
-					as.matrix(dataNotInRaster[,-1])
+					forRasterHere[dataNotInRaster$cell, ,drop=FALSE] + 
+					as.matrix(dataNotInRaster[,-1,drop=FALSE])
 		}
 		
     forRaster = cbind(

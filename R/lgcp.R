@@ -33,9 +33,6 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	names(counts) = "count"
 	counts[is.na(counts)] = 0
 	
-	if(!missing(border)) {
-		counts = raster::mask(counts, border)
-	}
 	
 # the formula	
 	if(is.null(formula)) {
@@ -49,6 +46,35 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	)
 	formula = update.formula(formula, count ~ .)
 
+
+	if(!missing(border)) {
+		# set values of the offset to zero outside the border
+#	instead of masking as was done formerly with	counts = raster::mask(counts, border)
+		
+		alltermsFull = rownames(attributes(terms(formula))$factors)[-1]
+		offsetToLogOrig = grep(
+      	"^offset\\([[:print:]]+,log=TRUE\\)$", 
+      	gsub("[[:space:]]+", "", alltermsFull))
+  	offsetToLogOrig = alltermsFull[offsetToLogOrig]
+		if(length(offsetToLogOrig)) {
+  		offsetToMask = gsub(
+      		"^[[:space:]]?offset\\(|,[[:space:]]?log[[:space:]]?=[[:space:]]?TRUE[[:space:]]?\\)[[:space:]]?$",
+      		'', offsetToLogOrig
+			)[1]
+			if(offsetToMask %in% names(covariates)) {
+				if(!.compareCRS(covariates[[offsetToMask]], border)) {
+					borderM = spTransform(border, 
+							CRS(proj4string(covariates[[offsetToMask]])))
+				} else {
+					borderM = border
+				}
+			covariates[[offsetToMask]] = raster::mask(
+					covariates[[offsetToMask]], borderM
+					)
+  		}
+		}
+	}
+	
 	
 	# cell size offset
 	logCellSize = cells
@@ -67,7 +93,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	}
 	
 	dots = list(...)
-	if(!any(names(list(...))=='family')) {
+	if(!any(names(dots)=='family')) {
 		dots$family='poisson'
 	}
 	dots$formula = formula
