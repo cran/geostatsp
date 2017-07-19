@@ -1,24 +1,23 @@
-squareRaster = function(x, cells=NULL)  {
-	UseMethod("squareRaster")
-	
+squareRaster = function(x, cells=NULL, buffer=0)  {
+	UseMethod("squareRaster")	
 }
 
-squareRaster.matrix = function(x,   cells=NULL) {
+squareRaster.matrix = function(x,   cells=NULL, buffer=0) {
 	
 	x = extent(x)
-	squareRaster(x, cells)
+	squareRaster(x, cells, buffer)
 	
 }
-squareRaster.Extent = function(x, cells=NULL) {
+squareRaster.Extent = function(x, cells=NULL, buffer=0) {
 	
 	if(is.null(cells))
 		warning("cells must be specified if x is a matrix or extent")
 	cells = as.integer(cells[1])
 	x = raster(x, ncol=cells, nrow=cells)
-	squareRaster(x, cells)
+	squareRaster(x, cells, buffer)
 }
 
-squareRaster.BasicRaster = squareRaster.RasterLayer = function(x, cells=NULL) {
+squareRaster.BasicRaster = squareRaster.RasterLayer = function(x, cells=NULL, buffer=0) {
 	x=raster(x)
 	if(is.null(cells)) {
 		cells = ncol(x)
@@ -28,14 +27,14 @@ squareRaster.BasicRaster = squareRaster.RasterLayer = function(x, cells=NULL) {
 	Ny = ceiling(signif( (ymax(x) - ymin(x))/xres(x), 10) )
 	ymax(x) = ymin(x) + Ny*xres(x)
 	nrow(x) = Ny
-	x
+	extend(x, round(buffer/xres(x)))
 }
 
 squareRaster.SpatialPointsDataFrame = squareRaster.SpatialPoints =
 		squareRaster.SpatialPolygons = squareRaster.SpatialPolygonsDataFrame =
-		function(x, cells=NULL) {
+		function(x, cells=NULL, buffer=0) {
 	
-	result = squareRaster(extent(x), cells)
+	result = squareRaster(extent(x), cells, buffer)
 	proj4string(result) = proj4string(x)
 	result
 }

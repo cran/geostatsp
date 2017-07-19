@@ -77,14 +77,18 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	
 	
 	# cell size offset
-	logCellSize = cells
-	names(logCellSize) = "logCellSize"
-	values(logCellSize) =  sum(log(res(cells)) )
 
-  	if(class(covariates)=="RasterLayer") {
-		covariates = list( logCellSize, covariates)
-		names(covariates) = unlist(lapply(covariates, names))
+ 	if(length(grep("^Raster", class(covariates)))) {
+		# add a raster layer for log cell size
+		logCellSize = raster(covariates)
+		values(logCellSize) = sum(log(res(cells)))
+		names(logCellSize) = 'logCellSize'
+		covariates = addLayer(logCellSize, covariates)
 	} else {
+		# create a raster and put it in the covariate list
+		logCellSize = cells
+		names(logCellSize) = "logCellSize"
+		values(logCellSize) =  sum(log(res(cells)) )
     if(length(covariates)){
 		  covariates = c(covariates, logCellSize=logCellSize)
     } else {

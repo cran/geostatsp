@@ -15,23 +15,24 @@ Given a raster object, an extent, or a bounding box, a raster of with square cel
 extent and number of cells specified is returned.
 }
 \usage{
-	squareRaster(x,  cells=NULL)
-	\method{squareRaster}{RasterLayer}(x,cells=NULL)
-	\method{squareRaster}{BasicRaster}(x,cells=NULL)
-	\method{squareRaster}{matrix}(x,cells=NULL)
-	\method{squareRaster}{Extent}(x,cells=NULL)
-	\method{squareRaster}{SpatialPoints}(x,cells=NULL)
-	\method{squareRaster}{SpatialPointsDataFrame}(x,cells=NULL)
-	\method{squareRaster}{SpatialPolygons}(x,cells=NULL)
-	\method{squareRaster}{SpatialPolygonsDataFrame}(x,cells=NULL)
+	squareRaster(x,  cells=NULL, buffer=0)
+	\method{squareRaster}{RasterLayer}(x,cells=NULL, buffer=0)
+	\method{squareRaster}{BasicRaster}(x,cells=NULL, buffer=0)
+	\method{squareRaster}{matrix}(x,cells=NULL, buffer=0)
+	\method{squareRaster}{Extent}(x,cells=NULL, buffer=0)
+	\method{squareRaster}{SpatialPoints}(x,cells=NULL, buffer=0)
+	\method{squareRaster}{SpatialPointsDataFrame}(x,cells=NULL, buffer=0)
+	\method{squareRaster}{SpatialPolygons}(x,cells=NULL, buffer=0)
+	\method{squareRaster}{SpatialPolygonsDataFrame}(x,cells=NULL, buffer=0)
 	}
 
 \arguments{
 	\item{x}{
 	A bounding box from a  
-	SpatialPoints or SpatialPolygons object or an 
-	Extent from a Raster. }
+	\code{SpatialPoints} or \code{SpatialPolygons} object or an 
+	\code{Extent} from a Raster. }
 \item{cells}{The number of cells in the x direction.  If NULL the number of columns of x is used.  }
+\item{buffer}{Additional area to add around the resulting raster}
 }
 
 \value{

@@ -83,11 +83,11 @@ myParams = swissFit$param
 dput(myParams)
 # will give the following
 } else {
-myParams=structure(c(0.0951677553339405, 0.773131120360615, 49376.366554348, 
-1, 11.6731542330799, 0.649923845971017, 1, 2.26103865436198, 
-0.000146945159199578, 37.2378933790499), .Names = c("nugget", 
-"variance", "range", "shape", "anisoRatio", "anisoAngleRadians", 
-"boxcox", "(Intercept)", "CHE_alt", "anisoAngleDegrees"))
+myParams=structure(c(0.0951770829449953, 0.77308786208928, 49379.3845752436, 
+1, 11.673076577513, 0.649925237653982, 1, 2.26103881494066, 0.000146945995279231, 
+37.2379731166102), .Names = c("nugget", "variance", "range", 
+"shape", "anisoRatio", "anisoAngleRadians", "boxcox", "(Intercept)", 
+"CHE_alt", "anisoAngleDegrees"))
 myTrend =lograin~ CHE_alt
 }
 
@@ -107,9 +107,11 @@ plot(swissBorder, add=TRUE)
 # now with box cox and provide a raster for prediction, no covariates
 
 if(interactive()  | Sys.info()['user'] =='patrick') {
-swissFit2 = likfitLgm(data=swissRain, 
+swissFit2 = likfitLgm(
+	data=swissRain, 
 			formula=rain~1,
-			param=c(range=52000, nugget=0.1,shape=1, boxcox=0.5,
+			param=c(range=52000, nugget=0.1,
+			shape=1, boxcox=0.5,
 					anisoAngleDegrees=35, anisoRatio=8),
 			paramToEstimate = c("range","nugget", 
 				"anisoAngleDegrees", "anisoRatio"),

@@ -1,8 +1,8 @@
 /* taken from the stats package */
 /* http://svn.r-project.org/R/trunk/src/library/stats/src/optimize.c */
 
-#include<R.h>
-
+//#include<R.h>
+#include"geostatsp.h"
 /* Formerly in src/appl/fmim.c */
 
 /* fmin.f -- translated by f2c (version 19990503).

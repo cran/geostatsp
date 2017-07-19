@@ -24,7 +24,7 @@ Murder locations
 \source{
 Murder data:\url{http://www.thestar.com/news/crime/torontohomicidemap.html}, 
 
-Lights: \url{http://ngdc.noaa.gov/eog/viirs/download_monthly.html}
+Lights: \url{https://ngdc.noaa.gov/eog/viirs/download_ut_mos.html}
 
 Boundary files: \url{http://www12.statcan.gc.ca/census-recensement/2011/geo/bound-limit/bound-limit-2006-eng.cfm}
 

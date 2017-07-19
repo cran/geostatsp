@@ -4,6 +4,18 @@ havePackages = c(
 
 print(havePackages)
 
+if(Sys.info()['sysname'] =='Linux' &
+  requireNamespace("INLA")) {   
+  INLA::inla.setOption(inla.call = 
+      system.file(paste(
+          "bin/linux/",          
+          ifelse(
+            .Machine$sizeof.pointer == 4, 
+            "32", "64"),
+          'bit/inla.static', sep=''),
+        package="INLA")) 
+}
+
 # number of cells... smaller is faster but less interesting
 Ncell = 25
 

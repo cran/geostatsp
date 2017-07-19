@@ -2,15 +2,15 @@
 \docType{methods}
 \alias{lgm}
 \alias{lgm-methods}
-\alias{lgm,NULL,ANY,ANY,ANY-method}
+\alias{lgm,missingOrNULL,ANY,ANY,ANY-method}
 \alias{lgm,numeric,ANY,ANY,ANY-method}
 \alias{lgm,character,ANY,ANY,ANY-method}
-\alias{lgm,formula,Raster,ANY,ANY-method}
 \alias{lgm,formula,Spatial,numeric,ANY-method}
-\alias{lgm,formula,Spatial,Raster,missing-method}
+\alias{lgm,formula,Spatial,Raster,missingOrNULL-method}
 \alias{lgm,formula,Spatial,Raster,list-method}
 \alias{lgm,formula,Spatial,Raster,Raster-method}
 \alias{lgm,formula,Spatial,Raster,data.frame-method}
+\alias{lgm,formula,Raster,ANY,ANY-method}
 \alias{lgm,formula,data.frame,Raster,data.frame-method}
 
 \title{
@@ -22,60 +22,106 @@ Calculate MLE's of model parameters and perform spatial prediction. }
  
 
 \usage{
-\S4method{lgm}{NULL,ANY,ANY,ANY}(
-formula=NULL, data,
-		grid,
-		covariates=NULL, 
-		...) 
-\S4method{lgm}{numeric,ANY,ANY,ANY}(formula, data,
-		grid,
-		covariates=NULL, 
-		...) 
-\S4method{lgm}{character,ANY,ANY,ANY}(formula, data,
-		grid,
-		covariates=NULL, 
-		...) 
-\S4method{lgm}{formula,Raster,ANY,ANY}(formula, data,
-		grid,
-		covariates=NULL, 
-		...) 
-\S4method{lgm}{formula,Spatial,numeric,ANY}(formula, data,
-		grid,
-		covariates=NULL, 
-		...) 
-\S4method{lgm}{formula,Spatial,Raster,missing}(formula, data,
-		grid=NULL,
-		covariates=NULL, 
-		...) 
-\S4method{lgm}{formula,Spatial,Raster,list}(formula, data,
-		grid,
-		covariates=NULL, buffer=0,
-		...) 
-\S4method{lgm}{formula,Spatial,Raster,Raster}(formula, data,
-		grid,
-		covariates=NULL, buffer=0,
-		...) 
-\S4method{lgm}{formula,Spatial,Raster,data.frame}(formula, data,
-		grid,
-		covariates=NULL, 
-			shape=1, boxcox=1, nugget = 0, 
-		expPred=FALSE, nuggetInPrediction=TRUE,
-		reml=TRUE,mc.cores=1,
-		aniso=FALSE,
-		fixShape=TRUE,
-		fixBoxcox=TRUE,
-		fixNugget = FALSE,
-		...) 
+\S4method{lgm}{missingOrNULL,ANY,ANY,ANY}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{numeric,ANY,ANY,ANY}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{character,ANY,ANY,ANY}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{formula,Spatial,numeric,ANY}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{formula,Spatial,Raster,missingOrNULL}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{formula,Spatial,Raster,list}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{formula,Spatial,Raster,Raster}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{formula,Spatial,Raster,data.frame}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
+\S4method{lgm}{formula,Raster,ANY,ANY}(
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
 \S4method{lgm}{formula,data.frame,Raster,data.frame}(
-formula, data,
-		grid,
-		covariates=NULL, 
-		            shape=1,boxcox=1,nugget=0,
-				  expPred=FALSE, nuggetInPrediction=TRUE,
-				  reml = TRUE,
-				  mc.cores=1,		
-fixBoxcox=TRUE,fixNugget=FALSE, 
-		...) 
+formula, data, grid, covariates, 
+buffer=0, shape=1, boxcox=1, nugget = 0, 
+expPred=FALSE, nuggetInPrediction=TRUE,
+reml=TRUE,mc.cores=1,
+aniso=FALSE,
+fixShape=TRUE,
+fixBoxcox=TRUE,
+fixNugget = FALSE,
+...) 
 }
  
 \arguments{
@@ -155,19 +201,6 @@ swissRes$summary
 plot(swissRes$predict[["predict"]], main="predicted rain") 
 plot(swissBorder, add=TRUE)
 
-data("swissRainR")
-swissRainR2 = brick(swissRainR[['alt']], 
-	 sqrt(swissRainR[['prec1']]))
-
-if(interactive() | Sys.info()['user'] =='patrick') {	 
-swissResR =  lgm( formula=layer ~ alt, 
-	data=swissRainR2, shape=1,
-	oneminusar=seq(0.06, 0.09, len=2),
-	nugget =  seq(0,0.0001,len=2)
-	)
-
-swissResR$summary[c('oneminusar','range','propNugget','(Intercept).betaHat', 'alt.betaHat'),]
-}
 
 
 \dontrun{

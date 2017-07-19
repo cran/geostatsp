@@ -145,7 +145,7 @@ m1=matern(mypoints, param=c(range=2,shape=1.4,variance=4,nugget=1))
 c2=matern(dist(mypoints@coords), param=c(range=2,shape=1.4,variance=4,nugget=1),type='cholesky')
 
 # check it's correct
-quantile(m1- tcrossprod(c2))
+quantile(as.vector(m1- tcrossprod(c2)))
 
 # example with vector of distances
 range=3

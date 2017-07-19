@@ -1,7 +1,6 @@
 gambiaUTM
 loaloa: elevationLoa eviLoa loaloa ltLoa tempLoa
 murder: murder torontoBorder
-nn32: nn128 nn32 nn64
 rongelapUTM
 swissRain: swissAltitude swissBorder swissLandType swissRain
 swissRainR: swissNN swissRainR

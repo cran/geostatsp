@@ -1,19 +1,30 @@
-citHeader("To cite geostatsp in publications use:")
+year <- sub("-.*", "", meta$Date)
+note <- sprintf("R package version %s", meta$Version)
+pb = utils::person(c("Patrick", "E"),"Brown")
 
-citEntry(entry = "Article",
-  title        = "Model-Based Geostatistics the Easy Way",
-  author       = personList(as.person("Patrick E. Brown")),
-  journal      = "Journal of Statistical Software",
-  year         = "2015",
-  volume       = "63",
-  number       = "12",
-  pages        = "1--24",
-  url          = "http://www.jstatsoft.org/v63/i12/",
 
-  textVersion  =
-  paste("Patrick E. Brown (2015).",
-        "Model-Based Geostatistics the Easy Way.",
-        "Journal of Statistical Software, 63(12), 1-24.",
-        "URL http://www.jstatsoft.org/v63/i12/.")
+utils::bibentry(
+key = 'geostatsp',
+	bibtype = "Article",
+  title="Model-based geostatistics the easy way",
+  author = pb,
+  journal="Journal of Statistical Software",
+  volume="63",
+  number="12",
+  pages="1--24",
+  year="2015",
+  doi = "10.18637/jss.v063.i12"
 )
 
+
+utils::bibentry(
+	key = 'geostatspPackage',
+	bibtype = "Manual",
+         title = "Geostatistical Modelling with Likelihood and {B}ayes",
+         author = pb,
+         year = year,
+         note = note,
+         url = "https://CRAN.R-project.org/package=geostatsp"
+)
+         
+         

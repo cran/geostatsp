@@ -3,7 +3,8 @@
 #include<R_ext/Lapack.h>
 #include<R_ext/Applic.h>
 #include<R_ext/Print.h>
-#include <R_ext/Utils.h>
+#include<R_ext/Utils.h>
+#include<Matrix.h>
 
 
 /* type = 0, distances is a vector
@@ -19,7 +20,7 @@ If the cholkesy is performed (type > 1):
  type is info from dpotrf
 if the precision is computed type is info from dpotrfi
 ... and if chol of precision is computed, type is from dtrtri
-*/
+ */
 void maternAniso(
 		const double *x,
 		const double *y,
@@ -33,7 +34,7 @@ void maternAniso(
 		const double *nugget,
 		int *type,
 		double *halfLogDet
-		) ;
+) ;
 
 void matern(
 		const double *distance,
@@ -53,14 +54,35 @@ void maternForL(
 		double *corMat,
 		const double *param,
 		// nugget, variance,
-        // range, shape,
-        // anisoRatio, ansioAngleRadians
+		// range, shape,
+		// anisoRatio, ansioAngleRadians
 		const int *aniso,
 		const int *withoutNugget,
 		int *type,
 		double *halfLogDet
-		);
+);
 
+
+SEXP maternDistance(
+		SEXP distance,
+		SEXP params,
+		// range, shape,
+		// variance, nugget,
+		SEXP type
+		//c('variance','cholesky','precision','inverseCholesky')
+);
+
+
+SEXP maternPoints(
+		SEXP points,
+		SEXP param,
+		// range,
+		// shape,
+		// variance,
+		// anisoRatio,
+		// anisoAngleRadians,
+		// nugget,
+		SEXP type);
 
 void computeBoxCox(
 		double *obsCov,
@@ -96,7 +118,7 @@ void maternLogLGivenVarU(
 		double *betaHat, // an Ncov by Nrep matrix
 		double *varBetaHat, // an Ncov by Ncov by Nrep array
 		double *determinants // detVarHalf, detCholCovInvXcrossHalf
-		);
+);
 
 void logLfromComponents(
 		const int *N,
@@ -110,3 +132,13 @@ void logLfromComponents(
 		//2=ml, var fixed
 		// 3=reml, var fixed
 );
+
+// from Matrix_stubs.c
+int attribute_hidden M_cholmod_solve2(
+		int sys,
+		CHM_FR L,
+		CHM_DN B, // right
+		CHM_DN *X,// solution
+		CHM_DN *Yworkspace,
+		CHM_DN *Eworkspace,
+		cholmod_common *c);

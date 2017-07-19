@@ -18,11 +18,7 @@
 \title{Simulation of Random Fields}
 
 \description{
-  This function simulates conditional and unconditional Gaussian random fields:
-  
-  Here, only the simulation of Gaussian random fields is described.
-  For other kind of random fields (binary, max-stable, etc.) or
-  more sophisticated approaches see \link[RandomFields]{RFsimulateAdvanced}.
+  This function simulates conditional and unconditional Gaussian random fields, calling the function in the RandomFields package of the same name.
 }
 
 \usage{
@@ -118,12 +114,20 @@ simu <- RFsimulate(model, x=myraster, n=3)
 
 plot(simu[['sim2']])
 
-# same again with SpatialPixels
-myPoints = SpatialPixels(SpatialPoints(myraster))
+# conditional simulation
+firstSample = RFsimulate(
+	model, 
+	x=SpatialPoints(myraster)[seq(1,ncell(myraster), len=100), ],
+	n=3
+)
 
-# pass an argument 'cPrintlevel' to RandomFields
-simuPoints <- RFsimulate(model, x=myPoints, n=3, cPrintlevel=8)
-spplot(simuPoints, "sim1")
+secondSample = RFsimulate(
+	model = cbind(var=5:3, range=1:3, shape=seq(0.5, 1.5, len=3)),
+	x= myraster,
+	data=firstSample,n=4
+)
+
+plot(secondSample)
 
 # convert the model to RandomFields format and plot
 if(requireNamespace('RandomFields', quietly=TRUE)) {

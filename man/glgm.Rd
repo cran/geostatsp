@@ -21,31 +21,19 @@ Fits a generalized linear geostatistical model or a log-Gaussian Cox process
 using \code{inla} }
 \usage{
 \S4method{glgm}{NULL,ANY,ANY,ANY}(formula=NULL, data,  grid, 
-				covariates=NULL, 
-				...)
+	covariates=NULL, ...)
 \S4method{glgm}{numeric,ANY,ANY,ANY}(formula, data,  grid, 
-				covariates=NULL, 
-				...)
+	covariates=NULL, ...)
 \S4method{glgm}{character,ANY,ANY,ANY}(formula, data,  grid, 
-				covariates=NULL, 
-				...)
+	covariates=NULL, ...)
 \S4method{glgm}{formula,ANY,numeric,ANY}(formula, data,  grid, 
-				covariates=NULL, 
-				...)
+	covariates=NULL, ...)
 \S4method{glgm}{formula,Raster,Raster,ANY}(formula, data,  grid, 
-				covariates=NULL, buffer=0,
-				...)
-\S4method{glgm}{formula,Spatial,Raster,ANY}(
-	formula, data,  grid, 
-				covariates=NULL, buffer=0,
-				...)
-\S4method{glgm}{formula,data.frame,Raster,data.frame}(
-	formula, data,  grid, 
-				covariates=NULL, 
-				shape=1, priorCI=NULL, 
-				mesh=FALSE,...) 
-lgcp(formula=NULL, data,  grid, covariates=NULL, border,
-	...)
+	covariates=NULL, buffer=0, ...)
+\S4method{glgm}{formula,Spatial,Raster,ANY}(formula, data,  grid, covariates=NULL, buffer=0, ...)
+\S4method{glgm}{formula,data.frame,Raster,data.frame}(formula, data,  grid, covariates=NULL, 
+  shape=1, priorCI=NULL, mesh=FALSE,...) 
+lgcp(formula=NULL, data,  grid, covariates=NULL, border, ...)
 }
  
 \arguments{
@@ -67,45 +55,65 @@ can be overridden with a
  \code{formula} can be an integer or character string specifying the response variable.  For \code{lgcp}, the formula
  should be one-sided.
 }
-\item{priorCI}{list with named elements of 0.025 and 0.975 quantiles of prior distributions, or a single 
-vector giving the prior quantiles for the range parameter.  List elements can be named: \code{range} for 
-the range parameter (not the scale); \code{sd} for the standard deviation (not the variance or precision);
-\code{sdNugget} for the standard deviation of the observation error for Gaussian data; 
-\code{intercept} for the intercept; and \code{betas} for the regression coefficients.}
+\item{priorCI}{list with elements named \code{range}, \code{sd}, \code{sdNugget}, 
+\code{intercept}, or \code{betas}.  See Details.}
 \item{shape}{Shape parameter for the Matern correlation function, must be 1 or 2.}
 \item{buffer}{Extra space padded around the data bounding box to reduce edge effects.}
 \item{mesh}{Currently unimplemented options for using a mesh rather than a grid for the Markov random field approximation.}
 \item{border}{boundary of the region on which an LGCP is defined, passed to \code{\link[raster]{mask}}}
-\item{...}{Additional options passed to  INLA}
+\item{...}{Additional options passed to  \code{\link[INLA]{inla}} }
 }
 \details{
 This function performs Bayesian inference for generalized linear geostatistical models with INLA.  The Markov random field
 approximation on a regular lattice is used for the spatial random effect.  The range parameter is the distance at which 
 the correlation is 0.13, or
-\deqn{cov[U(s+h), U(s)] = 
-		(2^(1-shape)/gamma(shape) )*d^shape*besselK(d, shape) } 
-\deqn{d= |h|*sqrt(8*shape)/range}
-The range parameter produced by \code{glgm} multiplies the range parameter from \code{INLA} by the cell size.
+\deqn{cov[U(s+h), U(s)] = (2^{1-\nu}/Gamma(\nu))  d^\nu besselK(d, \nu) } 
+\deqn{d= |h| \sqrt{8 \nu}/range}
+where \eqn{\nu} is the shape parameter. The range parameter produced by \code{glgm} multiplies the range parameter from \code{INLA} by the cell size.
+
+Elements of \code{priorCI} can be named: 
+\itemize{
+\item \code{range} for the range parameter (not the scale)
+\item \code{sd} for the standard deviation (not the variance or precision)
+\item \code{sdNugget} for the standard deviation of the observation error for Gaussian data
+\item \code{gammaShape} for the shape parameter of a Gamma distributed observations
+\item \code{intercept} for the intercept
+\item \code{betas} for the regression coefficients
 }
+Each element is either a vector of length 2 or a two-column matrix. 
+\itemize{
+\item \code{c(lower=a, upper=b)} specifies 0.025 and 0.975 quantiles of prior distributions
+\item \code{c(u=a, alpha=b)} gives a penalized complexity prior for standard deviation parameters.
+\eqn{pr(\sigma > a) = b}
+\item A matrix has a first column of parameter values and a second column of densities
+}
+
+}
+
 \value{
 A list with two components named  \code{inla}, \code{raster}, and \code{parameters}.  \code{inla} contains the results of the call to the
 \code{inla} function.  \code{raster} is a raster stack with the following layers:
-\item{random.mean, random.sd,random.X0.025quant, random.X0.5quant, random.X0.975quant, random.kld}{}
-\item{predict.mean, predict.sd,predict.X0.025quant, predict.X0.5quant, predict.X0.975quant, predict.kld}{}
-\item{predict.exp}{}
+\item{random.}{mean, sd, X0.0??quant: Posterior mean, standard deviation, and quantiles of the random effect}
+\item{predict.}{mean, sd, X0.0??quant: same for linear predictors, on the link scale}
+\item{predict.exp}{posterior mean of the exponential of the linear predictor}
 \item{predict.invlogit}{Only supplied if a binomial response variable was used.}
-\code{parameters} contains a list with element
-\item{summary}{}
-and \code{range} and \code{sd} elements containing, 
-for the range and standard deviation parameters respectively,
-\item{prior}{}
-\item{posterior}{}
+
+\code{parameters} contains a list with elements:
+\item{summary}{a table with parameter estimates and posterior quantiles}
+\item{range, sd}{prior and posterior distributions of range and standard deviations}
 }
 
 \seealso{
 \url{http://r-inla.org}
 }
 \examples{
+# use the 'safe' version of INLA on linux systems
+if(Sys.info()['sysname'] =='Linux' &
+  requireNamespace("INLA")) {   
+  INLA::inla.setOption(inla.call = system.file(paste("bin/linux/",          
+          ifelse(.Machine$sizeof.pointer == 4, "32", "64"),
+          'bit/inla.static', sep=''), package="INLA")) }
+
 # geostatistical model for the swiss rainfall data
 require("geostatsp")
 data("swissRain")
