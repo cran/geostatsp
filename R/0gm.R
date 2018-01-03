@@ -1,5 +1,39 @@
-setClassUnion("missingOrNULL", c("missing", "NULL"))
 
+allVarsP = function(formula) {
+  # return vector of variable names in the formula
+  allterms = rownames(attributes(terms(formula))$factors)
+  if(!length(allterms)) {
+  	# might be intercepty only but there may be an offset
+  	# add a junk variable so that the terms function produces a factors
+  	allterms =  setdiff(
+  	rownames(attributes(terms(
+  		update.formula(formula, .~ .+ junk)
+  		))$factors),
+  		'junk')
+  }
+  
+  firstTerm = as.character(formula)
+  firstTerm = trimws(firstTerm[-c(1, length(firstTerm))])
+  allterms = setdiff(allterms, firstTerm)
+  
+  # look for values=1:stuff in inla formula and replace with seq
+  
+  if(length(allterms)) {
+    inlaValuesPattern = 'values[[:space:]]+?=[[:space:]]+?'
+    haveInlaValues = grep(inlaValuesPattern, allterms, value=TRUE)
+    notInlaValues = grep(inlaValuesPattern, allterms, 
+      value=TRUE, invert=TRUE)
+    allterms = c(
+      unique(unlist(strsplit(notInlaValues, ":"))),
+      haveInlaValues
+    )
+  }
+  allterms = gsub("[[:space:]]", "", allterms)
+# remove offset( or factor(
+  alltermsPlain = gsub("^[[:alpha:]]+\\(|\\)$|[,].*", "", allterms)
+  attributes(alltermsPlain)$orig = allterms
+  alltermsPlain
+}
 
 gm.dataRaster = function(
   formula,
@@ -15,18 +49,17 @@ gm.dataRaster = function(
   
   # find factors
   
-  alltermsFull = rownames(attributes(terms(formula))$factors)[-1]
-  if(!length(alltermsFull)){
-    # maybe there's offsets
-    # this thing works if that's the case
-    alltermsFull = as.character(attributes(terms(formula))$variables)[-(1:2)]
-  }
-  allterms = grep(":", alltermsFull, invert=TRUE, value=TRUE)
-  allterms = gsub("[[:space:]]", "", allterms)
+  allterms = allVarsP(formula)
   
-  theFactors = grep("^factor", allterms, value=T)
+  alltermsFull = attributes(allterms)$orig
+
+  # find factors
+  
+  theFactors = grep("^factor", alltermsFull, value=T)
   theFactors = gsub("^factor\\(|\\)$", "", theFactors)
   
+  termsInF = grep("^f[(]", alltermsFull, value=TRUE)
+  termsInF = gsub("^f[(]|[,].*|[[:space:]]", "", termsInF)
   
   covFactors = NULL
   for(D in names(covariates)) {
@@ -39,9 +72,8 @@ gm.dataRaster = function(
       dataFactors = c(D, dataFactors)
   }
   
-  inModel = gsub("^[[:alnum:]]+\\(",
-    "",
-    alltermsFull)
+  inModel = gsub("^[[:alnum:]]+[(]|[,].*|[[:space:]]",
+    "",  alltermsFull)
   inModel = gsub(
     "(,([[:alnum:]]|=|[[:space:]])+)?\\)$",#+?[[:space:]]?\\)[[:space:]]?$",
     "", inModel)
@@ -66,12 +98,12 @@ gm.dataRaster = function(
   dataFactors = intersect(Sfactor,names(data))
   
   inModel = intersect(inModel, names(covariates))
-  if(length(grep("^Raster", class(covariates)))) {
-    covariates = covariates[[inModel]]
-  } else {
-    covariates = covariates[inModel]
-  }
-  if(length(inModel)) {		
+  if(length(inModel)) {	
+    if(length(grep("^Raster", class(covariates)))) {
+      covariates = covariates[[inModel]]
+    } else {
+      covariates = covariates[inModel]
+    }
     dataFactors = intersect(Sfactor, names(data))
     notInData = setdiff(names(covariates), names(data))
     
@@ -272,14 +304,19 @@ gm.dataSpatial = function(
   covariates=NULL, 
   buffer=0) {
   
-# find factors
-  allterms = colnames(attributes(terms(formula))$factors)
-  if(length(allterms)) 
-    allterms = unique(unlist(strsplit(allterms, ":")))
-  allterms = gsub("[[:space:]]", "", allterms)
-  # remove offset( or factor(
-  alltermsPlain = gsub("^[[:alpha:]]+\\(|\\)$", "", allterms)
+  # check response variable is in data
+  if(!all.vars(formula)[1] %in% names(data)){
+    warning(paste(
+        'response variable',
+        all.vars(formula)[1],
+        'not found in data'
+      ))
+  }
   
+  alltermsPlain = allVarsP(formula)
+  
+# find factors
+  allterms = attributes(alltermsPlain)$orig
   
   # remove covariates not in the model
   keepCovariates = intersect(alltermsPlain, names(covariates))
@@ -295,6 +332,11 @@ gm.dataSpatial = function(
   
   theFactors = grep("^factor", allterms, value=T)
   theFactors = gsub("^factor\\(|\\)$", "", theFactors)
+  
+  
+  termsInF = grep("^f[(]", allterms, value=TRUE)
+  termsInF = gsub("^f[(]|[,].*|[[:space:]]", "", termsInF)
+  
   
   covFactors = NULL
   for(D in names(covariates)) {
@@ -327,9 +369,11 @@ gm.dataSpatial = function(
     rmethod = rep("bilinear", length(names(covariates)))
     names(rmethod) = names(covariates)
     rmethod[covFactors] = "ngb"
+    rmethod[intersect(names(covariates), termsInF)] = "ngb"
     
     
-    covariatesStack = stackRasterList(covariates, 
+    covariatesStack = stackRasterList(
+      covariates, 
       template=cellsSmall, 
       method=rmethod)
     covariatesStack = stack(cellsSmall, covariatesStack)
@@ -342,7 +386,7 @@ gm.dataSpatial = function(
   }
   
   # loop through covariates which aren't in data, extract it from `covariates`
-  for(D in setdiff(all.vars(formula), names(data))){
+  for(D in setdiff(alltermsPlain, names(data))){
     if(is.null(covariates[[D]]))
       warning("cant find covariate '", D, "' in covariates or data")
     if(!.compareCRS(covariates[[D]], data, unknown=TRUE) ) {
@@ -355,7 +399,7 @@ gm.dataSpatial = function(
         data) 
     }
   }
-  data$space = extract(cellsSmall, data) 
+  data$space = suppressWarnings(extract(cellsSmall, data))
   
   # loop through spatial covariates which are factors
   for(D in intersect(Sfactors, names(covariatesDF))) {
@@ -365,13 +409,19 @@ gm.dataSpatial = function(
       theLabels = paste("l", names(theTable),sep="")
     } else {
       idCol = grep("^id$", names(theLevels), ignore.case=TRUE)[1]
-      if(!length(idCol)) idCol = 1
+      if(is.na(idCol)) idCol = 1
       labelCol = grep("^category$|^label$", names(theLevels), ignore.case=TRUE)[1]
-      if(!length(labelCol)) labelCol = 2
-      
-      theLabels = theLevels[
-        match(as.integer(names(theTable)), theLevels[,idCol])
-        ,labelCol]
+      if(is.na(labelCol)) labelCol = 2
+ 
+    if(all(names(theTable) %in% theLevels[,labelCol])) {
+      # convert table names to numeric
+      # code must work for data where data[[D]] is numeric
+      names(theTable) = theLevels[
+        match(names(theTable), theLevels[,labelCol])
+        , idCol]
+    }
+
+      theLabels = as.character(theLevels[match(names(theTable), theLevels[,idCol]), labelCol])
       if(any(is.na(theLabels))) {
         warning(
           'missing labels in covariate raster ', 
@@ -381,11 +431,14 @@ gm.dataSpatial = function(
           names(theTable)[is.na(theLabels)]
       }
     }
-    data[[D]] = factor(data[[D]], levels=as.integer(names(theTable)),
+    data[[D]] = factor(
+      as.integer(data[[D]]), 
+      levels=as.integer(names(theTable)),
       labels=theLabels)			
-    covariatesDF[[D]] = factor(covariatesDF[[D]], levels=as.integer(names(theTable)),
+    covariatesDF[[D]] = factor(
+      as.integer(covariatesDF[[D]]), 
+      levels=as.integer(names(theTable)),
       labels=theLabels)			
-    
   }
   
   

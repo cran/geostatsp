@@ -16,7 +16,7 @@ setGeneric('lgm', function(
 # sort out formula
 # null formula
 setMethod("lgm", 
-		signature("missingOrNULL", "ANY", "ANY", "ANY"), 
+		signature("missing", "ANY", "ANY", "ANY"), 
   function(formula, data, grid, 
     covariates, 
     buffer=0,
@@ -125,7 +125,7 @@ setMethod("lgm",
 
 # missing covariates, create empty list
 setMethod("lgm", 
-  signature("formula", "Spatial", "Raster", "missingOrNULL"),
+  signature("formula", "Spatial", "Raster", "missing"),
   function(formula, data, grid, covariates, 
     buffer=0,
     shape=1, boxcox=1, nugget = 0, 

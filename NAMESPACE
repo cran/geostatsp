@@ -4,7 +4,7 @@ export( lgm, glgm, lgcp,
  simLgcp,simPoissonPP,
  excProb, likfitLgm, loglikLgm,
  profLlgm, informationLgm, conditionalGmrf, spatialRoc,
- spdfToBrick
+ spdfToBrick, pcPriorRange
 )
 
 
@@ -19,6 +19,7 @@ S3method(matern, SpatialPoints)
 S3method(matern, dist)
 S3method(matern, dsyMatrix)
 S3method(matern, default)
+export(fillParam)
 
 #S3method(as.im, RasterLayer)
 export(asImRaster)

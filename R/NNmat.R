@@ -41,7 +41,11 @@ nbMat = rbind(
     nnIndices(9,baseDist = 4+0i),
     nnIndices(10,baseDist = 3+2i),
     nnIndices(11,baseDist = 4+1i),
-    nnIndices(12,baseDist = 5+0i)
+    nnIndices(12,baseDist = 5+0i),
+nnIndices(13,baseDist = 3+3i),
+nnIndices(14,baseDist = 4+2i),
+nnIndices(15,baseDist = 5+1i),
+nnIndices(16,baseDist = 6+0i)
 )
 
 

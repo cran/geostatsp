@@ -497,8 +497,11 @@ SEXP maternPoints(
   SET_SLOT(result, install("x"), resultX);
   SET_SLOT(result, install("Dim"), dim);
   SET_SLOT(result, install("uplo"), resultUplo);
-  setAttrib(result, install("type"), duplicate(type));
-  setAttrib(result, install("param"), duplicate(param));
+
+  SEXP type_s = PROTECT(install("type"));
+  SEXP param_s = PROTECT(install("param"));
+  setAttrib(result, type_s, PROTECT(duplicate(type)));
+  setAttrib(result, param_s, PROTECT(duplicate(param)));
 
   maternAniso(
       P, // x
@@ -519,7 +522,7 @@ SEXP maternPoints(
       setAttrib(result, install("halfLogDet"), halfLogDet);
   }
 
-  UNPROTECT(5);
+  UNPROTECT(9); // was 5
   return result;
 }
 
@@ -570,23 +573,30 @@ SEXP maternDistance(
       PROTECT(result = NEW_OBJECT(MAKE_CLASS("dsyMatrix")));
   }
 
-  SET_SLOT(result, install("x"),
-           duplicate(GET_SLOT(distance, install("x"))));
-  SET_SLOT(result, install("Dim"),
-           duplicate(GET_SLOT(distance, install("Dim"))));
-  SET_SLOT(result, install("Dimnames"),
-           duplicate(GET_SLOT(distance, install("Dimnames"))));
-  SET_SLOT(result, install("uplo"),
-           ScalarString(mkChar("L")));
+  SEXP x_s = PROTECT(install("x"));
+  SEXP Dim_s = PROTECT(install("Dim"));
+  SEXP Dimnames_s = PROTECT(install("Dimnames"));
+  SEXP uplo_s = PROTECT(install("uplo"));
+  SEXP L_s = PROTECT(ScalarString(mkChar("L")));
 
-  setAttrib(result, install("type"), duplicate(type));
-  setAttrib(result, install("param"), duplicate(param));
 
+  SET_SLOT(result, x_s,
+           PROTECT(duplicate(GET_SLOT(distance, x_s))));
+  SET_SLOT(result, Dim_s,
+           PROTECT(duplicate(GET_SLOT(distance, Dim_s))));
+  SET_SLOT(result, Dimnames_s,
+           PROTECT(duplicate(GET_SLOT(distance, Dimnames_s))));
+  SET_SLOT(result, uplo_s, L_s);
+
+  SEXP type_s = PROTECT(install("type"));
+  SEXP param_s = PROTECT(install("param"));
+  setAttrib(result, type_s, PROTECT(duplicate(type)));
+  setAttrib(result, param_s, PROTECT(duplicate(param)));
 
   matern(
       P,
       &N, //N
-      REAL(GET_SLOT(result, install("x"))),
+      REAL(GET_SLOT(result,  x_s)),
       &REAL(param)[0],// range,
       &REAL(param)[1],// shape,
       &REAL(param)[2],// variance,
@@ -599,7 +609,7 @@ SEXP maternDistance(
       setAttrib(result, install("halfLogDet"), halfLogDet);
   }
 
-  UNPROTECT(2);
+  UNPROTECT(14); // was 2, change to 9?
   return result;
 }
 

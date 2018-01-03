@@ -20,7 +20,7 @@ Generalized Linear Geostatistical Models
 Fits a generalized linear geostatistical model or a log-Gaussian Cox process
 using \code{inla} }
 \usage{
-\S4method{glgm}{NULL,ANY,ANY,ANY}(formula=NULL, data,  grid, 
+\S4method{glgm}{NULL,ANY,ANY,ANY}(formula, data,  grid, 
 	covariates=NULL, ...)
 \S4method{glgm}{numeric,ANY,ANY,ANY}(formula, data,  grid, 
 	covariates=NULL, ...)

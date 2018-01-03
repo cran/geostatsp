@@ -359,16 +359,20 @@ spatialRoc = function(fit,
 						)
 				resultOut[,'onemspec'] = 1-spec
 				for(D in dimnames(result)[[2]]) {
-					if(all(is.na(result[,D,'onemspec'])) |
-							all(is.na(result[,D,'sens']))){
-						resultOut[,D] = NA
-					} else {
-						resultOut[,D] = approx(
-							result[,D,'onemspec'],
-							result[,D,'sens'],
-							xout = resultOut[,'onemspec']
-							)$y
-					}
+				  
+				  resultOneMSpec = result[,D,'onemspec']
+				  resultSens = result[,D,'sens']
+				  
+				  if(all(is.na(resultOneMSpec)) | 
+				      all(is.na(resultSens)) | 
+				      length(unique(resultOneMSpec[!is.na(resultOneMSpec)])) == 1) {
+				    resultOut[,D] = NA
+				  } else {
+				    resultOut[,D] = approx(
+				      resultOneMSpec, 
+				      resultSens, 
+				      xout = resultOut[,'onemspec'])$y
+				  }
 				}
 				resultOrig = result
 				result = resultOut

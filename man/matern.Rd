@@ -5,6 +5,7 @@
 \alias{matern.Raster}
 \alias{matern.SpatialPoints}
 \alias{matern.SpatialPointsDataFrame}
+\alias{fillParam}
 
 \title{Evaluate the Matern correlation function}
 \description{
@@ -29,6 +30,7 @@ Returns the Matern covariance for the distances supplied.
 	\method{matern}{SpatialPointsDataFrame}(x, param,
 	type=c('variance','cholesky','precision', 'inverseCholesky'),
 	y=NULL)
+	fillParam(param)
 }
 
 \arguments{

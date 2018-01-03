@@ -27,10 +27,15 @@ names(mycov)="x1"
 
 if(all(havePackages)) {
   
-res = lgcp(data=myPoints, grid=20, covariates=mycov,
-		formula=~factor(x1),
-		priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
+res = lgcp(
+    formula=~factor(x1),
+    data=myPoints, 
+    grid=20, 
+    covariates=mycov,
+		priorCI=list(sd=c(u=0.1, alpha = 0.01), range=c(0.4, 0.41))
 )
+
+knitr::kable(res$parameters$summary, digits=3)
 
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
@@ -38,10 +43,15 @@ plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 	
 # intercept only
 
-res = lgcp(data=myPoints, grid=20, covariates=mycov,
+res = lgcp(
+    data=myPoints, 
+    grid=20, 
+    covariates=mycov,
 		formula=~1,
 		priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
 )
+
+knitr::kable(res$parameters$summary, digits=3)
 
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)

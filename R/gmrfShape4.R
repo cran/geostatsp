@@ -1,122 +1,39 @@
 if(FALSE) {
   # creating the precision matrix entries in maternGmrfPrec.R
   
-  params=c(oneminusar=0.1, shape=0, conditionalVariance=1)
-  
-  Ngrid = 5
-  myGrid = geostatsp::squareRaster(extent(-Ngrid,Ngrid,-Ngrid,Ngrid), 1+2*Ngrid)
-  midcell = cellFromRowCol(myGrid, Ngrid+1, Ngrid+1)
-  
-  precMat = maternGmrfPrec(myGrid, param=params)
-  
-  
-  params1 = params
-  params1['shape'] = 1
-  precMat1a = maternGmrfPrec(myGrid, param=params1)
-  precMat1m = precMat %*% precMat
 
-  table(as.matrix(precMat1a)[,midcell])
-  table(as.matrix(precMat1m)[,midcell])
+  shape = Dnu = 5
+  Dorder = Dnu + 1
+  DnuEx = pmax(Dorder, 3)
+  DD = geostatsp::NNmat(2*DnuEx+1, nearest=1)
+  DD@x = c(-4,1)[DD@x]
+  Ryacas::yacas(paste("DD := {{", paste(apply(DD,1,paste,collapse=','), collapse='},{'), "}}"))
+  Ryacas::yacas("precCar1 := (1-theta) * Identity(Length(DD)) - (theta/4) * DD")
+  Ryacas::yacas(paste(c(
+						  "precCarNu := {BaseVector(Ceil(Length(precCar1)/2), Length(precCar1))}",rep('precCar1', Dorder)
+				  ), collapse=' * '))
+  Ryacas::yacas("precSubset := Partition(precCarNu[1], Sqrt(Length(precCar1)))")
   
-  precMatChar = as.character(precMat)
-  precMatChar[precMatChar==as.character(-1/attributes(precMat)$info$theo['a'])] = '-a'
-  precMatChar = matrix(precMatChar, nrow(precMat), ncol(precMat))
+  Ryacas::yacas("Echo(Simplify(precSubset Where theta == 4*a))")
   
-  precForYacas = apply(precMatChar,1,paste,collapse=',')
-  precForYacas = paste(precForYacas, collapse='},{')
-  yacas0 = Ryacas::yacas(paste("prec0:= { {", precForYacas, "} }"))
+  res = Ryacas::yacas("Echo(Simplify(precSubset Where theta == 4*a))")
 
-  # matern 0
-  shape = 0
-  yacas0s = Ryacas::yacas(paste("prec", shape, sep=''))
-  yacasExp = yacas0s$text
-  
-  yacasChar = gsub("\n", "", as.character(yacasExp))
-  
   exprMat = as.matrix(read.table(
-          text=gsub("([)][,] |list[(])list[(]", '\n', as.character(yacasChar)), 
-          stringsAsFactors=FALSE, sep=','))
-  nnIndexMat = as.matrix(NNmat(myGrid, nearest = shape+1))
-  precEntriesMat = data.frame(ind=as.vector(nnIndexMat[,midcell]), eqn=as.vector(exprMat[,midcell]))
-  precEntriesMat = precEntriesMat[precEntriesMat$ind >0, ]
-  precEntriesMat = precEntriesMat[!duplicated(precEntriesMat$ind), ]
-  precEntriesMat = precEntriesMat[order(as.integer(precEntriesMat$ind)),]
-  precEntriesMat$ind = paste("'", precEntriesMat$ind, "'=", sep='')
-  precEntriesMat$last = ','
-  precEntriesMat[nrow(precEntriesMat), 'last'] = ''
+				  text=gsub('[{]|[}]', '', gsub("[}] [{]", '\n', as.character(res$PrettyForm))), 
+				  stringsAsFactors=FALSE, sep=',', nrows = 2*DnuEx+1))
   
-  cat(paste(apply(precEntriesMat, 1, paste, collapse=' '), collapse='\n'), '\n')
+  nnIndexMat = geostatsp::NNmat(2*DnuEx+1, nearest = Dorder)
+  nnIndexMat = matrix(nnIndexMat[,ceiling(ncol(nnIndexMat)/2)], 2*DnuEx+1) 
+  nnIndexMat	  
   
-  
-  # matern 1, or 2nd order GRF  
-  shape = 1
-  yacas1 = Ryacas::yacas(paste("prec", shape, ":=MatrixPower(prec0,", shape+1, ")", sep=''))
-  yacas1s = Ryacas::yacas(paste("prec", shape, sep=''))
-  yacasExp = yacas1s$text
-  
-  yacasChar = gsub("\n", "", as.character(yacasExp))
-  
-  exprMat = as.matrix(read.table(
-          text=gsub("([)][,] |list[(])list[(]", '\n', as.character(yacasChar)), 
-          stringsAsFactors=FALSE, sep=','))
-  nnIndexMat = as.matrix(NNmat(myGrid, nearest = shape+1))
-  precEntriesMat = data.frame(ind=as.vector(nnIndexMat[,midcell]), eqn=as.vector(exprMat[,midcell]))
-  precEntriesMat = precEntriesMat[precEntriesMat$ind >0, ]
-  precEntriesMat = precEntriesMat[!duplicated(precEntriesMat$ind), ]
-  precEntriesMat = precEntriesMat[order(as.integer(precEntriesMat$ind)),]
-  precEntriesMat$ind = paste("'", precEntriesMat$ind, "'=", sep='')
-  precEntriesMat$last = ','
-  precEntriesMat[nrow(precEntriesMat), 'last'] = ''
-  
-  cat(paste(apply(precEntriesMat, 1, paste, collapse=' '), collapse='\n'), '\n')
-  
-  
-  # matern 2, or 3rd order GRF  
-  shape = 2
-  yacas2 = Ryacas::yacas(paste("prec", shape, ":=MatrixPower(prec0,", shape+1, ")", sep=''))
-  yacas2s = Ryacas::yacas(paste("Simplify(prec", shape, ")", sep=''))
-  yacasExp = yacas2s$text
-  
-  yacasChar = gsub("\n", "", as.character(yacasExp))
-  
-  exprMat = as.matrix(read.table(
-          text=gsub("([)][,] |list[(])list[(]", '\n', as.character(yacasChar)), 
-          stringsAsFactors=FALSE, sep=','))
-  nnIndexMat = as.matrix(NNmat(myGrid, nearest = shape+1))
-  precEntriesMat = data.frame(ind=as.vector(nnIndexMat[,midcell]), eqn=as.vector(exprMat[,midcell]))
-  precEntriesMat = precEntriesMat[precEntriesMat$ind >0, ]
-  precEntriesMat = precEntriesMat[!duplicated(precEntriesMat$ind), ]
-  precEntriesMat = precEntriesMat[order(as.integer(precEntriesMat$ind)),]
-  precEntriesMat$ind = paste("'", precEntriesMat$ind, "'=", sep='')
-  precEntriesMat$last = ','
-  precEntriesMat[nrow(precEntriesMat), 'last'] = ''
-  
-  cat(paste(apply(precEntriesMat, 1, paste, collapse=' '), collapse='\n'), '\n')
-  
-  # matern 4, or 5th order GRF  
-  shape = 4
-  yacas4 = Ryacas::yacas(paste("prec", shape, ":=MatrixPower(prec0,", shape+1, ")", sep=''))
-  yacas4s = Ryacas::yacas(paste("Simplify(prec", shape, ")", sep=''))
-  yacasExp = yacas4s$text
-  
-  yacasChar = gsub("\n", "", as.character(yacasExp))
-  exprMat = as.matrix(read.table(
-          text=gsub("([)][,] |list[(])list[(]", '\n', as.character(yacasChar)), 
-          stringsAsFactors=FALSE, sep=','))
-  nnIndexMat = as.matrix(NNmat(myGrid, nearest = shape+1))
-  precEntriesMat = data.frame(ind=as.vector(nnIndexMat[,midcell]), eqn=as.vector(exprMat[,midcell]))
-  precEntriesMat = precEntriesMat[precEntriesMat$ind >0, ]
-  precEntriesMat$eqn = gsub("[[:space:]]+", " ", precEntriesMat$eqn)
-  precEntriesMat = precEntriesMat[!duplicated(precEntriesMat$eqn), ]
-  precEntriesMat = precEntriesMat[order(as.integer(precEntriesMat$ind)),]
-  precEntriesMat$ind = paste("'", precEntriesMat$ind, "'=", sep='')
-  precEntriesMat$last = ','
-  precEntriesMat[nrow(precEntriesMat), 'last'] = ''
-  
-  cat(paste(apply(precEntriesMat, 1, paste, collapse=' '), collapse='\n'), '\n')
+  res =data.frame(as.vector(nnIndexMat), as.vector(exprMat))
+  res = res[!duplicated(res[,1]) & res[,1] != '0',]
+  res = res[order(res[,1]),]
 
+cat(paste('\n"', res[,1], '" = ', res[,2], ',',sep=''))
   
-  # testing
+
+# testing
 
   Ngrid = 30
   myGrid = geostatsp::squareRaster(extent(-Ngrid,Ngrid,-Ngrid,Ngrid), 1+2*Ngrid)

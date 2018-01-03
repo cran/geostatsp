@@ -138,9 +138,11 @@ double logLoneNuggetMoreArguments(
   // and int Nxy, Nobs, Nxysq, Nrep;
   // as are YwkL, EwkL, YwkD, EwkD; // workspaces
 
-  double minusXisqTausq, oneD=1.0, varHatMl, varHatReml;
+  double minusXisqTausq, oneD=1.0;
+  double varHatMl, varHatReml;
   double result, *tempPointer;
   int oneI=1, D;
+
   /*
    * V = xisq Q^(-1) + tausq I
    *   =  xisq ( Q^(-1) + (tausq/xisq) I)
@@ -245,8 +247,6 @@ double logLoneNuggetMoreArguments(
       m2logReL[D] = (Nobs-Ncov)*(onePlusLogTwoPi +log(varHatMl) ) +
           *determinant - *determinantForReml - YrepAdd[D];
   }
-
-
 
   if(Ltype){
       tempPointer = m2logReL;
