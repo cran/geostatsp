@@ -17,7 +17,7 @@ bob = function(x) {
 # specify formula name of raster layer
 swissFit = lgm(data=swissRain[1:60,], formula=rain~ CHE_alt,
 		grid=80, covariates=swissAltitude,
-		shape=1,  fixShape=TRUE, 
+		shape=2,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
 names(swissFit)
@@ -39,7 +39,9 @@ swissFitAgain$param
 swissFitAgain$summary[,c('estimate','stdErr','Estimated')]
 bob(swissFitAgain)
 
-swissFitAgain = lgm(data=swissRain[1:60,], formula="rain",
+swissFitAgain = lgm(
+	data=swissRain[1:60,], 
+	formula="rain",
 		grid=80, covariates=swissAltitude,
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 

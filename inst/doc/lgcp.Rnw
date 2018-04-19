@@ -49,16 +49,20 @@ formulaHere = ~ inc + offset(pop, log=TRUE)
 @
 
 
-\section*{LGCP with gamma priors on precision}
+\section*{LGCP with priors given by quantiles}
 
 <<lgcpGamma, tidy=FALSE>>=
 if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INLA")) {
-	resG=lgcp(formulaHere, data=murderT, 
+	resG=lgcp(
+		formula = formulaHere, 
+		data=murderT, 
 			grid=squareRaster(borderC, 30),
 			covariates=covList,
 			border=borderC, buffer=2000,
-			priorCI = list(sd = c(0.05, 0.5), range = c(1, 10)*1000),
-			control.inla=list(verbose=TRUE)
+			prior = list(
+				sd = c(lower = 0.2, upper = 2), 
+				range = c(lower = 2, upper=20)*1000),
+			control.inla=list(strategy='gaussian')
 	)
 } else {
 	resG = NULL
@@ -80,8 +84,12 @@ if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INL
 			grid=squareRaster(borderC, 30),
 			covariates=covList,
 			border=borderC, buffer=2000,
-			priorCI = list(sd = c(u=0.5, alpha=0.05), range = c(1, 10)*1000)
-	) } else {
+			prior = list(
+				sd = c(u=0.5, alpha=0.05), 
+				range = c(u=10*1000, alpha = 0.4)),
+			control.inla = list(strategy='gaussian')
+	) 
+} else {
 	resP = NULL
 }
 @
@@ -99,11 +107,12 @@ if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INL
 			grid=squareRaster(borderC, 30),
 			covariates=covList,
 			border=borderC, buffer=2000,
-			priorCI = list(
+			prior = list(
 					sd = cbind(sdSeq, dexp(sdSeq, 2)), 
-					range = cbind(rangeSeq, dexp(rangeSeq, 1/5000))
-			)
-	)} else {
+					range = cbind(rangeSeq, dexp(rangeSeq, 1/5000))),
+			control.inla = list(strategy='gaussian')
+	)
+} else {
 	resT = NULL
 }
 @
@@ -132,26 +141,38 @@ if(!is.null(resT$parameters))
 
 if(!is.null(resG$parameters)) {
 	
-	plot(resG$parameters$sd$posterior, type='l', 
-			xlim=c(0,1), col='red', xlab='sd', ylab='dens')
-	lines(resG$parameters$sd$prior, col='blue')
-	lines(resP$parameters$sd$posterior, col='red', lty=2)
-	lines(resP$parameters$sd$prior, col='blue', lty=2)
-	lines(resT$parameters$sd$posterior, col='red', lty=3)
-	lines(resT$parameters$sd$prior, col='blue', lty=3)
-	
-	
-	plot(resG$parameters$range$posterior, type='l', 
-			xlab = 'range (m)', ylab='dens',
-			xlim=c(0,10000), col='#FF000050', lwd=2)
-	lines(resG$parameters$range$prior, col='#0000FF50', lwd=2)
-	lines(resP$parameters$range$posterior, col='red', lty=2)
-	lines(resP$parameters$range$prior, col='blue', lty=2)
-	lines(resT$parameters$range$posterior, col='red', lty=3)
-	lines(resT$parameters$range$prior, col='blue', lty=3)
-	legend('topright', lty=c(1,1,1,2,3), 
-			col=c('red','blue', 'black','black','black'), 
-			legend=c('posterior','prior', 'Gamma','PC','table'))
+	matplot(resG$parameters$sd$posterior[,'x'], 
+			resG$parameters$sd$posterior[,c('y', 'prior')],
+			type='l', lty=1:2,
+			col='red', 
+			xlab='sd', ylab='dens')
+	matlines(resP$parameters$sd$posterior[,'x'], 
+			resP$parameters$sd$posterior[,c('y', 'prior')],
+			lty=1:2, col='blue' )
+	matlines(resT$parameters$sd$posterior[,'x'], 
+			resT$parameters$sd$posterior[,c('y', 'prior')],
+			lty=1:2, col='green' )
+
+	legend('topleft', lty=c(1,1,1,1,2), 
+			col=c('red','blue', 'green','black','black'), 
+			legend=c( 'Gamma','PC','table', 'posterior','prior'))
+
+
+	matplot(resG$parameters$range$posterior[,'x'], 
+			resG$parameters$range$posterior[,c('y', 'prior')],
+			type='l', lty=1:2,
+			col='red', 
+			xlab='range', ylab='dens')
+	matlines(resP$parameters$range$posterior[,'x'], 
+			resP$parameters$range$posterior[,c('y', 'prior')],
+			lty=1:2, col='blue' )
+	matlines(resT$parameters$range$posterior[,'x'], 
+			resT$parameters$range$posterior[,c('y', 'prior')],
+			lty=1:2, col='green' )
+
+	legend('topleft', lty=c(1,1,1,1,2), 
+			col=c('red','blue', 'green','black','black'), 
+			legend=c( 'Gamma','PC','table', 'posterior','prior'))
 	
 } else {
 	plot(1:10)

@@ -1,6 +1,6 @@
 lgcp = function(formula=NULL, data,  grid, covariates=NULL, 
-		border,
-		...) {
+	border,
+	...) {
 	
 	if(!missing(border)){
 		if(!.compareCRS(data, border))
@@ -21,15 +21,15 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	
 	if(!missing(border)) {
 		inBorder = over(
-				data, 
-				as(border, 'SpatialPolygons')
-		)
+			data, 
+			as(border, 'SpatialPolygons')
+			)
 		data = data[!is.na(inBorder),]
 	}
 	
 	counts = rasterize(
-			SpatialPoints(data), 
-			cells, fun="count")
+		SpatialPoints(data), 
+		cells, fun="count")
 	names(counts) = "count"
 	counts[is.na(counts)] = 0
 	
@@ -37,48 +37,49 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 # the formula	
 	if(is.null(formula)) {
 		formula = as.formula(
-				paste(c("count ~ 1", names(covariates)), collapse="+")
-		)
+			paste(c("count ~ 1", names(covariates)), collapse="+")
+			)
 	}
 
 	formula	= update.formula(formula,
-			.~.+offset(logCellSize) 
-	)
+		.~.+offset(logCellSize) 
+		)
 	formula = update.formula(formula, count ~ .)
 
+	alltermsFull = rownames(attributes(terms(formula))$factors)[-1]
+	offsetToLogOrig = grep(
+		"^offset\\([[:print:]]+,log=TRUE\\)$", 
+		gsub("[[:space:]]+", "", alltermsFull))
+	offsetToLogOrig = alltermsFull[offsetToLogOrig]
+
+	offsetToMask = gsub(
+		"^[[:space:]]?offset\\(|,[[:space:]]?log[[:space:]]?=[[:space:]]?TRUE[[:space:]]?\\)[[:space:]]?$",
+		'', offsetToLogOrig
+		)[1]
 
 	if(!missing(border)) {
 		# set values of the offset to zero outside the border
 #	instead of masking as was done formerly with	counts = raster::mask(counts, border)
 		
-		alltermsFull = rownames(attributes(terms(formula))$factors)[-1]
-		offsetToLogOrig = grep(
-      	"^offset\\([[:print:]]+,log=TRUE\\)$", 
-      	gsub("[[:space:]]+", "", alltermsFull))
-  	offsetToLogOrig = alltermsFull[offsetToLogOrig]
 		if(length(offsetToLogOrig)) {
-  		offsetToMask = gsub(
-      		"^[[:space:]]?offset\\(|,[[:space:]]?log[[:space:]]?=[[:space:]]?TRUE[[:space:]]?\\)[[:space:]]?$",
-      		'', offsetToLogOrig
-			)[1]
 			if(offsetToMask %in% names(covariates)) {
 				if(!.compareCRS(covariates[[offsetToMask]], border)) {
 					borderM = spTransform(border, 
-							CRS(proj4string(covariates[[offsetToMask]])))
+						CRS(proj4string(covariates[[offsetToMask]])))
 				} else {
 					borderM = border
 				}
-			covariates[[offsetToMask]] = raster::mask(
+				covariates[[offsetToMask]] = raster::mask(
 					covariates[[offsetToMask]], borderM
 					)
-  		}
+			}
 		}
 	}
 	
 	
 	# cell size offset
 
- 	if(length(grep("^Raster", class(covariates)))) {
+	if(length(grep("^Raster", class(covariates)))) {
 		# add a raster layer for log cell size
 		logCellSize = raster(covariates)
 		values(logCellSize) = sum(log(res(cells)))
@@ -89,11 +90,11 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 		logCellSize = cells
 		names(logCellSize) = "logCellSize"
 		values(logCellSize) =  sum(log(res(cells)) )
-    if(length(covariates)){
-		  covariates = c(covariates, logCellSize=logCellSize)
-    } else {
-      covariates = logCellSize
-    }
+		if(length(covariates)){
+			covariates = c(covariates, logCellSize=logCellSize)
+		} else {
+			covariates = logCellSize
+		}
 	}
 	
 	dots = list(...)
@@ -108,7 +109,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 
 	result = do.call(glgm, dots)
 
-result
+	result
 
 }
 

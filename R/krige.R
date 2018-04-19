@@ -543,7 +543,7 @@ krigeLgm = function(
 			 lengthc){
 		  
 		  # covariance of cells in row Drow with data points
-		  resC =  .C("maternArasterBpoints", 
+		  resC =  .C(C_maternArasterBpoints, 
 				  as.double(xminl), 
 				  as.double(xresl), 
 				  as.integer(ncoll), 

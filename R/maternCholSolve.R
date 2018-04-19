@@ -91,7 +91,8 @@ maternCholSolve = function(param, obsCov, coordinates){
     Ncov = ncol(obsCov)-1
     Nrep = 1
     
-    temp = resultC = .C('maternLogLGivenChol',
+    temp = resultC = .C(
+    C_maternLogLGivenChol,
      obsCov = as.double(obsCov),
      N= as.integer(c(Nobs,Nrep,Ncov)),
      cholCovMat = as.double(cholCovMat),

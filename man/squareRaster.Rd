@@ -1,13 +1,13 @@
-\name{squareRaster}
+\name{squareRaster-methods}
+\docType{methods}
 \alias{squareRaster}
-\alias{squareRaster.BasicRaster}
-\alias{squareRaster.RasterLayer}
-\alias{squareRaster.matrix}
-\alias{squareRaster.Extent}
-\alias{squareRaster.SpatialPoints}
-\alias{squareRaster.SpatialPointsDataFrame}
-\alias{squareRaster.SpatialPolygons}
-\alias{squareRaster.SpatialPolygonsDataFrame}
+\alias{squareRaster-methods}
+\alias{squareRaster,matrix-method}
+\alias{squareRaster,Raster-method}
+\alias{squareRaster,Spatial-method}
+\alias{squareRaster,Extent-method}
+
+
 
 \title{Create a raster with square cells}
 \description{
@@ -15,16 +15,11 @@ Given a raster object, an extent, or a bounding box, a raster of with square cel
 extent and number of cells specified is returned.
 }
 \usage{
-	squareRaster(x,  cells=NULL, buffer=0)
-	\method{squareRaster}{RasterLayer}(x,cells=NULL, buffer=0)
-	\method{squareRaster}{BasicRaster}(x,cells=NULL, buffer=0)
-	\method{squareRaster}{matrix}(x,cells=NULL, buffer=0)
-	\method{squareRaster}{Extent}(x,cells=NULL, buffer=0)
-	\method{squareRaster}{SpatialPoints}(x,cells=NULL, buffer=0)
-	\method{squareRaster}{SpatialPointsDataFrame}(x,cells=NULL, buffer=0)
-	\method{squareRaster}{SpatialPolygons}(x,cells=NULL, buffer=0)
-	\method{squareRaster}{SpatialPolygonsDataFrame}(x,cells=NULL, buffer=0)
-	}
+\S4method{squareRaster}{matrix}(x,cells=NULL, buffer=0)
+\S4method{squareRaster}{Raster}(x,cells=NULL, buffer=0)
+\S4method{squareRaster}{Spatial}(x,cells=NULL, buffer=0)
+\S4method{squareRaster}{Extent}(x,cells=NULL, buffer=0)
+}
 
 \arguments{
 	\item{x}{
@@ -36,7 +31,7 @@ extent and number of cells specified is returned.
 }
 
 \value{
-A raster.
+A \code{rasterLayer} with square cells
 }	
 
 \examples{

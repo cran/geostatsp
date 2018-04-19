@@ -1,5 +1,9 @@
+useDynLib("geostatsp", .registration = TRUE, .fixes = "C_")
+
+
 # functions that don't depend on other packages
-export( lgm, glgm, lgcp,
+
+export(lgm, glgm, lgcp,
  krigeLgm,stackRasterList,
  simLgcp,simPoissonPP,
  excProb, likfitLgm, loglikLgm,
@@ -11,8 +15,8 @@ export( lgm, glgm, lgcp,
 export(RFsimulate)
 export(modelRandomFields)
 
-useDynLib(geostatsp)
 export(matern)
+
 S3method(matern, Raster)
 S3method(matern, SpatialPointsDataFrame)
 S3method(matern, SpatialPoints)
@@ -26,14 +30,6 @@ export(asImRaster)
 
 
 export(squareRaster)
-S3method(squareRaster, matrix) 
-S3method(squareRaster, Extent) 
-S3method(squareRaster, RasterLayer) 
-S3method(squareRaster, BasicRaster) 
-S3method(squareRaster, SpatialPoints) 
-S3method(squareRaster, SpatialPointsDataFrame) 
-S3method(squareRaster, SpatialPolygons) 
-S3method(squareRaster, SpatialPolygonsDataFrame) 
 
 export(maternGmrfPrec)
 S3method(maternGmrfPrec, dgCMatrix)

@@ -31,8 +31,8 @@ q is the quantile in spatial units, usually meters, and the scale parameter foll
 \examples{
 # pr(range < 100km) = 0.1, 200m grid cells 
 	x = pcPriorRange(q=100*1000, p=0.1, cellSize = 200)
-	plot(x$priorRange \%*\% diag(c(1/1000000, 1000000)), 
-	  type='l', xlab="range, 1000's km", ylab='dens',
- 	  xlim = c(0, 1500/1000))
+	rangeSeq = seq(0, 1000, len=1001)
+	plot(rangeSeq, x$dprior$range(rangeSeq*1000)*1000, 
+	  type='l', xlab="range, 1000's km", ylab='dens')
 	cat(x$inla)
 }

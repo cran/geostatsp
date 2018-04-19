@@ -2,12 +2,9 @@
 \docType{methods}
 \alias{glgm}
 \alias{glgm-methods}
-\alias{glgm,NULL,ANY,ANY,ANY-method}
-\alias{glgm,numeric,ANY,ANY,ANY-method}
-\alias{glgm,character,ANY,ANY,ANY-method}
-\alias{glgm,formula,ANY,numeric,ANY-method}
-\alias{glgm,formula,Raster,Raster,ANY-method}
-\alias{glgm,formula,Spatial,Raster,ANY-method}
+\alias{glgm,ANY,ANY,ANY,ANY-method}
+\alias{glgm,formula,Raster,ANY,ANY-method}
+\alias{glgm,formula,Spatial,ANY,ANY-method}
 \alias{glgm,formula,data.frame,Raster,data.frame-method}
 
 
@@ -20,19 +17,10 @@ Generalized Linear Geostatistical Models
 Fits a generalized linear geostatistical model or a log-Gaussian Cox process
 using \code{inla} }
 \usage{
-\S4method{glgm}{NULL,ANY,ANY,ANY}(formula, data,  grid, 
-	covariates=NULL, ...)
-\S4method{glgm}{numeric,ANY,ANY,ANY}(formula, data,  grid, 
-	covariates=NULL, ...)
-\S4method{glgm}{character,ANY,ANY,ANY}(formula, data,  grid, 
-	covariates=NULL, ...)
-\S4method{glgm}{formula,ANY,numeric,ANY}(formula, data,  grid, 
-	covariates=NULL, ...)
-\S4method{glgm}{formula,Raster,Raster,ANY}(formula, data,  grid, 
-	covariates=NULL, buffer=0, ...)
-\S4method{glgm}{formula,Spatial,Raster,ANY}(formula, data,  grid, covariates=NULL, buffer=0, ...)
-\S4method{glgm}{formula,data.frame,Raster,data.frame}(formula, data,  grid, covariates=NULL, 
-  shape=1, priorCI=NULL, mesh=FALSE,...) 
+\S4method{glgm}{ANY,ANY,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
+\S4method{glgm}{formula,Raster,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
+\S4method{glgm}{formula,Spatial,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
+\S4method{glgm}{formula,data.frame,Raster,data.frame}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
 lgcp(formula=NULL, data,  grid, covariates=NULL, border, ...)
 }
  
@@ -55,11 +43,9 @@ can be overridden with a
  \code{formula} can be an integer or character string specifying the response variable.  For \code{lgcp}, the formula
  should be one-sided.
 }
-\item{priorCI}{list with elements named \code{range}, \code{sd}, \code{sdNugget}, 
-\code{intercept}, or \code{betas}.  See Details.}
+\item{prior}{list with elements named \code{range}, \code{sd}, \code{sdObs}.  See Details.}
 \item{shape}{Shape parameter for the Matern correlation function, must be 1 or 2.}
 \item{buffer}{Extra space padded around the data bounding box to reduce edge effects.}
-\item{mesh}{Currently unimplemented options for using a mesh rather than a grid for the Markov random field approximation.}
 \item{border}{boundary of the region on which an LGCP is defined, passed to \code{\link[raster]{mask}}}
 \item{...}{Additional options passed to  \code{\link[INLA]{inla}} }
 }
@@ -71,22 +57,15 @@ the correlation is 0.13, or
 \deqn{d= |h| \sqrt{8 \nu}/range}
 where \eqn{\nu} is the shape parameter. The range parameter produced by \code{glgm} multiplies the range parameter from \code{INLA} by the cell size.
 
-Elements of \code{priorCI} can be named: 
+Elements of \code{prior} can be named \code{range}, \code{sd}, or \code{sdObs}.  Elements can consist of: 
 \itemize{
-\item \code{range} for the range parameter (not the scale)
-\item \code{sd} for the standard deviation (not the variance or precision)
-\item \code{sdNugget} for the standard deviation of the observation error for Gaussian data
-\item \code{gammaShape} for the shape parameter of a Gamma distributed observations
-\item \code{intercept} for the intercept
-\item \code{betas} for the regression coefficients
+\item a single value giving the prior median for penalized complexity priors (exponential on the sd or 1/range).
+\item a vector \code{c(u=a, alpha=b)} giving an quantile and probability for pc priors.  For standard deviations alpha is an upper quantile, for the range parameter b = pr(1/range > 1/a).
+\item a vector \code{c(lower=a, upper=b)} giving a 0.025 and 0.975 quantiles for the sd or range.
+\item a list of the form \code{list(prior='loggamma', param=c(1,2))} passed directly to inla.
+\item a two-column matrix of prior densities for the sd or range.
 }
-Each element is either a vector of length 2 or a two-column matrix. 
-\itemize{
-\item \code{c(lower=a, upper=b)} specifies 0.025 and 0.975 quantiles of prior distributions
-\item \code{c(u=a, alpha=b)} gives a penalized complexity prior for standard deviation parameters.
-\eqn{pr(\sigma > a) = b}
-\item A matrix has a first column of parameter values and a second column of densities
-}
+
 
 }
 
@@ -109,7 +88,7 @@ A list with two components named  \code{inla}, \code{raster}, and \code{paramete
 \examples{
 # use the 'safe' version of INLA on linux systems
 if(Sys.info()['sysname'] =='Linux' &
-  requireNamespace("INLA")) {   
+  requireNamespace("INLA", quietly = TRUE)) {   
   INLA::inla.setOption(inla.call = system.file(paste("bin/linux/",          
           ifelse(.Machine$sizeof.pointer == 4, "32", "64"),
           'bit/inla.static', sep=''), package="INLA")) }
@@ -120,11 +99,9 @@ data("swissRain")
 swissRain$lograin = log(swissRain$rain)
 swissFit =  glgm(formula="lograin", data=swissRain, grid=30, 
 	covariates=swissAltitude, family="gaussian", buffer=20000,
-	priorCI=list(sd=c(0.01, 5), range=c(50000,500000),
-		sdNugget = c(0.01, 5)), 
-	control.mode=list(theta=c(1.6,-0.25,2.9),restart=TRUE)
+	prior = list(sd=1, range=100*1000, sdObs = 2),
+	control.inla = list(strategy='gaussian')
 	)
-
 
 if(!is.null(swissFit$parameters) ) {
 	
@@ -135,18 +112,13 @@ if(!is.null(swissFit$parameters) ) {
 
 	swissFit$parameters$summary
 
-	plot(swissFit$parameters$range$prior,type="l",
-		ylim=c(0,max(swissFit$parameters$range$posterior[,"y"])),
-		xlim=c(0, 500000))
-	abline(v=swissFit$parameters$range$userPriorCI,col="yellow")
-	abline(v=swissFit$parameters$range$priorCI,col="orange")
-	lines(swissFit$parameters$range$posterior, col='blue')
+	matplot(
+		swissFit$parameters$range$postK[,'x'],
+		swissFit$parameters$range$postK[,c('y','prior')],
+		type="l", lty=1, xlim = c(0, 1000),
+		xlab = 'km', ylab='dens')
+	legend('topright', lty=1, col=1:2, legend=c('post','prior'))
 
-
-}
-
-
-if(interactive()  | Sys.info()['user'] =='patrick') {
 	plot(swissFit$raster[["predict.exp"]]) 
 
 	mycol = c("green","yellow","orange","red")
@@ -165,34 +137,9 @@ if(interactive()  | Sys.info()['user'] =='patrick') {
 
 		
 
-\dontrun{
-load(url("http://www.filefactory.com/file/frd1mhownd9/n/CHE_adm0_RData"))
-thenames = GNcities(bbox(gadm),max=12)
-swissTiles = openmap(bbox(gadm),zoom=8,type="nps")
-
-par(mar=c(0,0,0,0))
-plot(gadm)
-plot(swissTiles, add=TRUE)
-library('RColorBrewer')
-mycol=rev(brewer.pal(4,"RdYlGn"))
-plot(mask(
-		projectRaster(swissExc, crs=proj4string(gadm)),
-		gadm), 
-	breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
-	col=mycol, alpha=0.5,add=TRUE)	
-plot(gadm, add=TRUE, lwd=2, border='blue')
-
-points(thenames,cex=0.5)
-text(thenames, labels=thenames$name,pos=3,
-  vfont=c("gothic german","plain"),cex=1.5)
-
-
-
-}
 
 # a log-Gaussian Cox process example
 
-if(interactive()  | Sys.info()['user'] =='patrick') {
 myPoints = SpatialPoints(cbind(rbeta(100,2,2), rbeta(100,3,4)))
 myPoints@bbox = cbind(c(0,0), c(1,1))
 
@@ -200,13 +147,16 @@ mycov = raster(matrix(rbinom(100, 1, 0.5), 10, 10), 0, 1, 0, 1)
 names(mycov)="x1"
 
 
-res = lgcp(data=myPoints, grid=20, covariates=mycov,
+res = lgcp(
 	formula=~factor(x1),
-	priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
+	data=myPoints, 
+	grid=20, covariates=mycov,
+	prior=list(sd=c(0.9, 1.1), range=c(0.4, 0.41),
+	control.inla = list(strategy='gaussian'))
 )
-plot(res$raster[["predict.exp"]])
-plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
-
+if(requireNamespace("INLA", quietly = TRUE)) {  
+	plot(res$raster[["predict.exp"]])
+	plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 }
 
 }

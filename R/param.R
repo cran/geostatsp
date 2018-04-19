@@ -132,5 +132,11 @@ fillParam = function(param) {
 				anisoAngleDegrees= param[,"anisoAngleRadians"] *360/(2*pi)
     )
 	}
-	drop(param)
+	param = drop(param)
+	if(is.na(param['range'])) param['range'] = 1
+	if(is.na(param['anisoRatio'])) param['anisoRatio'] = 1
+
+	if(is.na(param['anisoAngleDegrees'])) 
+		param['anisoAngleRadians'] = param['anisoAngleDegrees'] =0
+	param
 }

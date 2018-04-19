@@ -518,7 +518,8 @@ maternGmrfPrec.dgCMatrix = function(N,
 				theraster, outerCells, spatial=TRUE
 		)
 		
-		precOuter = .Call("gmrfEdge", 
+		precOuter = .Call(
+			C_gmrfEdge, 
 				as.matrix(Aic),
 				outerCoordsCartesian, 
 				fillParam(paramForM)[c(

@@ -23,7 +23,7 @@ of individuals tested and \code{y} being the number of positives.
 
 \source{
 \url{http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets} for the loaloa data,
-\url{https://lpdaac.usgs.gov/dataset_discovery/modis/modis_products_table/mod13q1} for the EVI data,  
+\url{https://lpdaac.usgs.gov/dataset_discovery/modis/modis_products_table/mod13q1_v006} for the EVI data,  
 \url{https://lpdaac.usgs.gov/dataset_discovery/modis/modis_products_table/mcd12q2} for land type and  
 \url{http://srtm.csi.cgiar.org} for the elevation data.
 }

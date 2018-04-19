@@ -253,7 +253,8 @@ setMethod("RFsimulate",
         
         xRaster = raster(x)
         
-        resC = .C("maternRaster", #"maternRasterConditional",
+        resC = .C(
+          C_maternRaster, #"maternRasterConditional",
           # raster
           as.double(xmin(xRaster)), 
             as.double(xres(xRaster)), 

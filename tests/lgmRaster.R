@@ -6,7 +6,13 @@ library('geostatsp')
 
 
 #+ simData
-myRaster = squareRaster(extent(0,6000,0,6000), 60)
+if(.Platform$OS.type == 'windows') {
+	Ncell =  30
+} else {
+	Ncell = 40
+}
+myRaster = squareRaster(extent(0,6000,0,6000), Ncell)
+
 myParam=c(oneminusar=0.1, conditionalVariance=2.5^2,shape=2)
 myQ = maternGmrfPrec(myRaster, param=myParam)
 attributes(myQ)$info$optimalShape
@@ -38,7 +44,7 @@ plot(myY)
 #+ simGrid
 myResR = lgm(formula = sim ~ x, 
     data=raster::stack(myY, myCov), 
-    oneminusar = exp(seq(log(0.025), log(0.2),len=25)),
+    oneminusar = exp(seq(log(0.05), log(0.2),len=25)),
     nugget = exp(seq(log(5), log(100),len=21)), shape=2, 
     adjustEdges=TRUE,
     mc.cores=1+(.Platform$OS.type=='unix') )		
@@ -169,16 +175,27 @@ names(anotherx) = "myvar"
 swissRainR2 = brick(swissRainR[['alt']], 
     sqrt(swissRainR[['prec1']]),
     anotherx)
+#'
 
+#+ aggregateIfWindows
+
+if(.Platform$OS.type=='windows') {
+  swissRainR2 = raster::aggregate(swissRainR2, fact=2)
+}
+#'
+
+#+ swissRainFit
 
 swissResR =  lgm(
     formula=layer ~ alt+ myvar, 
     data=swissRainR2, shape=2,
-    oneminusar = exp(seq(log(0.025), log(0.1), len=11)),
+    oneminusar = exp(seq(log(0.05), log(0.1), len=11)),
     nugget = exp(seq(log(0.25), log(2.5), len=11)),
     adjustEdges=TRUE,
     mc.cores=1+(.Platform$OS.type=='unix') )		
+#'
 
+#+ swissRainPlot
 
 myCol = mapmisc::colourScale(
     breaks = Sbreaks + max(swissResR$array[,-1,'logLreml',]),
@@ -207,17 +224,17 @@ names(yBC) = names(myY)
 myResBC = lgm(
     formula = sim ~ x, 
     data=raster::stack(yBC, myCov), 
-    oneminusar = exp(seq(log(0.025), log(0.15), len=11)),
+    oneminusar = exp(seq(log(0.05), log(0.15), len=11)),
     nugget = exp(seq(log(5), log(50), len=11)),
     shape=2, 
     mc.cores=1+(.Platform$OS.type=='unix'), 
     fixBoxcox=FALSE,
     adjustEdges=FALSE)
+#'
 
+#+ boxCoxPlot
 
-if(!interactive()) pdf("profLboxcox.pdf")
 plot(myResBC$profL$boxcox,type='o', ylim=max(myResBC$profL$boxcox[,2])-c(3,0))
-if(!interactive()) dev.off()
 
 myResBC$param
 
@@ -227,7 +244,6 @@ myCol = mapmisc::colourScale(
     col=terrain.colors
 )
 
-if(!interactive()) pdf("profLwithboxcox.pdf")
 image(	
     myResBC$profL$twoDim$x[-1], 
     myResBC$profL$twoDim$y,
@@ -237,7 +253,6 @@ image(
     col=myCol$col, breaks=myCol$breaks+max(myResBC$array[,,'logLreml',]))
 mapmisc::legendBreaks("topright",  myCol)
 points(myResBC$param['propNugget'], myResBC$param['oneminusar'])
-if(!interactive()) dev.off()
 #'
 
 #' optimizing, doesn't work
