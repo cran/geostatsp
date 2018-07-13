@@ -47,7 +47,11 @@ can be overridden with a
 \item{shape}{Shape parameter for the Matern correlation function, must be 1 or 2.}
 \item{buffer}{Extra space padded around the data bounding box to reduce edge effects.}
 \item{border}{boundary of the region on which an LGCP is defined, passed to \code{\link[raster]{mask}}}
-\item{...}{Additional options passed to  \code{\link[INLA]{inla}} }
+\item{...}{Additional options passed to  
+\Sexpr[results=rd]{c(
+  '\\\\code{inla} in the \\\\code{INLA} package', 
+  '\\\\code{\\\\link[INLA]{inla}}'
+  )[1+requireNamespace('INLA', quietly=TRUE)]} }
 }
 \details{
 This function performs Bayesian inference for generalized linear geostatistical models with INLA.  The Markov random field
@@ -83,7 +87,11 @@ A list with two components named  \code{inla}, \code{raster}, and \code{paramete
 }
 
 \seealso{
-\url{http://r-inla.org}
+\Sexpr[results=rd]{c(
+  '\\\\code{inla} in the \\\\code{INLA} package', 
+  '\\\\code{\\\\link[INLA]{inla}}'
+  )[1+requireNamespace('INLA', quietly=TRUE)]}, 
+  \url{http://r-inla.org}
 }
 \examples{
 # use the 'safe' version of INLA on linux systems

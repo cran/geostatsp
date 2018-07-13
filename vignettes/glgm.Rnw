@@ -598,8 +598,10 @@ resLegacy = res = glgm(data=data2,
 specifying spatial formula
 
 <<spaceFormula, fig.cap='spatial formula provided', fig.subcap = c('one','two')>>=
+
 swissRain$group = 1+rbinom(length(swissRain), 1, 0.5)
-theGrid = squareRaster(swissRain, Ncell, buffer=30*1000)
+theGrid = squareRaster(swissRain, Ncell, buffer=10*1000)
+
 if(all(havePackages)) {
   swissFit = glgm(
     formula = rain ~ 1,
@@ -609,17 +611,19 @@ if(all(havePackages)) {
     spaceFormula = ~ f(space, model='matern2d', 
       nrow = nrow(theGrid), ncol = ncol(theGrid),
       nu = 1, replicate = group),
-      control.inla = list(strategy='gaussian')
+      control.inla = list(strategy='gaussian'),
 )
 
+if(!is.null(swissFit$inla$summary.random$space)) {
   swissFit$rasterTwo = setValues(
-    swissFit$raster[[1:2]],
+    raster::brick(swissFit$raster, nl=2),
     as.matrix(swissFit$inla$summary.random$space[
       ncell(theGrid)+values(swissFit$raster[['space']]), 
       c('mean','0.5quant')]))
   plot(swissFit$raster[['random.mean']])
 
   plot(swissFit$rasterTwo[['mean']])
+  }
 }
 @
 

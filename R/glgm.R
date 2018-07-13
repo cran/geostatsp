@@ -495,9 +495,10 @@ setMethod("glgm",
     params[[DsdName]]= list(
       posterior = precToSd(inlaResult$marginals.hyperpar[[Dsd]]),
       prior = priorList[[DsdName]])
-    params[[DsdName]]$posterior = cbind(
-      params[[DsdName]]$posterior,
-      prior = priorList[[DsdName]]$dprior(params[[DsdName]]$posterior[,'x']))
+    if(!is.null(priorList[[DsdName]]$dprior))
+      params[[DsdName]]$posterior = cbind(
+        params[[DsdName]]$posterior,
+        prior = priorList[[DsdName]]$dprior(params[[DsdName]]$posterior[,'x']))
   }
 
   if(length(familyShapeName)) {

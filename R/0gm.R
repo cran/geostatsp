@@ -388,7 +388,9 @@ gm.dataSpatial = function(
       if(is.null(covariates[[D]]))
         warning("cant find covariate '", D, "' in covariates or data")
       if(!.compareCRS(covariates[[D]], data, unknown=TRUE) ) {
-        if(requireNamespace('rgdal', quietly=TRUE ) ) { 
+        if(requireNamespace('rgdal', quietly=TRUE) ) {
+          # sometimes the names are different and an error results from spTransform
+          rownames(data@data) = rownames(data@coords) = 1:length(data)
           data[[D]] = raster::extract(covariates[[D]], 
             spTransform(data, CRSobj=CRS(projection(covariates[[D]]))))
         } else warning("need rgdal if covariates and data are different projections")
