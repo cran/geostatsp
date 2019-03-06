@@ -486,11 +486,11 @@ SEXP maternPoints(
 
 
   if( (typeInt == 2) | (typeInt == 4)) {
-      // lower triangle
-      PROTECT(result = NEW_OBJECT(MAKE_CLASS("dtrMatrix")));
+    // lower triangle
+    result = PROTECT(NEW_OBJECT(MAKE_CLASS("dtrMatrix")));
   } else {
-      // symmetric
-      PROTECT(result = NEW_OBJECT(MAKE_CLASS("dsyMatrix")));
+     // symmetric
+    result = PROTECT(NEW_OBJECT(MAKE_CLASS("dsyMatrix")));
   }
 
 
@@ -567,10 +567,10 @@ SEXP maternDistance(
 
   if( (typeInt == 2) | (typeInt == 4) ) {
       // lower triangle
-      PROTECT(result = NEW_OBJECT(MAKE_CLASS("dtrMatrix")));
+      result = PROTECT(NEW_OBJECT(MAKE_CLASS("dtrMatrix")));
   } else {
       // symmetric
-      PROTECT(result = NEW_OBJECT(MAKE_CLASS("dsyMatrix")));
+      result = PROTECT(NEW_OBJECT(MAKE_CLASS("dsyMatrix")));
   }
 
   SEXP x_s = PROTECT(install("x"));

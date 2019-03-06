@@ -132,6 +132,11 @@ fillParam = function(param) {
 				anisoAngleDegrees= param[,"anisoAngleRadians"] *360/(2*pi)
     )
 	}
+
+	theOrder = c('range','shape','variance','nugget','anisoRatio','anisoAngleRadians')
+	otherParams = setdiff(colnames(param), theOrder)
+	param = param[,c(theOrder, otherParams)]
+
 	param = drop(param)
 	if(is.na(param['range'])) param['range'] = 1
 	if(is.na(param['anisoRatio'])) param['anisoRatio'] = 1

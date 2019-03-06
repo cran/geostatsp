@@ -213,6 +213,8 @@ matern.SpatialPointsXX = function(x,
 			Dim = as.integer(c(length(x), length(x))), 
 			uplo="L",
 			x=resC$result)
+		if(type==3) 		
+			attributes(result)$logDetHalf = resC$halfLogDet
 	}
 
 } # end y null

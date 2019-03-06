@@ -280,7 +280,7 @@ if(all(havePackages)) {
     data = swissRain, grid = Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
     family="gaussian", buffer=20000,
-    priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
+    prior=list(sd=c(0.2, 2), range=c(50000,500000)), 
     control.inla=list(strategy='gaussian'),
     control.family=list(hyper=list(
       prec=list(prior="loggamma", 

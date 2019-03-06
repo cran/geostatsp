@@ -1,12 +1,12 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistical Modelling with Likelihood and Bayes
-Version: 1.7.2
-Date: 2018-07-11
+Version: 1.7.7
+Date: 2019-03-04
 Depends: Matrix (>= 1.2.0), raster, sp, R (>= 3.0.0)
 Imports: abind, numDeriv, methods, stats
-Suggests: RandomFields, rgdal, parallel, mapmisc, ellipse, pracma,
-        knitr
+Suggests: RandomFields (>= 3.3.4), rgdal, parallel, mapmisc, ellipse,
+        pracma, knitr
 Enhances: INLA, diseasemapping, geoR, rgeos, mvtnorm
 LinkingTo: Matrix
 Additional_repositories: https://inla.r-inla-download.org/R/testing
@@ -21,7 +21,7 @@ VignetteBuilder: knitr
 RoxygenNote: 5.0.1
 Repository: CRAN
 Repository/R-Forge/Project: diseasemapping
-Repository/R-Forge/Revision: 2003
-Repository/R-Forge/DateTimeStamp: 2018-07-12 16:28:15
-Date/Publication: 2018-07-13 21:20:03 UTC
-Packaged: 2018-07-12 16:50:43 UTC; rforge
+Repository/R-Forge/Revision: 2079
+Repository/R-Forge/DateTimeStamp: 2019-03-05 01:01:46
+Date/Publication: 2019-03-06 11:40:03 UTC
+Packaged: 2019-03-05 01:27:55 UTC; rforge

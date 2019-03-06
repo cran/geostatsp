@@ -130,8 +130,8 @@ setMethod("RFsimulate",
         err.model = RandomFields::RMnugget(var=err.model)
       
       theSim=callGeneric(
-        model, x,  data = NULL, 
-        err.model=NULL, n = n, ...
+        model, x,  data = err.model, 
+        err.model=err.model, n = n, ...
       )
       #model, x,  
 #		data=data,	err.model= err.model, n=n  ,  ...)

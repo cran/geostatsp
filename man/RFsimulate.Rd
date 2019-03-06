@@ -101,7 +101,7 @@ where a Raster is returned.
 }
 
 \examples{
-
+library('geostatsp')
 model <- c(var=5, range=1,shape=0.5)
 
 
@@ -133,6 +133,7 @@ plot(secondSample)
 if(requireNamespace('RandomFields', quietly=TRUE)) {
 	RandomFields::plot(modelRandomFields(model))
 }
+
 
 }
 

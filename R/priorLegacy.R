@@ -236,7 +236,7 @@ if(any(names(priorDistributions)=='range')) {
 			theci = stats::pgamma(obj1, shape=pars[1], rate=pars[2], log.p=T)
 
 			(theci[1] - log(0.025))^2 +
-			(theci[2] - log(0.925))^2 
+			(theci[2] - log(0.975))^2 
 		}
 
 		ratePrior2=optim(c(2,2/mean(obj1)), cifun, 

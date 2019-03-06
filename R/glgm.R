@@ -752,6 +752,32 @@ setMethod("glgm",
 
   }
 
+  # any additional standard deviations
+  for(Dsd in names(toAddSd)) {
+    Dprec = toAddSd[Dsd]
+    DsdVar = gsub("^sd[[:space:]]+", "", Dsd)
+
+    params[[Dsd]]= list(
+      posterior = precToSd(inlaResult$marginals.hyperpar[[Dprec]]),
+      prior = 
+        inlaResult$all.hyper$random[[DsdVar]]$hyper$theta[c('prior','param')]
+        )
+
+    if(!is.null(params[[Dsd]]$prior$prior)) {
+      if(params[[Dsd]]$prior$prior =='pc.prec') {
+        params[[Dsd]]$prior = priorInla(list(sd = params[[Dsd]]$prior$param))$sd
+
+        params[[Dsd]]$posterior = cbind(
+          params[[Dsd]]$posterior,
+          prior = params[[Dsd]]$prior$dprior(
+            params[[Dsd]]$posterior[,'x'])
+          )
+      }
+    } # end not null prior
+  }
+
+
+
 
 # put range in summary, in units of distance, not numbers of cells
   thecolsFull =c("mean","sd",thecols,"mode") 
@@ -794,9 +820,12 @@ setMethod("glgm",
     }
   }
 
+getRid = c('random.ID', 'predict.ID', 'predict.space', 'predict.kld')
 
-
-  resRaster=stack(resRasterRandom, resRasterFitted, cells)
+  resRaster=brick(stack(
+    resRasterRandom[[setdiff(names(resRasterRandom), getRid)]], 
+    resRasterFitted[[setdiff(names(resRasterFitted), getRid)]], 
+    cells[[setdiff(names(cells), getRid)]]))
 
   result=list(inla=inlaResult,
     raster=resRaster,
