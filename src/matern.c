@@ -476,10 +476,10 @@ SEXP maternPoints(
 
   typeInt = typeStringToInt(type);
 
-  PROTECT(resultX = NEW_NUMERIC(N*N));
-  PROTECT(halfLogDet = NEW_NUMERIC(1));
-  PROTECT(dim = NEW_INTEGER(2));
-  PROTECT(resultUplo = ScalarString(mkChar("L")));
+  resultX = PROTECT(NEW_NUMERIC(N*N));
+  halfLogDet = PROTECT(NEW_NUMERIC(1));
+  dim = PROTECT(NEW_INTEGER(2));
+  resultUplo = PROTECT(ScalarString(mkChar("L")));
 
   INTEGER(dim)[0] = N;
   INTEGER(dim)[1] = N;
@@ -487,10 +487,10 @@ SEXP maternPoints(
 
   if( (typeInt == 2) | (typeInt == 4)) {
     // lower triangle
-    result = PROTECT(NEW_OBJECT(MAKE_CLASS("dtrMatrix")));
+    result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dtrMatrix"))));
   } else {
      // symmetric
-    result = PROTECT(NEW_OBJECT(MAKE_CLASS("dsyMatrix")));
+    result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dsyMatrix"))));
   }
 
 
@@ -522,7 +522,7 @@ SEXP maternPoints(
       setAttrib(result, install("halfLogDet"), halfLogDet);
   }
 
-  UNPROTECT(9); // was 5
+  UNPROTECT(11); // was 9
   return result;
 }
 
@@ -545,7 +545,7 @@ SEXP maternDistance(
 
   N = INTEGER(GET_SLOT(distance, install("Dim")))[0];
   P = REAL(GET_SLOT(distance, install("x")));
-  PROTECT(halfLogDet = NEW_NUMERIC(1));
+  halfLogDet = PROTECT(NEW_NUMERIC(1));
 
   // check distance is symmetric
   if(R_check_class_etc(distance, valid)) {
@@ -567,10 +567,10 @@ SEXP maternDistance(
 
   if( (typeInt == 2) | (typeInt == 4) ) {
       // lower triangle
-      result = PROTECT(NEW_OBJECT(MAKE_CLASS("dtrMatrix")));
+      result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dtrMatrix"))));
   } else {
       // symmetric
-      result = PROTECT(NEW_OBJECT(MAKE_CLASS("dsyMatrix")));
+      result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dsyMatrix"))));
   }
 
   SEXP x_s = PROTECT(install("x"));
@@ -609,7 +609,7 @@ SEXP maternDistance(
       setAttrib(result, install("halfLogDet"), halfLogDet);
   }
 
-  UNPROTECT(14); // was 2, change to 9?
+  UNPROTECT(16); // was 14?
   return result;
 }
 
@@ -775,12 +775,15 @@ void maternRasterConditional(
   int oneI=1, fourI=4, Ncell, Nrandom;
   int Dparam, D;
   double *resultHere, *ydataHere, oneD=1.0, minusOneD=-1.0;
-  double *varY, *covDataGrid, *varGrid, halfLogDet=0.0;
+  //double *varY, *covDataGrid
+  double *varGrid, halfLogDet=0.0;
 
   Ncell = (*AyN) * (*AxN);
   Nrandom = Ncell * (*Nsim);
-  varY = (double *) calloc((*Ny)*(*Ny), sizeof(double));
-  covDataGrid = (double *) calloc( (*Ny) * Ncell, sizeof(double));
+//  varY = (double *) calloc((*Ny)*(*Ny), sizeof(double));
+//  covDataGrid = (double *) calloc( (*Ny) * Ncell, sizeof(double));
+  SEXP varY = PROTECT(NEW_NUMERIC( (*Ny)*(*Ny) ));
+  SEXP covDataGrid = PROTECT(NEW_NUMERIC((*Ny) * Ncell));
 
   varGrid = inVarGrid;//(double *) calloc(NcellSq, sizeof(double));
 
@@ -797,7 +800,7 @@ void maternRasterConditional(
 
       maternAniso(
           yx, yy, Ny,
-          varY,
+          REAL(varY),
           &range[Dparam],
           &shape[Dparam],
           &variance[Dparam],
@@ -811,7 +814,7 @@ void maternRasterConditional(
       maternArasterBpoints(
           Axmin, Axres, AxN, Aymax, Ayres, AyN,
           yx, yy, Ny,
-          covDataGrid,
+          REAL(covDataGrid),
           &range[Dparam], &shape[Dparam], &variance[Dparam],
           &anisoRatio[Dparam], &anisoAngleRadians[Dparam]);
 
@@ -836,8 +839,8 @@ void maternRasterConditional(
       F77_NAME(dtrmm)(
           "R", "L", "T", "N",
           &Ncell, Ny, &oneD,
-          varY, Ny,
-          covDataGrid, &Ncell);
+          REAL(varY), Ny,
+          REAL(covDataGrid), &Ncell);
 
       // var U
       maternRaster(
@@ -870,8 +873,8 @@ void maternRasterConditional(
           "N", "T",
           &Ncell, &Ncell, Ny,
           &minusOneD,
-          covDataGrid, &Ncell,
-          covDataGrid, &Ncell,
+          REAL(covDataGrid), &Ncell,
+          REAL(covDataGrid), &Ncell,
           &oneD,
           varGrid, &Ncell);
 
@@ -899,7 +902,7 @@ void maternRasterConditional(
       F77_NAME(dtrmm)(
           "R", "L", "N", "N",
           Ny, Nsim, &oneD,
-          varY, Ny,
+          REAL(varY), Ny,
           ydataHere, Ny);
 
       // crossprod and add random bit
@@ -907,14 +910,16 @@ void maternRasterConditional(
             "N", "N",
             &Ncell, Nsim, Ny,
             &oneD,
-            covDataGrid, &Ncell,
+            REAL(covDataGrid), 
+            &Ncell,
             ydataHere, Ny,
             &oneD,
             resultHere, &Ncell);
   } // param loop
 
-  free(varY);
+//  free(varY);
  // free(varGrid);
-  free(covDataGrid);
+//  free(covDataGrid);
+  UNPROTECT(2);
 }
 

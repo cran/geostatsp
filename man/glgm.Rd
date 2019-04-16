@@ -105,8 +105,10 @@ if(Sys.info()['sysname'] =='Linux' &
 require("geostatsp")
 data("swissRain")
 swissRain$lograin = log(swissRain$rain)
-swissFit =  glgm(formula="lograin", data=swissRain, grid=30, 
-	covariates=swissAltitude, family="gaussian", buffer=20000,
+swissFit =  glgm(formula="lograin", data=swissRain, 
+	grid=30, 
+	covariates=swissAltitude, family="gaussian", 
+	buffer=2000,
 	prior = list(sd=1, range=100*1000, sdObs = 2),
 	control.inla = list(strategy='gaussian')
 	)

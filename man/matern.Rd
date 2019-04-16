@@ -66,12 +66,18 @@ Returns the Matern covariance for the distances supplied.
 
 \details{		
 The formula for the Matern correlation function is
-\deqn{M(x) =  \frac{variance}{\Gamma(shape)} 2^{shape-1} 
-x (\sqrt{8 shape}/ range)^{shape}  
-besselK(x \sqrt{8 shape}/ range, shape) }{%
-             M(x) =   (variance / Gamma(shape)) 2^(shape-1) 
- [x sqrt(8 shape)/ range]^shape  
-besselK[x sqrt(8 shape)/ range, shape] 
+\deqn{
+	M(x) =  \frac{variance}{\Gamma(shape)} 
+	2^{1-shape} 
+	\left(
+		\frac{ x \sqrt{8 shape} }{range}
+	\right)^{shape}  
+	besselK(x \sqrt{8 shape}/ range, shape) 
+}{%
+	M(x) =   (variance / Gamma(shape)) 
+	2^(1-shape) 
+ 	[x sqrt(8 shape)/ range]^shape  
+	besselK[x sqrt(8 shape)/ range, shape] 
 }
 
 The \code{range} argument is sqrt(8*shape)*phi.geoR, sqrt(8*shape)*scale.whittle.RandomFields, and
@@ -93,20 +99,22 @@ starting at the top left.
 }
 
 \examples{
-param=c(shape=1,range=1,variance=1)
-u=seq(0,4,len=20)
-	uscale = sqrt(8*param['shape'])* u / param['range']
+param=c(shape=2.5,range=1,variance=1)
+u=seq(0,4,len=200)
+uscale = sqrt(8*param['shape'])* u / param['range']
+
 theMaterns = cbind(
 	dist=u, 
-	manual=	param['variance']*
-			( 1/(gamma(param['shape']) * 2^(param['shape']-1)  ) ) * 
-			uscale^param['shape'] * besselK( uscale , param['shape']),
-	geostatsp=matern(u, param=param)
+	manual=	param['variance']* 2^(1- param['shape']) * 
+			( 1/gamma(param['shape'])  )  * 
+			uscale^param['shape'] * besselK(uscale , param['shape']),
+	geostatsp=geostatsp::matern(u, param=param)
 )
 head(theMaterns)
 matplot(theMaterns[,'dist'], 
 	theMaterns[,c('manual','geostatsp')],
-	col=c('red','blue'), type='l')
+	col=c('red','blue'), type='l', 
+	xlab='dist', ylab='var')
 legend('topright', fill=c('red','blue'),
 	legend=c('manual','geostatsp'))
 

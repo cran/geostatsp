@@ -1,4 +1,4 @@
-8f837cfb1389d52a39e216007c6c3aad *DESCRIPTION
+d5daac4a503770e6df962f596a074316 *DESCRIPTION
 e96d1439b82d4b2f6f2e60c7e88bc0e2 *NAMESPACE
 5782cc9e75574373930e7c1a5664500b *R/0gm.R
 40a77328a49e4bdb0464bbc0aa470a76 *R/NNmat.R
@@ -34,7 +34,7 @@ e56a448613c5174c25fe014f4141961f *R/spdfToBrick.R
 72cfc990b4e41ff50be702c7bb454923 *R/stackRasterList.R
 ca7b0f0f41cc37b162f81af02adab859 *R/utils.R
 d4913078e5d8bff223652655b55e9c79 *R/variog.R
-de5f093fe4ae2a88b858f680c927db4a *build/geostatsp.pdf
+b685242e4b8e4a423c5dad6990c3e11f *build/geostatsp.pdf
 f6bebeccc6f73c754722dcb72c936d64 *build/vignette.rds
 ec434a2f57f852ecc704e49462342c70 *data/datalist
 3aed6b4b57de97cd646031d69567568e *data/gambiaUTM.RData
@@ -47,9 +47,9 @@ b8a1ebe8489bf7dc88593d09345fb3e1 *data/swissRainR.RData
 4c8385370e928ed8af5a3203dc25097d *data/wheat.RData
 3e2b6839bc6b9121c760eb4f73c066d0 *inst/CITATION
 1143cfd6a2c8b5ad54221a0162d7a039 *inst/doc/glgm.Rnw
-8c08de039f8a0d3e3632319ffea2dfb9 *inst/doc/glgm.pdf
+af53c032de83f1de169372dfb8186388 *inst/doc/glgm.pdf
 e83467c99cb92b200d70ea81b686c21c *inst/doc/lgcp.Rnw
-da3cb10bd28a5445db6af62fe4f228ce *inst/doc/lgcp.pdf
+e4c4bc9400a1fd9e2f667cc3548a0676 *inst/doc/lgcp.pdf
 bcdf577fcf13596205126370b3a2af5f *inst/extR/gmrfShape4.R
 474d9fc9e8faa5e52c6514016c651e14 *inst/extdata/loaloaData.R
 02ad3ceabbd52078a7a9c80ac823223a *inst/extdata/murder1990.csv
@@ -82,13 +82,13 @@ a4a3bf4231ab1d79a2095fb382b8b249 *inst/extdata/murder2013.csv
 3ae7d190a26cee7d3c96b899b3e6ba18 *man/conditionalGmrf.Rd
 5e08e8912d5dbda2406848cf1f4e178f *man/excProb.Rd
 bc72024c2958dbacb8ec37aa2d720029 *man/gambiaUTM.Rd
-d140656af381253570ca6f5bd83d6be3 *man/glgm.Rd
+3aac8ccd1a2649d306614383938d99ec *man/glgm.Rd
 f5414be09ec5509c286580bdf01fa412 *man/inla.models.Rd
 597c9b96b45750019fd44b963b900841 *man/krige.Rd
 ecc183381d7516957a1d04df5d030d51 *man/lgm.Rd
 e159fadf51b24f53e2cfa267482e7c39 *man/likfitLgm.Rd
 66039c0387e808bd847a5fe69aefaabe *man/loaloa.Rd
-ed4be3c81915557be3a192aa2f0f6b12 *man/matern.Rd
+45aa42488a241cb10971e5815baf151d *man/matern.Rd
 4da6f19201e865620360aa8f026229e8 *man/maternGmrfPrec.Rd
 7267f758e98e660edf13084e21dac52c *man/murder.Rd
 1965ae1728bcbc0b5e810e0d523382c9 *man/pcPriorRange.Rd
@@ -108,7 +108,7 @@ ea08c136e54ea7b84b10ed146d4c98e4 *src/Makevars
 a65dc192582de88c871e0c2ca0b20850 *src/geostatsp.h
 a241f372dcdb55066ec680f0a5b017c0 *src/gmrfEdge.c
 5f62436922fe7186505fc819d7c9c602 *src/gmrfLik.c
-565fc8a27bfaf3ddec7730e82ce926b5 *src/matern.c
+6ae25df52b579a05baede00ac09d326f *src/matern.c
 dedf60b5f1a3bb7a4ff35fafac8ae3b0 *src/maternLogL.c
 9da20acb4c98729c6faf8c4287cd0b28 *src/maternLogLopt.c
 b9ba15139de036c1c6e8ae9d4dabfe58 *src/optimize.c
