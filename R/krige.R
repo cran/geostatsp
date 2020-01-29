@@ -133,7 +133,7 @@ krigeLgm = function(
 	 }
 	 
 	 
-	 if( is.data.frame(covariates) & class(formula)=="formula")  {
+	 if( is.data.frame(covariates) & any(class(formula)=="formula"))  {
     
 		  if(nrow(covariates)){		
 		    if(nrow(covariates) !=  ncell(locations)) 
@@ -160,7 +160,8 @@ krigeLgm = function(
 		  }	
 	 } # end covariates is DF
 	 
-	 if(class(data)=="SpatialPointsDataFrame"&class(formula)=="formula") {
+	 if(any(class(data)=="SpatialPointsDataFrame")&
+	 		any(class(formula)=="formula")) {
     
 		  if(all(names(covariates)%in% names(data))) {
       
@@ -211,7 +212,7 @@ krigeLgm = function(
     
 	   
 	   # look for factors in the model formula
-	   if(class(trend)=="formula"){
+	   if(any(class(trend)=="formula")){
       
       trendFormula = update.formula(trend, junk ~ . )
       
@@ -496,7 +497,7 @@ krigeLgm = function(
 		    noNAdata = !theNAdata
 		    if(length(grep("^SpatialPoints", class(coordinates)))) {
 			     coordinates = coordinates[noNAdata,]	
-		    } else if(class(coordinates)=="dist"){
+		    } else if(any(class(coordinates)=="dist")){
 			     coordinates = as.matrix(coordinates)
 			     coordinates = coordinates[noNAdata,noNAdata]
 			     coordinates = as.dist(coordinates)

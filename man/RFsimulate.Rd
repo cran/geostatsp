@@ -50,11 +50,11 @@ modelRandomFields(param, includeNugget=FALSE)
  parameters, or a matrix where each column is a model parameter
  }
  \item{x}{Object of type \code{\link[sp:GridTopology-class]{GridTopology}} or Raster
-  or \command{\link[sp]{SpatialPoints}} or \command{\link[sp]{SpatialPixels}}.}
+  or \command{\link[sp]{SpatialPoints}} or \command{\link[sp:SpatialPixels-class]{SpatialPixels}}.}
  \item{data}{For conditional simulation and random imputing only.
  If \code{data} is missing, unconditional
  simulation is performed.Object of class
- \command{\link[sp]{SpatialPointsDataFrame}};
+ \command{\link[sp:SpatialPointsDataFrame-class]{SpatialPointsDataFrame}};
  coordinates and response values of
  measurements in case that conditional simulation is to
  be performed
@@ -90,7 +90,6 @@ where a Raster is returned.
 
 \seealso{
  \command{\link[RandomFields]{RFsimulate}},
- \command{\link[RandomFields]{RFempiricalvariogram}},
  \command{\link[RandomFields]{RFfit}},
  \command{\link[RandomFields]{RFgetModelInfo}},
  \command{\link[RandomFields]{RFgui}},

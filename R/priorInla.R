@@ -258,10 +258,20 @@ priorInla = function(x, family='gaussian', cellSize=1) {
 
 	if( length(familyShapeName) ) {
 		familyShapeName = familyShapeName[1]
-		if(!is.list(x[[familyShapeName]])) {
+		if(is.list(x[[familyShapeName]])) {
 			familyShapePrior = list(
-				string = deparse(x[[familyShapeName]][setdiff(names(x[[familyShapeName]]), parGetRid)], control=NULL)
+				string = deparse(x[[familyShapeName]][setdiff(names(x[[familyShapeName]]), parGetRid)]),
+				name = familyShapeName
 				)
+
+			if(identical(x[[familyShapeName]]$prior, 'loggamma')) {
+				familyShapePrior$dprior = eval(parse(text=paste(
+					'function(x) dgamma(x, shape = ',
+					x[[familyShapeName]]$param[1],
+					', rate = ',
+					x[[familyShapeName]]$param[2],					
+					')') ))
+			} 
 		} else {
 			# default prior
 			familyShapePrior  = list(
@@ -269,9 +279,10 @@ priorInla = function(x, family='gaussian', cellSize=1) {
 				param=c(
 					mean=as.numeric(mean(log(x[[familyShapeName]]))),
 					precision = as.numeric(abs(diff(log(x[[familyShapeName]])))[1]/4)^(-2)
-					)
+					),
+				name = familyShapeName
 				)
-		}
+	}
 		result$family = familyShapePrior
 	}
 

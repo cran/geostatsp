@@ -1,9 +1,9 @@
 stackRasterList = function(x, template=x[[1]],method='ngb',mc.cores=NULL) {
 
-	if(class(x)=="SpatialPolygonsDataFrame")
+	if(any(class(x)=="SpatialPolygonsDataFrame"))
 		x = list(x)
 	
-	if(class(x)=="RasterLayer") {
+	if(any(class(x)=="RasterLayer")) {
 		x = list(x)
 		names(x) =names(x[[1]])
 	}
@@ -33,7 +33,7 @@ stackRasterList = function(x, template=x[[1]],method='ngb',mc.cores=NULL) {
 	
 	# function to reproject rasters
 	projfun = function(D) {
-		if(class(x[[D]])=="SpatialPolygonsDataFrame"){
+		if(any(class(x[[D]])=="SpatialPolygonsDataFrame")){
 			if(length(names(x[[D]]))!=1)
 				warning("polygon ", D, "has more than one data column, using the first" )
 			
@@ -41,10 +41,12 @@ stackRasterList = function(x, template=x[[1]],method='ngb',mc.cores=NULL) {
 			
 			toAdd =  
 					rasterize(
-							spTransform(x[[D]], CRS(projection(template))), 
-							raster(template), field=names(x[[D]][1])
-					)
- 
+							spTransform(x[[D]][,1], 
+								CRS(projection(template))), 
+							raster(template))
+ 			if(is.numeric(x[[D]]@data[,1])) {
+ 				toAdd = deratify(toAdd)
+ 			}
 		} else { # not a spdf
 			if(as(x[[D]], 'BasicRaster')==template) {
 				# same projection, same resolution

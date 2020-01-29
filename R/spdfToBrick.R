@@ -8,7 +8,7 @@ spdfToBrick = function(x,
   
   
   
-  if(class(x)=='SpatialPolygonsDataFrame'){
+  if(any(class(x)=='SpatialPolygonsDataFrame')){
 		if(ncol(x)==1) {
 			pattern=names(x)
 		}

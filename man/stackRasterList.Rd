@@ -30,7 +30,7 @@ A raster whose projection and resolution all other rasters will be aligned with.
 The method to use, either "ngb", or "bilinear".  Can be a vector of the same length as x to specify different methods for each raster.  If \code{method} has names 
 which correspond to the names of \code{x}, the names will be used instead of the order to assign methods to rasters.
 }
-\item{mc.cores}{If non-null, \code{\link[parallel]{mcmapply}} is used with this argument specifying the number of cores.}
+\item{mc.cores}{If non-null, \code{\link[parallel]{mclapply}} is used with this argument specifying the number of cores.}
 \item{logSumExpected}{return the log of the sum of offsets}
 \item{pattern}{expression to identify layers to rasterize in \code{x}}
 }

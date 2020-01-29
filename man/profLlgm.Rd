@@ -18,7 +18,7 @@ informationLgm(fit,  ...)
 Output from the \code{\link{lgm}} function
 }
   \item{mc.cores}{
-Passed to \code{\link[parallel]{mcmapply}}
+Passed to \code{\link[parallel:parallel-package]{mclapply}}
 }
   \item{\dots}{
 For \code{profLlgm}, one or more vectors of parameter values 
@@ -54,7 +54,7 @@ Patrick Brown
 
 
 \seealso{
-\code{\link{lgm}}, \code{\link[parallel]{mcmapply}}, \code{\link[numDeriv]{hessian}} 
+\code{\link{lgm}}, \code{\link[parallel:parallel-package]{mcmapply}}, \code{\link[numDeriv]{hessian}} 
 }
 \examples{
 

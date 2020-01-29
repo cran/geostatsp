@@ -27,9 +27,9 @@ grfConditional = function(data, y=1,
 	# convert param to a matrix if it's a list
 	# fill in missing parameters with defaults
 	param = fillParam(param)
-	if(class(param)%in%c("integer","numeric"))
+	if(all(class(param)%in%c("integer","numeric")))
 		param = t(as.matrix(param))
-	if(class(y)%in%c("integer","numeric")) {
+	if(all(class(y)%in%c("integer","numeric"))) {
 		y = t(as.matrix(y))
 	
 	Nsamples = unique(c(dim(param)[1], dim(y)[1]))
@@ -100,7 +100,7 @@ simFun = function(D) {
 	result = mapply(simFun, 1:Nsim, SIMPLIFY=TRUE)
 	
 }
-	if(all(sapply(result, class)=="RasterLayer"))
+	if(all(unlist(sapply(result, class))=="RasterLayer"))
 		result = do.call(brick, result)
 
 result	

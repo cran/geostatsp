@@ -36,8 +36,8 @@ mydat$Ybc = (mydat$Y*0.5+1)^2
 
 mydat$YbcIso = (mydat$Yiso*0.5+1)^2
 
-print(range(mydat$Ybc))
-print(range(mydat$YbcIso))
+print(range(mydat$Ybc, na.rm=TRUE))
+print(range(mydat$YbcIso, na.rm=TRUE))
 
 date()
 myres = likfitLgm(

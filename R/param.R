@@ -2,7 +2,7 @@
 
 modelRandomFields = function(param, includeNugget=FALSE){
 
-if(class(param)=="RMmodel")
+if(any(class(param)=="RMmodel"))
 		return(param)
 
 	

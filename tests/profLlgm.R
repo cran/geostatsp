@@ -67,7 +67,7 @@ if(!interactive())
 plot(x[[1]],x[[2]], xlab=names(x)[1],
 #		yaxt='n',
 		ylab='log L',
-		ylim=c(min(x[[2]]),x$maxLogL),
+		ylim=c(min(x[[2]], na.rm=TRUE),x$maxLogL),
 		type='n')
 lines(x[[1]],x[[2]])
 abline(h=x$breaks[-1],

@@ -54,7 +54,7 @@ myResR = lgm(formula = sim ~ x,
 Sbreaks = c(-100000,-50,-20,-10, -5,  -2, -1,0)
 
 myCol = mapmisc::colourScale(
-    breaks = Sbreaks + max(myResR$array[,-1,'logLreml',]),
+    breaks = Sbreaks + max(myResR$array[,-1,'logLreml',], na.rm=TRUE),
     style='fixed',
     col=terrain.colors
 )
@@ -198,7 +198,7 @@ swissResR =  lgm(
 #+ swissRainPlot
 
 myCol = mapmisc::colourScale(
-    breaks = Sbreaks + max(swissResR$array[,-1,'logLreml',]),
+    breaks = Sbreaks + max(swissResR$array[,-1,'logLreml',], na.rm=TRUE),
     style='fixed',
     col=terrain.colors
 )
@@ -226,7 +226,7 @@ myResBC = lgm(
     data=raster::stack(yBC, myCov), 
     oneminusar = exp(seq(log(0.05), log(0.15), len=11)),
     nugget = exp(seq(log(5), log(50), len=11)),
-    shape=2, 
+    shape=2, reml=FALSE, 
     mc.cores=1+(.Platform$OS.type=='unix'), 
     fixBoxcox=FALSE,
     adjustEdges=FALSE)
@@ -234,7 +234,8 @@ myResBC = lgm(
 
 #+ boxCoxPlot
 
-plot(myResBC$profL$boxcox,type='o', ylim=max(myResBC$profL$boxcox[,2])-c(3,0))
+plot(myResBC$profL$boxcox,type='o', 
+  ylim=max(c(-10000,myResBC$profL$boxcox[,2]), na.rm=TRUE)-c(3,0))
 
 myResBC$param
 
@@ -250,7 +251,7 @@ image(
     myResBC$profL$twoDim$z[-1,],
     log='xy', 
     ylab = 'range', xlab='propNugget',
-    col=myCol$col, breaks=myCol$breaks+max(myResBC$array[,,'logLreml',]))
+    col=myCol$col, breaks=myCol$breaks+max(myResBC$array[,,'logLreml',], na.rm=TRUE))
 mapmisc::legendBreaks("topright",  myCol)
 points(myResBC$param['propNugget'], myResBC$param['oneminusar'])
 #'

@@ -36,7 +36,7 @@ nugget effect.  The prediction variances will be adjusted accordingly, and the p
 on the natural scale for logged or Box Cox transformed data will be affected. 
 Otherwise predict fitted values. 
 }
-\item{mc.cores}{passed to \code{\link[parallel]{mcmapply}} if greater than 1.}
+\item{mc.cores}{passed to \code{\link[parallel:parallel-package]{mclapply}} if greater than 1.}
 }
 \details{
 Given the model parameters and observed data, conditional means and variances of the spatial random field

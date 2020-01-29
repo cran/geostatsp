@@ -37,7 +37,7 @@ setMethod("RFsimulate",
       
       # convert data to an RFspdf (it might be a vanilla spdf)	
       if(!is.null(data)) {
-        if(class(data)=='SpatialPointsDataFrame'){
+        if(any(class(data)=='SpatialPointsDataFrame')){
           data = RandomFields::conventional2RFspDataFrame(
             data=as.matrix(data@data[,1]), 
             coords=as.matrix(data@coords),
@@ -84,7 +84,7 @@ setMethod("RFsimulate",
       # convert data to an RFspdf (it might be a vanilla spdf)	
       
       if(!is.null(data)) {
-        if(class(data)=='SpatialPointsDataFrame'){
+        if(any(class(data)=='SpatialPointsDataFrame')){
           data = RandomFields::conventional2RFspDataFrame(
             array(
               as.matrix(data@data),
@@ -135,7 +135,7 @@ setMethod("RFsimulate",
       )
       #model, x,  
 #		data=data,	err.model= err.model, n=n  ,  ...)
-      if(class(theSim)%in%c('try-error', 'NULL')) {
+      if(all(class(theSim)%in%c('try-error', 'NULL'))) {
         warning("error in RandomFields")
         theSim=as.data.frame(matrix(NA, length(x), n))
       } else {
@@ -207,7 +207,7 @@ setMethod("RFsimulate",
       
       names(theSim) = gsub("^variable1(\\.n)?","sim", names(theSim))
       
-      if(class(theSim)%in%c('try-error', 'NULL')) {
+      if(all(class(theSim)%in%c('try-error', 'NULL'))) {
         warning("error in RandomFields")
         theSim=as.data.frame(matrix(NA, prod(x@cells.dim), n))
       } else {
@@ -329,7 +329,7 @@ setMethod("RFsimulate",
     Siter = round(seq(1,nrow(model), len=n))
     
     if(!is.null(data)) {
-      if(class(data)!= "SpatialPointsDataFrame")
+      if(!any(class(data)== "SpatialPointsDataFrame"))
         warning("data should be a SpatialPointsDataFrame")
       # check data variables
       if(ncol(data) == 1) {
@@ -469,7 +469,7 @@ setMethod("RFsimulate",
     Siter = round(seq(from=1, to=nrow(model), len=n))
     
     if(!is.null(data)) {
-      if(class(data)!= "SpatialPointsDataFrame")
+      if(!any(class(data)== "SpatialPointsDataFrame"))
         warning("data should be a SpatialPointsDataFrame")
       # check data variables
       if(ncol(data) == 1) {

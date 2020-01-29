@@ -8,7 +8,7 @@ loglikLgm = function(param,
 	
 	trend = formula
 	
-	if(class(trend)=="formula") {
+	if(any(class(trend)=="formula")) {
 		observations = all.vars(trend)[1]
 		if(!any(names(data)==observations))
 			warning("can't find observations ", observations, "in data")
@@ -37,15 +37,15 @@ loglikLgm = function(param,
 	if(length(grep("SpatialPoints", class(coordinates)))) {
 		if(length(theNA))
 			coordinates = coordinates[-theNA,]
-	} else if(	class(coordinates) == "dist")	{
+	} else if(	any(class(coordinates) == "dist"))	{
 		if(length(theNA)) {
 			coordinates = 
 			as.matrix(coordinates)[-theNA,-theNA]
 		} else {
 			coordinates= as.matrix(coordinates)
 		} 
-	} else if(class(coordinates) == "matrix" |
-		class(coordinates) == 'dsyMatrix')	{
+	} else if(any(class(coordinates) == "matrix") |
+		any(class(coordinates) == 'dsyMatrix') )	{
 		if(length(theNA)) {
 			coordinates = coordinates[-theNA,-theNA]
 		}
@@ -116,8 +116,8 @@ paramFull = fillParam(param)
 Ltype = c(ml=0, reml=1, mlFixed=2, remlFixed=3)
 Ltype = reml + 2*haveVariance
 
-if(class(coordinates)=='matrix'|
-	class(coordinates) == 'dsyMatrix'){
+if(any(class(coordinates)=='matrix')|
+	any(class(coordinates) == 'dsyMatrix')){
 	xcoord = as.vector(coordinates)
 	ycoord = -99
 	aniso=FALSE
@@ -232,7 +232,7 @@ likfitLgm = function(
 	}
 }
 
-if(class(coordinates)=='dist')
+if(any(class(coordinates)=='dist'))
 	coordinates = as(as.matrix(coordinates), 'dsyMatrix')
 
 
@@ -245,7 +245,7 @@ maxDist = max(coordinates,na.rm=TRUE)
 }
 trend = formula
 theFactors = NULL
-if(class(trend)=="formula") {
+if(any(class(trend)=="formula")) {
 		# convert input data to a model matrix
 	data = data.frame(data)
 	theNA = apply(
@@ -622,7 +622,7 @@ if(length(grep("^Spatial", class(coordinatesOrig)))){
 
 
 result$model = list(reml=reml, baseline=theFactors)
-if(class(trend)=="formula") {
+if(any(class(trend)=="formula")) {
 	result$model$formula = trend
 	result$data[[all.vars(formula)[1]]] =
 	result$data$observations

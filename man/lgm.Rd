@@ -148,7 +148,7 @@ on the natural scale for logged or Box Cox transformed data will be affected.
 Otherwise predict fitted values. 
 }
 \item{reml}{If \code{TRUE} (the default), use restricted maximum likelihood.}
-\item{mc.cores}{If \code{mc.cores>1}, this argument is passed to  \code{\link[parallel]{mcmapply}} and computations are 
+\item{mc.cores}{If \code{mc.cores>1}, this argument is passed to  \code{\link[parallel:parallel-package]{mclapply}} and computations are 
 done in parallel where possible. }
 \item{aniso}{Set to \code{TRUE} to use geometric anisotropy.}
 \item{fixShape}{Set to \code{FALSE} to estimate the Matern order}

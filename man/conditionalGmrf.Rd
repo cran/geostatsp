@@ -29,7 +29,7 @@ Matrix of covariates.
 Raster on which the GMRF is defined
 }
   \item{mc.cores}{
-passed to \code{\link[parallel]{mcmapply}}
+passed to \code{\link[parallel:mclapply]{mcmapply}}
 }
   \item{cellsPerLoop}{
 number of cells to compute simultaneously.  Larger values consume more memory but 

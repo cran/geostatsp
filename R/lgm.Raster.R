@@ -85,13 +85,13 @@ setMethod("lgm",
       shape=shape,mc.cores=mc.cores,
       reml=reml, ...)
     
- 
   mle = thel$mle   
     lArray = thel$mlArray
     lMat = thel$mlMat
     res = list(param = drop(mle))
     
-   
+
+
     if (reml){
       chooseLike = 'logLreml'
     } else{
@@ -156,7 +156,7 @@ setMethod("lgm",
         res$profL$nugget = drop(res$profL$nugget)				
         
         
-      } else {
+      } else { # ncol(Yvec) == 1
         # dimension 1 of the array is box-cox
         # nugget
         if(dim(lArray)[2]>1){ # have nugget

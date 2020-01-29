@@ -62,8 +62,7 @@ informationLgm = function(fit, ...) {
   
   infmat = -hess
   infmat = try(solve(infmat), silent=TRUE)
-  if(class(infmat)=='try-error') {
-#    stuff <<- fit
+  if(any(class(infmat)=='try-error')) {
     return(list(summary=fit$summary,information=NULL, error=infmat))
   } 
   

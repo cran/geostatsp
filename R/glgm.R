@@ -137,9 +137,9 @@ setMethod("glgm",
 
     callGeneric(
       formula,
-      dataCov$data@data,
-      dataCov$grid,
-      dataCov$covariates,
+      data=dataCov$data@data,
+      grid=dataCov$grid,
+      covariates=dataCov$covariates,
       buffer,
       shape,
       prior, 
@@ -194,7 +194,8 @@ setMethod("glgm",
     buffer = (-(cellDim[1]+1) + sqrt(  (cellDim[1]+1)^2 + 8* (firstCell-1) ))/4
     # data, cells, and covariates must have varilable called 'space'		
     # values of cells must be index numbers, and cells shouldnt include the buffer		
-    forInla = thedots = list(...)
+#   forInla = thedots = list(family=family)
+     forInla = thedots = list(...)
     forInla = forInla[setdiff(names(forInla), getRidDots)]
 
     if(!any(names(thedots)=="family")) {
@@ -205,8 +206,10 @@ setMethod("glgm",
     # legacy priors
       priorList = priorLegacy(thedots$priorCI, forInla$family, cellSize = xres(cells))
     } else {
-      if(missing(prior)) prior=list(range=NULL)
-        priorList = priorInla(prior, forInla$family, cellSize = xres(cells))
+      if(missing(prior)) {
+        prior=list(range=NULL)
+      }
+      priorList = priorInla(prior, forInla$family, cellSize = xres(cells))
     }
 
     # done priors
@@ -405,10 +408,15 @@ setMethod("glgm",
     }
   }
 
-  familyShapeName = grep("familyShape", names(priorList), value=TRUE)
-  if(length(familyShapeName)) {
-    forInla$control.family$hyper$theta =
-    priorList$familyShapePrior 
+  if(length(priorList$family)) {
+    forInla$control.family = c(
+      forInla$control.family, 
+      eval(parse(text=priorList$family$string)) )
+
+      familyShapeName = priorList$family$name
+
+  } else {
+    familyShapeName = NULL
   }
 
 
@@ -431,7 +439,7 @@ setMethod("glgm",
   if(identical(forInla$verbose, TRUE)) {
     message("inla done") 
   }
-  if(all(names(inlaResult)=="logfile") | class(inlaResult) == 'try-error')
+  if(all(names(inlaResult)=="logfile") | any(class(inlaResult) == 'try-error'))
     return(c(forInla, list(inlares=inlaResult, prior = priorList)))
 
 
@@ -503,8 +511,15 @@ setMethod("glgm",
 
   if(length(familyShapeName)) {
     params[[familyShapeName]] = list(
-      priorList[[familyShapeName]]$prior
+      posterior = inlaResult$marginals.hyperpar[[
+        grep(paste('parameter for', gsub("Shape$", "", familyShapeName)),
+          names(inlaResult$marginals.hyperpar))]],
+      dprior = priorList$family$dprior
       )
+    params[[familyShapeName]]$posterior = cbind(
+      params[[familyShapeName]]$posterior,
+      prior = params[[familyShapeName]]$dprior(
+        params[[familyShapeName]]$posterior[,'x']))
   }
 
     # random into raster
@@ -720,7 +735,7 @@ setMethod("glgm",
 
       # prior
       # if Dsd matches the family argument
-    if(inlaResult$all.hyper$family[[1]]$label == gsub("Shape$", '', Dsd)) {
+    if(grepl(gsub("Shape$", '', Dsd), inlaResult$all.hyper$family[[1]]$label) ) {
       fPrior = inlaResult$all.hyper$family[[1]]$hyper$theta
       fDist = fPrior$prior
       fParam = fPrior$param
@@ -735,6 +750,10 @@ setMethod("glgm",
           x = xSeq,
           y = stats::dgamma(xSeq, shape=fParam[1], rate=fParam[2])
           )
+        params[[Dsd]]$posterior = cbind(
+          params[[Dsd]]$posterior, 
+          prior = stats::dgamma(params[[Dsd]]$posterior[,'x'], shape=fParam[1], rate=fParam[2])
+          )
       } else if (fDist == 'normal') {
         xSeq = c(
           stats::qlnorm(c(0.1, 0.9), meanlog=fParam[1], sdlog=1/sqrt(fParam[2])),
@@ -746,6 +765,11 @@ setMethod("glgm",
           x = xSeq,
           y = stats::dlnorm(xSeq, meanlog=fParam[1], sdlog=1/sqrt(fParam[2]))
           )
+          params[[Dsd]]$posterior = cbind(
+          params[[Dsd]]$posterior, 
+          prior = stats::dlnorm(params[[Dsd]]$posterior[,'x'], meanlog=fParam[1], sdlog=1/sqrt(fParam[2]))
+          )
+
       }
 
     }
