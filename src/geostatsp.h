@@ -47,6 +47,7 @@ void matern(
 		int *type,
 		double *halfLogDet) ;
 
+
 void maternForL(
 		const double *xcoord,
 		const double *ycoord,
@@ -61,6 +62,7 @@ void maternForL(
 		int *type,
 		double *halfLogDet
 );
+
 
 
 SEXP maternDistance(

@@ -84,7 +84,6 @@ setMethod("lgm",
       boxcox=boxcox, fixBoxcox=fixBoxcox,
       shape=shape,mc.cores=mc.cores,
       reml=reml, ...)
-    
   mle = thel$mle   
     lArray = thel$mlArray
     lMat = thel$mlMat

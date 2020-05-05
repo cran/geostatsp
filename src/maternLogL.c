@@ -349,7 +349,7 @@ void maternLogL(
 
 	double determinants[2], *corMat, *LxLy, *totalSsq;
 	int maternType=2, zero=0, oneI=1;
-
+//////
 	computeBoxCox(obsCov,
 		N,
 		boxcox,
@@ -359,14 +359,17 @@ void maternLogL(
 	LxLy = (double *) calloc(N[1]*(N[2]),sizeof(double));
 	totalSsq = (double *) calloc(2*(N[1]),sizeof(double));
 
+	
+	/////////
 	maternForL(
-			xcoord, ycoord,
+		xcoord, ycoord,
 		N,corMat,
 		param,aniso,
 		&zero,// don't ignore nugget
 		&maternType,//chol of variance matrix
 		determinants);
 
+	////////
 	maternLogLGivenChol(
 		obsCov,
 		N,  // Nobs, Nrep, Ncov,
@@ -380,7 +383,7 @@ void maternLogL(
 	free(corMat);
 	free(LxLy);
 
-
+ //////////
 	logLfromComponents(
 			N,boxcox,
 			*boxcoxType,
@@ -389,12 +392,8 @@ void maternLogL(
 			Ltype
 	);
 
-	F77_NAME(dcopy)(&N[1],
-			totalSsq, &oneI,
-			logL, &oneI);
-	F77_NAME(dcopy)(&N[1],
-			&totalSsq[N[1]], &oneI,
-			totalVarHat, &oneI);
+	F77_NAME(dcopy)(&N[1],totalSsq, &oneI,logL, &oneI);
+	F77_NAME(dcopy)(&N[1],&totalSsq[N[1]], &oneI,  totalVarHat, &oneI);
 	free(totalSsq);
 
 	obsCov[0] = determinants[0];

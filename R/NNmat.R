@@ -71,8 +71,12 @@ NNmat.default = function(N, Ny=N, nearest=3, adjustEdges=FALSE) {
   theraster = raster(extent(0,Nx, 0, Ny), nrows = Ny, ncol = Nx)
   Ncell = ncell(theraster)
   cellSeq = values(theraster) = 1:Ncell
-  
+
   # find id's of cells on the border (for edge correction)  
+
+ if(any(dim(theraster)[1:2] <= 2*nearest)) {
+  stop("grid too small for this many neighbours") 
+ }
   innerCells = raster::crop(theraster, 
       extend(extent(theraster), as.integer(-nearest))
   )
