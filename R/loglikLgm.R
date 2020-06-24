@@ -17,8 +17,7 @@ loglikLgm = function(param,
 		covariates = model.frame(trend, data.frame(data))
 		observations = covariates[,	observations]
 		theRowNames = rownames(covariates)
-		covariates = model.matrix(trend,
-			covariates, drop.unused.levels = FALSE)
+		covariates = model.matrix(trend, covariates, drop.unused.levels = FALSE)
 		# possible that there are columns of all zeros
 		# if there's a factor with no observations for a category
 		# drop.unused.levels should sort this
@@ -560,6 +559,7 @@ if(all(paramToEstimate=='variance') &
 
 } # end not only variance to estimate
 
+
 result$parameters = fillParam(
 	c(
 		result$optim$mle, result$betaHat
@@ -617,7 +617,7 @@ if(length(grep("^Spatial", class(coordinatesOrig)))){
 		coords=SpatialPoints(coordinatesOrig),
 		data=theDf)
 
-	raster::projection(result$data) = raster::projection(coordinatesOrig)
+	result$data@proj4string = coordinatesOrig@proj4string
 }
 
 

@@ -30,12 +30,12 @@ spdfToBrick = function(x,
     
     if(haveRgdal &
         !identical(
-            projection(x[[Dcensus]]),
-            projection(template)
+            crs(x[[Dcensus]]),
+            crs(template)
             )){
       x[[Dcensus]] = spTransform(
           x[[Dcensus]],
-          CRS(projection(template))
+          crs(template)
       )
     }
     

@@ -181,10 +181,11 @@ setMethod("RFsimulate",
       names(theSim) = gsub("1$", "", names(theSim)) 
     }
     
-    res = SpatialPointsDataFrame(SpatialPoints(x),
+    res = SpatialPointsDataFrame(
+      SpatialPoints(x),
       data=theSim,
-      proj4string=CRS(projection(x))
-    )
+      proj4string=x@proj4string)#CRS(projection(x))
+    
     
     res
   }
@@ -390,7 +391,7 @@ setMethod("RFsimulate",
     data=NULL, 
     err.model=NULL, n = 1, ...)  {
     
-    theproj = projection(x)
+    theproj = x@crs
     x = as(x, "GridTopology")
     res = callGeneric( 
       model=model, x=x,  
@@ -402,7 +403,7 @@ setMethod("RFsimulate",
     if(nlayers(res2)==1){
       res2 = res2[[1]]			
     }
-    proj4string(res2) = CRS(theproj)
+    res2@crs = theproj
     names(res2) = gsub("^variable1\\.n","sim", names(res2))
     
     return(res2)

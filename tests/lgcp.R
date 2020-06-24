@@ -1,5 +1,6 @@
+options("rgdal_show_exportToProj4_warnings"="none") 
 if(Sys.info()['sysname'] =='Linux' &
-  requireNamespace("INLA")) {   
+  requireNamespace("INLA", quietly=TRUE)) {   
   INLA::inla.setOption(inla.call = 
       system.file(paste(
           "bin/linux/",          
@@ -102,8 +103,8 @@ rbind(resL$param$summary, resO$param$summary)
 
 # check spdfToBrock
 
-if(require('diseasemapping', quiet=TRUE)){
-	
+if(requireNamespace('diseasemapping', quietly=TRUE)){
+	require('diseasemapping')
 	
 	data('kentucky')
 	

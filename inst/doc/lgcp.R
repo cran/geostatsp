@@ -2,7 +2,7 @@
 knitr::opts_chunk$set(out.width='0.48\\textwidth', 
 	fig.align='default', fig.height=3, fig.width=6,
 	tidy = FALSE)
-if(Sys.info()['sysname'] =='Linux' & requireNamespace("INLA")) {   
+if(Sys.info()['sysname'] =='Linux' & requireNamespace("INLA", quietly=TRUE)) {   
 	INLA::inla.setOption(inla.call = 
 		system.file(paste("bin/linux/",          
 			ifelse(.Machine$sizeof.pointer == 4, "32", "64"),
@@ -30,7 +30,7 @@ covList = list(
 formulaHere = ~ inc + offset(pop, log=TRUE)
 
 ## ----lgcpGamma, tidy=FALSE----------------------------------------------------
-if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INLA")) {
+if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=TRUE) & requireNamespace("INLA", quietly=TRUE)) {
 	resG=lgcp(
 		formula = formulaHere, 
 		data=murderT, 
@@ -47,7 +47,7 @@ if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INL
 }
 
 ## ----lgcpPc, tidy=FALSE-------------------------------------------------------
-if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INLA")) {
+if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=TRUE) & requireNamespace("INLA", quietly=TRUE)) {
 	resP=lgcp(formulaHere, data=murderT, 
 			grid=squareRaster(borderC, 30),
 			covariates=covList,
@@ -64,7 +64,7 @@ if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INL
 ## ----lgcpTable, tidy=FALSE----------------------------------------------------
 sdSeq = seq(0,4,len=501)
 rangeSeq = seq(0,15*1000, len=501)
-if(requireNamespace("rgdal") & requireNamespace("rgeos") & requireNamespace("INLA")) {
+if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=TRUE) & requireNamespace("INLA", quietly=TRUE)) {
 	resT=lgcp(formulaHere, 
 			data=murderT, 
 			grid=squareRaster(borderC, 30),

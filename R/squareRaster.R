@@ -46,6 +46,7 @@ setMethod("squareRaster",
 		function(x, cells=NULL, buffer=0) {
 	
 	result = squareRaster(extent(x), cells, buffer)
-	proj4string(result) = proj4string(x)
+#	proj4string(result) = proj4string(x)
+	result@crs = x@proj4string
 	result
 })

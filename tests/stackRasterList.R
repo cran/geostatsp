@@ -1,3 +1,4 @@
+options("rgdal_show_exportToProj4_warnings"="none") 
 library('geostatsp')
 
 grd <- GridTopology(c(1,1), c(1,1), c(10,10))

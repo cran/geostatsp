@@ -4,7 +4,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	
 	if(!missing(border)){
 		if(!.compareCRS(data, border))
-			border = spTransform(border, CRS(proj4string(data)))
+			border = spTransform(border, data@proj4string)
 	}
 	
 	if(is.numeric(grid)) {
@@ -65,7 +65,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 			if(offsetToMask %in% names(covariates)) {
 				if(!.compareCRS(covariates[[offsetToMask]], border)) {
 					borderM = spTransform(border, 
-						CRS(proj4string(covariates[[offsetToMask]])))
+						covariates[[offsetToMask]]@crs)
 				} else {
 					borderM = border
 				}

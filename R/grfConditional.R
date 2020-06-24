@@ -11,7 +11,7 @@ grfConditional = function(data, y=1,
 		Ny = round(locations*diff(data@bbox[2,])/diff(data@bbox[1,]))
 		myExtent@ymax = myExtent@ymin + Ny * diff(data@bbox[1,])/Nx
 		locations = raster(myExtent, Ny, Nx,
-				crs=projection(data))	
+				crs=crs(data))	
 	}
 	if(nrow(locations) * ncol(locations) > 10^7) warning("there are lots of cells in the prediction raster,\n this might take a very long time")
 	

@@ -58,45 +58,51 @@ legend("topleft",fill=thecol[names(commonValues)],
 
 # code to assemble the dataset
 \dontrun{
-dataDir = "/store/patirck/spatialData/"
-download.file("http://mldata.org/repository/data/download/spat-interp-comparison-1997/",
-	destfile=paste(dataDir, "swiss.zip",sep=""))
-unzip(paste(dataDir, 'swiss.zip',sep=""), exdir=dataDir)
-swissRain = read.table(paste(dataDir, "sic_obs.dat",sep=""),sep=',', 
-	col.names=c('ID','x','y','rain'))
-# the following seems to make the coordinates line up with epsg:2056
-swissRain$x = swissRain$x - 17791.29 + 2672591 
-swissRain$y = swissRain$y - 13224.66 + 1200225
-# the readme file says rain is in tenths of mm 
-swissRain$rain= swissRain$rain / 10  
-library(sp)
-library(rgdal)
-# create projection without epsg code so rgdal doesn't need to be loaded
-theproj = CRSargs(CRS("+init=epsg:2056"))
-theproj = gsub("\\+init=epsg:[[:digit:]]+ ", "", theproj)
-theproj = CRS(theproj)
+	dataDir = tempdir()
 
-swissRain = SpatialPointsDataFrame(swissRain[,c('x','y')], data=swissRain[,c('ID','rain')], 
-	proj4string=theproj)
+	download.file(
+"https://wiki.52north.org/pub/AI_GEOSTATS/AI_GEOSTATSData/sic97data_01.zip",
+		destfile=paste(dataDir, "swiss.zip",sep=""))
+	swissFile = unzip(paste(dataDir, 'swiss.zip',sep=""), exdir=dataDir)
+	swissRain = read.table(grep("sic_obs.dat",swissFile, value=TRUE), 
+		sep=',', 
+		col.names=c('ID','x','y','rain'))
+	# the following seems to make the coordinates line up with epsg:2056
+	swissRain$x = swissRain$x - 17791.29 + 2672591 
+	swissRain$y = swissRain$y - 13224.66 + 1200225
+	# the readme file says rain is in tenths of mm 
+	swissRain$rain= swissRain$rain / 10  
+	library(sp)
+	library(rgdal)
+	# create projection without epsg code so rgdal doesn't need to be loaded
+	#theproj = CRSargs(CRS("+init=epsg:2056"))
+	theproj = CRS(paste("+proj=somerc +lat_0=46.9524055555556",
+		"+lon_0=7.43958333333333 +k_0=1 +x_0=2600000 +y_0=1200000"))
+
+	#theproj = gsub("\\+init=epsg:[[:digit:]]+ ", "", theproj)
+	#theproj = CRS(theproj)
+
+	swissRain = SpatialPointsDataFrame(swissRain[,c('x','y')], data=swissRain[,c('ID','rain')], 
+		proj4string=theproj)
 
 
 
-#######
-# Swiss Border
-#######
+	#######
+	# Swiss Border
+	#######
 
 
-library('raster')
-swissBorder = getData('GADM', country='CHE', level=0)
-isChar = which(unlist(lapply(swissBorder@data, is.character)))
-isUtf = which(
-	unlist(lapply(swissBorder@data[,isChar], 
-		Encoding)) == 'UTF-8')
-swissBorder = swissBorder[,
-	!match(names(swissBorder), names(isUtf), nomatch=0)
-	]
-library(rgdal)
-swissBorder = spTransform(swissBorder, CRS(proj4string(swissRain)))
+	library('raster')
+	swissBorder = getData('GADM', country='CHE', level=0)
+	isChar = which(unlist(lapply(swissBorder@data, is.character)))
+	isUtf = which(
+		unlist(lapply(swissBorder@data[,isChar], 
+			Encoding)) == 'UTF-8')
+	swissBorder = swissBorder[,
+		!match(names(swissBorder), names(isUtf), nomatch=0)
+		]
+	library(rgdal)
+	swissBorder = spTransform(swissBorder, CRS(proj4string(swissRain)))
 
 ############
 # land type
@@ -112,7 +118,8 @@ getProduct(myProduct)
 
 thehdf=getHdf(product=myProduct,
 		begin="2002-01-01",end="2002-01-02",
-		extent=extent(spTransform(swissBorder, CRS("+init=epsg:4326"))))
+		tileH=18, tileV=4)
+#		extent=extent(spTransform(swissBorder, CRS("+init=epsg:4326"))))
 
 layerNames = getSds(thehdf[[1]][1])$SDSnames
 ltLayer = grep("Type_1$", layerNames)
@@ -125,7 +132,9 @@ runGdal(product=myProduct,
 		outProj = proj4string(swissRain),
 		pixelSize=2000, job="loa",
 		SDSstring = theString,
-		extent=extent(spTransform(swissBorder, CRS("+init=epsg:4326"))))
+				tileH=17:18, tileV=3:4)
+
+#		extent=extent(spTransform(swissBorder, CRS("+init=epsg:4326"))))
 
 # find file name 
 thenames = preStack(
@@ -201,18 +210,18 @@ table(extract(swissLandType, swissRain), exclude=NULL)
 #### 
 # SwissAltitude
 ###
-library(raster)
-download.file('http://biogeo.ucdavis.edu/data/diva/alt/CHE_alt.zip',
-	destfile=paste(dataDir,'CHE_alt.zip',sep=""))
-unzip(paste(dataDir, 'CHE_alt.zip',sep=""), exdir=dataDir)
-swissAltitude = raster(paste(dataDir, "CHE_alt.gri",sep=""))
-swissAltitude = projectRaster(swissAltitude, 
-	crs=CRS(proj4string(swissRain)))
-swissAltitude = aggregate(swissAltitude,fact=2)
- 
+	library(raster)
+	download.file('http://biogeo.ucdavis.edu/data/diva/alt/CHE_alt.zip',
+		destfile=paste(dataDir,'CHE_alt.zip',sep=""))
+	swissAfile = unzip(paste(dataDir, 'CHE_alt.zip',sep=""), exdir=dataDir)
+	swissAltitude = raster(grep("CHE_alt.gri", swissAfile, value=TRUE))
+		swissAltitude = projectRaster(swissAltitude, 
+			crs=CRS(proj4string(swissRain)))
+		swissAltitude = aggregate(swissAltitude,fact=2)
+	 
  
 save(swissRain, swissAltitude, swissBorder, swissLandType,
-		file="~/workspace/diseasemapping/pkg/geostatsp/data/swissRain.RData",
+		file="~/research/diseasemapping/pkg/geostatsp/data/swissRain.RData",
 		compress="xz")
 }
 

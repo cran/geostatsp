@@ -13,9 +13,10 @@ knitr::knit_hooks$set(
         0), cex = 1.25)
 })
 
+options("rgdal_show_exportToProj4_warnings"="none")
 
 if(Sys.info()['sysname'] =='Linux' &
-  requireNamespace("INLA")) {   
+  requireNamespace("INLA", quietly=TRUE)) {   
   INLA::inla.setOption(inla.call = 
       system.file(paste(
           "bin/linux/",          
@@ -32,13 +33,12 @@ library('mapmisc')
 library("geostatsp")
 data('swissRain')
 
-havePackages = c(
-  'INLA' = requireNamespace('INLA', quietly=TRUE)
-)
 
-print(havePackages)
+
+print(requireNamespace('INLA', quietly=TRUE))
 
 swissRain$lograin = log(swissRain$rain)
+
 swissAltitudeCrop = raster::mask(swissAltitude,swissBorder)
 
 ## ----cells--------------------------------------------------------------------
@@ -46,7 +46,7 @@ fact
 (Ncell = 25*fact)
 
 ## ----swissWithFormula, fig.cap = 'Swiss rain as in help file', fig.subcap = c('random','fitted', 'sd','range')----
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFit =  glgm(
     formula = lograin~ CHE_alt,
@@ -106,7 +106,7 @@ swissAltCut = raster::cut(
 )
 names(swissAltCut) = 'bqrnt'
 
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFitNp = glgm(
     formula = lograin ~ f(bqrnt, model = 'rw2', scale.model=TRUE, 
@@ -145,8 +145,7 @@ if(all(havePackages)) {
 
 ## ----asHelpFile---------------------------------------------------------------
 
-
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   swissFit =  glgm("lograin", swissRain, Ncell, 
     covariates=swissAltitude, family="gaussian", buffer=20000,
     priorCI=list(sd=c(0.2, 2), range=c(50000,500000), sdObs = 2), 
@@ -157,7 +156,7 @@ if(all(havePackages)) {
 }
 
 ## ----swissINterceptOnly, fig.cap = 'Swiss intercept only', fig.subcap = c('exc prob','range')----
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFit =  glgm(
     formula=lograin~1, 
@@ -190,7 +189,7 @@ if(all(havePackages)) {
 ## ----covInData, fig.cap = 'covaraites in data', fig.subcap = c('predict.mean','range')----
 newdat = swissRain
 newdat$elev = extract(swissAltitude, swissRain)
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   swissFit =  glgm(lograin~ elev + land,
     newdat, Ncell, 
     covariates=list(land=swissLandType),
@@ -214,7 +213,7 @@ if(all(havePackages)) {
 }
 
 ## ----swissFitNamedList--------------------------------------------------------
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFit =  glgm(lograin~ elev,
     swissRain, Ncell, 
@@ -230,7 +229,7 @@ if(all(havePackages)) {
 }
 
 ## ----swissFitCategorical, fig.cap = 'categorical covariates', fig.subcap = c('map','range')----
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   swissFit =  glgm(
     formula = lograin ~ elev + factor(land),
     data = swissRain, grid = Ncell, 
@@ -261,7 +260,7 @@ if(all(havePackages)) {
 temp = values(swissAltitude)
 temp[seq(10000,12000)] = NA
 values(swissAltitude) = temp
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFitMissing =  glgm(rain ~ elev + land,swissRain,  Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
@@ -278,7 +277,7 @@ if(all(havePackages)) {
 ## ----interactions, fig.cap = 'interactions', fig.subcap = c('map','range')----
 newdat = swissRain
 newdat$elev = extract(swissAltitude, swissRain)
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFit =  glgm(
     formula = lograin~ elev : land,
@@ -325,7 +324,7 @@ if(all(havePackages)) {
   covList = list(elLow = elevLow, elHigh = elevHigh, 
     land = ltLoaR, evi=eviLoa)
 
-if(all(havePackages) & fact > 1) {
+if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
   
   
   loaFit = glgm(
@@ -356,7 +355,7 @@ if(all(havePackages) & fact > 1) {
 }
 
 ## ----LongTestsSwiss-----------------------------------------------------------
-if(all(havePackages) &  fact > 1 ) {
+if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
   
 # prior for observation standard deviation
   swissFit =  glgm( formula="lograin",data=swissRain, grid=Ncell,
@@ -371,7 +370,7 @@ if(all(havePackages) &  fact > 1 ) {
   data2 = SpatialPointsDataFrame(cbind(c(1,0), c(0,1)),
     data=data.frame(y=c(0,0), offset=c(-50,-50), x=c(-1,1)))
 
-if(all(havePackages) & fact > 1) {
+if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
   
 resNoData = res = glgm(
   data=data2, grid=Ncell, 
@@ -423,7 +422,7 @@ resNoData = res = glgm(
 
 ## ----noDataQuantile, fig.height=3, fig.width=4, fig.cap = 'no data quantile priors', fig.subcap = c('intercept','sd','range','scale')----
 
-if(all(havePackages) & fact > 1) {
+if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
 
 
   resQuantile = res = glgm(
@@ -478,7 +477,7 @@ if(all(havePackages) & fact > 1) {
 
 ## ----noDataLegacy, fig.height=3, fig.width=4, fig.cap='No data, legacy priors', fig.subcap = c('intercept','beta','sd','range')----
 
-if(all(havePackages) & fact > 1) {
+if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
   
 resLegacy = res = glgm(data=data2, 
     grid=20, 
@@ -532,7 +531,7 @@ resLegacy = res = glgm(data=data2,
 swissRain$group = 1+rbinom(length(swissRain), 1, 0.5)
 theGrid = squareRaster(swissRain, Ncell, buffer=10*1000)
 
-if(all(havePackages)) {
+if(requireNamespace('INLA', quietly=TRUE) ) {
   swissFit = glgm(
     formula = rain ~ 1,
     data=swissRain, 

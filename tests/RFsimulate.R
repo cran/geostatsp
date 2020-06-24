@@ -2,12 +2,15 @@ library("geostatsp")
 
 model <- c(var=5, range=20,shape=0.5)
 
+# any old crs
+theCrs = CRS("+proj=utm +zone=17 +datum=NAD27 +units=m +no_defs")
+
 if (requireNamespace("RandomFields", quietly = TRUE)) { 
   myraster = raster(nrows=50,ncols=50,xmn=100,ymn=100,xmx=110,ymx=110, 
-    crs="+init=epsg:2081")
+    crs=theCrs)
 } else {
   myraster = raster(nrows=20,ncols=20,xmn=100,ymn=100,xmx=110,ymx=110, 
-    crs="+init=epsg:2081")
+    crs=theCrs)
 }
 
 set.seed(0)

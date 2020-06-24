@@ -541,7 +541,7 @@ setMethod("glgm",
     forRast = 	as.matrix(inlaResult$summary.random[["space"]][values(cells),])
     resRasterRandom = 
     brick(extent(cells), nrows=nrow(cells),
-      ncols=ncol(cells), crs=projection(cells),
+      ncols=ncol(cells), crs=crs(cells),
       nl=dim(forRast)[2])
     names(resRasterRandom) = 
     paste("random.", colnames(forRast),sep="")
@@ -622,7 +622,7 @@ setMethod("glgm",
 
     resRasterFitted = 
     brick(extent(cells), nrows=nrow(cells),
-      ncols=ncol(cells), crs=projection(cells),
+      ncols=ncol(cells), crs=crs(cells),
       nl=ncol(linc))
     names(resRasterFitted) = 
     paste("predict.", colnames(linc),sep="")

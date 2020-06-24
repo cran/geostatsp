@@ -105,7 +105,7 @@ model <- c(var=5, range=1,shape=0.5)
 
 
 myraster = raster(nrows=20,ncols=30,xmn=0,ymn=0,xmx=6,ymx=4, 
-		crs="+init=epsg:2081")
+	crs=CRS("+proj=utm +zone=17 +datum=NAD27 +units=m +no_defs"))
 
 set.seed(0) 
 

@@ -1,4 +1,6 @@
 # land type, categorical variable
+options("rgdal_show_exportToProj4_warnings"="none") 
+
 library("geostatsp")
 data("swissRain")
 swissRain$lograin = log(swissRain$rain)

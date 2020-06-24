@@ -33,7 +33,7 @@ simPoissonPP = function(intensity) {
 	
   if(nrow(eventsD)){
   	events[[D]] = SpatialPoints(eventsD)
-	  projection(events[[D]]) = projection(intensity)	
+	  crs(events[[D]]) = crs(intensity)	
   } else {
     events[[D]] = NULL
   }

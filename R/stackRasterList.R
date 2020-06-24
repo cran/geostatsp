@@ -42,7 +42,7 @@ stackRasterList = function(x, template=x[[1]],method='ngb',mc.cores=NULL) {
 			toAdd =  
 					rasterize(
 							spTransform(x[[D]][,1], 
-								CRS(projection(template))), 
+								crs(template)), 
 							raster(template))
  			if(is.numeric(x[[D]]@data[,1])) {
  				toAdd = deratify(toAdd)

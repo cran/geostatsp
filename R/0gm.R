@@ -395,7 +395,7 @@ gm.dataSpatial = function(
         if(requireNamespace('rgdal', quietly=TRUE) ) {
           # sometimes the names are different and an error results from spTransform
           extractHere = raster::extract(covariates[[D]], 
-            spTransform(data, CRSobj=CRS(projection(covariates[[D]]))))
+            spTransform(data, CRSobj=crs(covariates[[D]])))
         } else { # don't have gdal
           warning("need rgdal if covariates and data are different projections")
         }
@@ -414,8 +414,8 @@ gm.dataSpatial = function(
 
     # reproject data to grid
     if(requireNamespace('rgdal', quietly=TRUE ) &
-      !is.na(projection(cellsSmall))) {
-        data = spTransform(data, projection(cellsSmall))
+      !is.na(crs(cellsSmall))) {
+        data = spTransform(data, crs(cellsSmall))
     }
     data$space = suppressWarnings(extract(cellsSmall, data))
   # loop through spatial covariates which are factors

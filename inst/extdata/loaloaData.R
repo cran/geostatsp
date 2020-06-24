@@ -12,9 +12,7 @@
 	library(rgdal)
 	
 # create projection without epsg code so rgdal doesn't need to be loaded
-	theproj = CRSargs(CRS("+init=epsg:3064"))
-	theproj = gsub("\\+init=epsg:[[:digit:]]+ ", "", theproj)
-	theproj = CRS(theproj)
+	theproj = CRS("+init=epsg:3064")
 	
 	loaloaLL = SpatialPointsDataFrame(loaloa[,c("long","lat")], 
 			data=loaloa[,c("N","y")], 
@@ -75,7 +73,7 @@
 			landOrig, loaExtentM
 	)
 	
-	ltLoaExt = projectRaster(landCrop, crs=projection(loaloa), method='ngb')
+	ltLoaExt = projectRaster(landCrop, crs=crs(loaloa), method='ngb')
 	
 	ltLoa = raster::crop(
 			ltLoaExt, loaExtent
@@ -292,7 +290,7 @@
 	
 # save data
 	save(loaloa, eviLoa, ltLoa, tempLoa, elevationLoa,
-			file="~/workspace/diseasemapping/pkg/geostatsp/data/loaloa.RData", 
+			file="~/research/diseasemapping/pkg/geostatsp/data/loaloa.RData", 
 			compress="xz")
 	
 	
