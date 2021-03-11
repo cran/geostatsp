@@ -56,17 +56,20 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     covariates=swissAltitudeCrop, 
     family="gaussian", 
     prior = list(
-      sd=c(2, 0.05), 
+      sd=c(1,0.5), 
       sdObs = 1,
       range=c(500000, 0.5)),
-    control.inla = list(strategy='gaussian')
+    control.inla = list(strategy='gaussian'),
+    verbose=TRUE
   )
-  knitr::kable(swissFit$parameters$summary, digits=3)
+  if(length(swissFit$parameters)) {
+    knitr::kable(swissFit$parameters$summary, digits=3)
 
-  
+
   swissExc = excProb(
     x=swissFit,  random=TRUE,
     threshold=0)
+  
   
   plot(swissExc, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
     col=c('green','yellow','orange','red'))	
@@ -92,6 +95,9 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
+  } else {
+    print("INLA was not run, probably INLA isn't configured correctly")
+  }
 }
 
 ## ----swissNonParam, fig.cap = 'Swiss rain elevation rw2', fig.subcap = c('elevation effect','fitted')----
@@ -122,6 +128,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
       sdObs = c(u=1, alpha=0.4)), 
     control.inla=list(strategy='gaussian')
   )
+  if(length(swissFitNp$parameters)) {
   knitr::kable(swissFitNp$parameters$summary, digits=3)
   
   matplot(
@@ -140,7 +147,10 @@ if(requireNamespace('INLA', quietly=TRUE)) {
   plot(swissExcP, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
     col=c('green','yellow','orange','red'))	
   plot(swissBorder, add=TRUE)
-  
+  } else {
+    print("INLA was not run, probably INLA isn't configured correctly")
+  }
+ 
 }
 
 ## ----asHelpFile---------------------------------------------------------------
@@ -151,8 +161,8 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     priorCI=list(sd=c(0.2, 2), range=c(50000,500000), sdObs = 2), 
     control.inla=list(strategy='gaussian')
   )
-  
-  knitr::kable(swissFit$parameters$summary[,c(1, 3:5, 8)], digits=4)
+  if(length(swissFit$parameters))  
+    knitr::kable(swissFit$parameters$summary[,c(1, 3:5, 8)], digits=4)
 }
 
 ## ----swissINterceptOnly, fig.cap = 'Swiss intercept only', fig.subcap = c('exc prob','range')----
@@ -169,6 +179,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.family=list(hyper=list(prec=list(prior="loggamma", param=c(.1, .1))))
   )
   
+  if(length(swissFit$parameters)) {
   knitr::kable(swissFit$parameters$summary[,c(1, 3:5, 8)], digits=3)
   
   swissExc = excProb(
@@ -183,6 +194,9 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
+  } else {
+    print("INLA was not run, probably INLA isn't configured correctly")
+  }
 
 }
 
@@ -199,6 +213,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
+  if(length(swissFit$parameters)) {
   knitr::kable(swissFit$parameters$summary, digits=3)
   
   plot(swissFit$raster[['predict.mean']])
@@ -209,6 +224,9 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
+  } else {
+    print("INLA was not run, probably INLA isn't configured correctly")
+  }
 
 }
 
@@ -225,7 +243,8 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
-  swissFit$parameters$summary[,c(1,3,5)]
+  if(length(swissFit$parameters))
+    swissFit$parameters$summary[,c(1,3,5)]
 }
 
 ## ----swissFitCategorical, fig.cap = 'categorical covariates', fig.subcap = c('map','range')----
@@ -241,7 +260,8 @@ if(requireNamespace('INLA', quietly=TRUE)) {
       prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
-  
+    if(length(swissFit$parameters)) {
+
   knitr::kable(swissFit$parameters$summary[,c(1,3,5)], digits=3)
   
   
@@ -253,7 +273,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-  
+    }
 } 
 
 ## ----someMissing--------------------------------------------------------------
@@ -270,7 +290,8 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
-  knitr::kable(swissFitMissing$parameters$summary[,1:5], digits=3)
+    if(length(swissFitMissing$parameters))
+      knitr::kable(swissFitMissing$parameters$summary[,1:5], digits=3)
   
 }
 
@@ -290,18 +311,19 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
+  if(length(swissFit$parameters)) {
+
+    knitr::kable(swissFit$parameters$summary, digits=3)
   
-  knitr::kable(swissFit$parameters$summary, digits=3)
-  
-  plot(swissFit$raster[['predict.mean']])
-     plot(swissBorder, add=TRUE)    
+    plot(swissFit$raster[['predict.mean']])
+    plot(swissBorder, add=TRUE)    
 
     matplot(
     swissFit$parameters$range$posterior[,'x'],
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-
+  }
 }
 
 ## ----longTestsLoa, fig.cap='categorical', fig.subcap = c('predict','range')----
@@ -342,6 +364,8 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
     control.inla = list(strategy='gaussian')
     )
   
+    if(length(loaFit$parameters)) {
+
   loaFit$par$summary[,c(1,3,5)]
   
   plot(loaFit$raster[['predict.exp']])
@@ -351,7 +375,7 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
       loaFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-
+}
 }
 
 ## ----LongTestsSwiss-----------------------------------------------------------
@@ -385,7 +409,7 @@ resNoData = res = glgm(
     control.inla = list(strategy='gaussian')
   )
   
-  
+  if(length(res$parameters)) {
 # beta
   plot(res$inla$marginals.fixed[['x']], col='blue', type='l',
     xlab='beta',lwd=3)
@@ -417,7 +441,7 @@ resNoData = res = glgm(
 #      ylim = c(0, 10^(-3)), xlim = c(0,1000),
       type='l', col=c('red','blue'),xlab='scale',lwd=3, ylab='dens')
     legend("topright", col=c("red","blue"),lty=1,legend=c("post'r","prior"))
-
+}
 }
 
 ## ----noDataQuantile, fig.height=3, fig.width=4, fig.cap = 'no data quantile priors', fig.subcap = c('intercept','sd','range','scale')----
@@ -439,6 +463,7 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
     control.inla = list(strategy='gaussian')
   )
   
+  if(length(res$parameters)) {
 # beta
   plot(res$inla$marginals.fixed[['x']], col='blue', type='l',
     xlab='beta',lwd=3)
@@ -472,7 +497,7 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
 #      ylim = c(0, 10^(-3)), xlim = c(0,1000),
       type='l', col=c('red','blue'),xlab='scale',lwd=3, ylab='dens')
     legend("topright", col=c("red","blue"),lty=1,legend=c("post'r","prior"))
-
+  }
 }
 
 ## ----noDataLegacy, fig.height=3, fig.width=4, fig.cap='No data, legacy priors', fig.subcap = c('intercept','beta','sd','range')----
@@ -495,7 +520,7 @@ resLegacy = res = glgm(data=data2,
     control.mode=list(theta=c(2, 2),restart=TRUE)
   )
   
-   
+   if(length(res$parameters)) {
 # intercept
   plot(res$inla$marginals.fixed[['(Intercept)']], col='blue', type='l',
     xlab='intercept',lwd=3)
@@ -524,6 +549,7 @@ resLegacy = res = glgm(data=data2,
       res$parameters$range$posterior[,c('y','prior')], 
       type='l', col=c('red','blue'),xlab='range',lwd=3, ylab='dens')
     legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
+   }
 }
 
 ## ----spaceFormula, fig.cap='spatial formula provided', fig.subcap = c('one','two')----

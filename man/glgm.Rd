@@ -91,7 +91,7 @@ A list with two components named  \code{inla}, \code{raster}, and \code{paramete
   '\\\\code{inla} in the \\\\code{INLA} package', 
   '\\\\code{\\\\link[INLA]{inla}}'
   )[1+requireNamespace('INLA', quietly=TRUE)]}, 
-  \url{http://r-inla.org}
+  \url{https://www.r-inla.org}
 }
 \examples{
 # use the 'safe' version of INLA on linux systems

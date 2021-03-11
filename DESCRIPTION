@@ -1,8 +1,8 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistical Modelling with Likelihood and Bayes
-Version: 1.8.2
-Date: 2020-06-22
+Version: 1.8.4
+Date: 2021-03-10
 Depends: Matrix (>= 1.2.0), raster, sp, R (>= 3.5.0)
 Imports: abind, numDeriv, methods, stats
 Suggests: RandomFields (>= 3.3.4), rgdal, parallel, mapmisc, ellipse,
@@ -12,13 +12,16 @@ LinkingTo: Matrix
 Additional_repositories: https://inla.r-inla-download.org/R/testing
 Author: Patrick Brown <patrick.brown@utoronto.ca>[aut, cre], Robert Hijmans [ctb]
 Maintainer: Patrick Brown <patrick.brown@utoronto.ca>
-Description: Geostatistical modelling facilities using Raster and SpatialPoints
-    objects are provided. Non-Gaussian models are fit using INLA, and Gaussian
+Description: Geostatistical modelling facilities using 'Raster' and 'SpatialPoints'
+    objects are provided. Non-Gaussian models are fit using 'INLA', and Gaussian
     geostatistical models use Maximum Likelihood Estimation.  For details see Brown (2015) <doi:10.18637/jss.v063.i12>.
 License: GPL
 NeedsCompilation: yes
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
-Packaged: 2020-06-23 16:56:03 UTC; patrick
 Repository: CRAN
-Date/Publication: 2020-06-24 08:40:18 UTC
+Repository/R-Forge/Project: diseasemapping
+Repository/R-Forge/Revision: 2627
+Repository/R-Forge/DateTimeStamp: 2021-03-10 18:17:42
+Date/Publication: 2021-03-11 07:50:06 UTC
+Packaged: 2021-03-10 18:27:33 UTC; rforge

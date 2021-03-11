@@ -151,4 +151,59 @@ legend("topright", fill=x2d$col, legend=x2d$prob[-length(x2d$prob)])
 
 if(!interactive()) 
   dev.off()
+
+
+
+# isotropic
+sr2$sqrtY = sqrt(sr2$rain)
+swissFitIso = likfitLgm(
+    data=sr2, 
+    formula=sqrtY ~ elev,
+    param=c(range=10000,shape=1,nugget=0),
+    reml=FALSE,
+    verbose=FALSE
+)
+
+swissFitIso$parameters
+
+newParamList = list(
+		range=seq(15, 100 , len=24)*1000,
+    nugget = seq(0,0.25,len=24)
+	)
+newParam= do.call(expand.grid, newParamList)
+
+res= mapply(
+	function(range, nugget) {
+		loglikLgm(
+		c(swissFitIso$parameters[c('shape')], 
+			range = unname(range), nugget = unname(nugget)),
+		data = sr2,
+		formula = swissFitIso$model$formula,
+		reml = swissFitIso$model$reml,
+		minustwotimes=FALSE)
+	},
+	range = newParam$range,
+	nugget = newParam$nugget
+	)
+
+lMatrix = matrix(res, length(newParamList[[1]]), length(newParamList[[2]]))
+
+myCol = mapmisc::colourScale(lMatrix, breaks=8, dec=0)
+
+if(!interactive()) 
+  pdf("profLswissIso.pdf")
+image(
+	newParamList[[1]]/1000, newParamList[[2]], lMatrix,
+	col = myCol$col, breaks=myCol$breaks,
+	xlab = names(newParamList)[1],
+	ylab = names(newParamList)[2]	
+	)
+mapmisc::legendBreaks('topright', myCol)
+
+if(!interactive()) 
+	dev.off()
+
 }
+
+
+

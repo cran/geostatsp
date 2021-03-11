@@ -185,7 +185,7 @@ setMethod("RFsimulate",
       SpatialPoints(x),
       data=theSim,
       proj4string=x@proj4string)#CRS(projection(x))
-    
+      
     
     res
   }

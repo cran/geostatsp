@@ -81,7 +81,7 @@ void computeBoxCox(
 
 
 void maternLogLGivenChol(
-		double *obsCov,
+		double *obsCov, // Y X
 		const int *N,  // Nobs, Nrep, Ncov,
 		const double *cholVariance,
 		double *totalSsq, // an Nrep by 2 matrix

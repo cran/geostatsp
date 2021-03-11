@@ -265,7 +265,7 @@ if(Sys.info()['user'] =='patrick' & FALSE) {
   myResRopt = lgm(
       formula = sim ~ x, 
       data=raster::stack(myY, myCov), 
-      oneminusar = seq(0.05, 0.2,len=12),
+      oneminusar = seq(0.05, 0.2,len=4),
       shape=2)		
   
   if(!interactive()) pdf("doesntwork.pdf")
@@ -276,7 +276,7 @@ if(Sys.info()['user'] =='patrick' & FALSE) {
   swissResRoptAr =  lgm(
       formula=layer ~ alt+ myvar, 
       data=swissRainR2, shape=2,
-      oneminusar = seq(0.1, 0.5, len=6),
+      oneminusar = seq(0.1, 0.5, len=4),
       adjustEdges=FALSE
   )
   
@@ -298,7 +298,7 @@ if(Sys.info()['user'] =='patrick' & FALSE) {
   swissResROptNug =  lgm(
       formula=layer ~ alt+ myvar, 
       data=swissRainR2, shape=2,
-      oneminusar=seq(0.05, 0.1, len=12),
+      oneminusar=seq(0.05, 0.1, len=4),
       adjustEdges=FALSE,fixNugget=TRUE,
       mc.cores=1+(.Platform$OS.type=='unix')
   )
