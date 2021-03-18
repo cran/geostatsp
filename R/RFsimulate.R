@@ -183,9 +183,7 @@ setMethod("RFsimulate",
     
     res = SpatialPointsDataFrame(
       SpatialPoints(x),
-      data=theSim,
-      proj4string=x@proj4string)#CRS(projection(x))
-      
+      data=theSim) 
     
     res
   }
@@ -509,8 +507,7 @@ setMethod("RFsimulate",
       resHere = 	callGeneric(
         model=model[D,], 
         x, data= data[,D], 
-        err.model= err.model[D], n=1,
-        ...)
+        err.model= err.model[D], n=1, ...)
       
       result = cbind(
         resHere@data[,'sim'],

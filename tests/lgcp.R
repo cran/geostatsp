@@ -36,11 +36,12 @@ res = lgcp(
 		priorCI=list(sd=c(u=0.1, alpha = 0.01), range=c(0.4, 0.41))
 )
 
+if(length(res$parameters)) {
 knitr::kable(res$parameters$summary, digits=3)
 
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
-
+}
 	
 # intercept only
 
@@ -52,10 +53,13 @@ res = lgcp(
 		priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
 )
 
+if(length(res$parameters)) {
+
 knitr::kable(res$parameters$summary, digits=3)
 
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
+}
 
 if(interactive()  | Sys.info()['user'] =='patrick') {
 
@@ -70,8 +74,11 @@ res = lgcp(data=myPoints, grid=20, covariates=mycov,
 		priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
 )
 
+if(length(res$parameters)) {
+
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
+}
 
 data('murder')
 data('torontoPop')
@@ -93,8 +100,10 @@ resO = lgcp( ~ inc + pop,
     covariates=list(inc=myCov$inc, pop=log(myCov$pop)),
     border=torontoBorder)
 
-rbind(resL$param$summary, resO$param$summary)
+if(length(resL$parameters)) {
 
+	rbind(resL$param$summary, resO$param$summary)
+}
 
 
 }	

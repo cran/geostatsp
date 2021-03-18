@@ -31,16 +31,10 @@ swissFit =  glgm(formula="lograin", data=swissRain,
 	control.inla = list(strategy='gaussian', int.strategy='eb'),
 	control.mode = list(theta=c(1.6542995, 0.7137123,2.2404179))
 	)
-postExp(swissFit$parameters$summary)
+if(length(swissFit$parameters)) {
+	postExp(swissFit$parameters$summary)
+}
 
-swissFitLgm =  lgm( formula="lograin",
-	data=swissRain[1:60,], grid=20,
-	covariates=swissAltitude/1000, 
-	shape=1, fixShape=TRUE,
-	aniso=FALSE, nugget=0, fixNugget=FALSE
-)
-
-swissFitLgm$summary
 }
 
 }

@@ -34,11 +34,11 @@ for(D in 1:length(names(simu2))) {
 
 
 if(interactive()  | Sys.info()['user'] =='patrick') {
-  simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
+  simu2 = RFsimulate(
+    model = rbind(a=model, b=model+0.1), 
     x=as(myraster,"SpatialPoints")[
-      sample(ncell(myraster), 12)
-      ,]
-  )
+      sample(ncell(myraster), 12),]
+   )
   
   simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
     x=as(myraster,"SpatialGrid")
@@ -50,8 +50,8 @@ if(interactive()  | Sys.info()['user'] =='patrick') {
     set.seed(0) 
     simu2 <- RFsimulate(model, x=as(myraster,"SpatialPixels"), n=Dn)
     
-    print(proj4string(simu))
-    print(proj4string(simu2))
+    print(projection(simu))
+    print(projection(simu2))
     
     par(mfrow=c(nlayers(simu),2))
     for(D in 1:nlayers(simu)) {

@@ -164,7 +164,7 @@ res = lgcp(
 	prior=list(sd=c(0.9, 1.1), range=c(0.4, 0.41),
 	control.inla = list(strategy='gaussian'))
 )
-if(requireNamespace("INLA", quietly = TRUE)) {  
+if(length(res$parameters)) {  
 	plot(res$raster[["predict.exp"]])
 	plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 }

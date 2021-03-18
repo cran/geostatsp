@@ -251,25 +251,6 @@ setMethod("glgm",
     varsInData = names(data)[varsInData]
     varsInData = intersect(all.vars(formula), varsInData)
 
-    thevars = union(varsInData, thevars)
-
-    if(length(thevars)){
-
-      thevars = gsub("^factor\\(|\\)", "", thevars)
-      # loop through factors
-      for(D in thevars){
-        # biggest category is baseline
-        thetable = table(data[,D])
-        thebase = names(sort(thetable,decreasing=TRUE))[1]
-        newLevels = unique(c(thebase, levels(factor(data[,D]))))
-        data[,D] = factor(data[,D], levels=newLevels)
-        if(D %in% colnames(covariates))
-          covariates[,D] = factor(
-            covariates[,D],
-            levels=levels(data[,D]))
-      }
-    }
-
     # variables wrapped in an f()
     termsInF = grep("^f[(]", attributes(allVarsP(formulaOrig))$orig, value=TRUE)
     termsInF = gsub("^f[(]|[,].*|[[:space:]]", "", termsInF)

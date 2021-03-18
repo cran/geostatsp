@@ -254,7 +254,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     data = swissRain, grid = Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
     family="gaussian", buffer=20000,
-    prior=list(sd=c(0.2, 2), range=c(50000,500000)), 
+    prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
     control.inla=list(strategy='gaussian'),
     control.family=list(hyper=list(
       prec=list(prior="loggamma", 
@@ -285,7 +285,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
   swissFitMissing =  glgm(rain ~ elev + land,swissRain,  Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
     family="gaussian", buffer=20000,
-    priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
+    prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
     control.inla = list(strategy='gaussian'),
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
@@ -295,22 +295,67 @@ if(requireNamespace('INLA', quietly=TRUE)) {
   
 }
 
+## ----covInDataLevels----------------------------------------------------------
+newdat = swissRain
+newdat$landOrig = factor(unlist(raster::factorValues(swissLandType, raster::extract(swissLandType, swissRain),att='Category')))
+newdat$landRel = relevel(newdat$landOrig, 'Mixed forests')
+
+
+
+if(requireNamespace('INLA', quietly=TRUE)) {
+  
+  swissFit =  glgm(
+    formula = lograin~ elev + landOrig,
+    data=newdat, 
+    covariates=list(elev = swissAltitude),
+    grid=squareRaster(swissRain,Ncell), 
+    family="gaussian", buffer=0,
+    prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
+    control.inla = list(strategy='gaussian'),
+    control.family=list(hyper=list(prec=list(prior="loggamma", 
+          param=c(.1, .1))))
+  )
+  swissFitR =  glgm(
+    formula = lograin~ elev + landRel,
+    data=newdat, 
+    grid=squareRaster(swissRain,Ncell), 
+    covariates=list(elev = swissAltitude, landRel = swissLandType),
+    family="gaussian", buffer=0,
+    prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
+    control.inla = list(strategy='gaussian'),
+    control.family=list(hyper=list(prec=list(prior="loggamma", 
+          param=c(.1, .1)))),
+    verbose= TRUE
+  )
+
+  if(length(swissFit$parameters)) {
+    levels(newdat$landOrig)
+    levels(newdat$landRel)
+    levels(swissFit$inla$.args$data$landOrig)
+    levels(swissFitR$inla$.args$data$landRel)
+    knitr::kable(swissFit$parameters$summary, digits=3)
+    knitr::kable(swissFitR$parameters$summary, digits=3)
+  }
+}
+
 ## ----interactions, fig.cap = 'interactions', fig.subcap = c('map','range')----
 newdat = swissRain
 newdat$elev = extract(swissAltitude, swissRain)
+
 if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFit =  glgm(
     formula = lograin~ elev : land,
     data=newdat, 
-    grid=squareRaster(swissRain,50), 
+    grid=squareRaster(swissRain,Ncell), 
     covariates=list(land=swissLandType),
     family="gaussian", buffer=0,
-    priorCI=list(sd=c(0.2, 2), range=c(50000,500000)), 
+    prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
     control.inla = list(strategy='gaussian'),
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
+
   if(length(swissFit$parameters)) {
 
     knitr::kable(swissFit$parameters$summary, digits=3)
