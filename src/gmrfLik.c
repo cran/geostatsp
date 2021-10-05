@@ -72,7 +72,7 @@ void ssqFromXprod(
   F77_CALL(dpotrf)("L",
       &Ncov, xvx,
       &N, // Ncov by Ncov submatrix of N by N matrix
-      &infoCholXX);
+      &infoCholXX FCONE);
 
   // determinant for reml
   *detXVinvX  = 0.0;
@@ -86,7 +86,8 @@ void ssqFromXprod(
       &Ncov,
       xvx,
       &N,
-      &infoInvXX);
+      &infoInvXX
+      FCONE);
 
   // put beta hat in last row
   // (first Nrep rows still have LyLx)
@@ -99,6 +100,7 @@ void ssqFromXprod(
       &copyLx[Nrep],&N, // Lx
       &zeroD,
       &YXVinvYX[Nrep], &N //betahat, ldc
+      FCONE FCONE
   );
 
   // sum of squares
@@ -118,7 +120,8 @@ void ssqFromXprod(
       // blasBeta
       &oneD,
       // C, nrow(c)
-      YXVinvYX, &N);
+      YXVinvYX, &N
+      FCONE FCONE);
 
 }
 
@@ -214,7 +217,8 @@ double logLoneNuggetMoreArguments(
       // beta
       &oneD,
       // C, nrow(c)
-      DYXVYX, &Nxy);
+      DYXVYX, &Nxy
+      FCONE FCONE);
 
   // betaHat =  t(YX) Q^(-1) (YX)
   // copy YXVYX into beta hat
@@ -435,7 +439,8 @@ SEXP gmrfLik(
       // beta
       &zeroD,
       // C, nrow(&c)
-      YXYX, &Nxy);
+      YXYX, &Nxy
+      FCONE FCONE);
 
 
   /* .. now allocate Lx .. */
@@ -467,7 +472,8 @@ SEXP gmrfLik(
       // beta
       &zeroD,
       // C, nrow(c)
-      YXVYX, &Nxy);
+      YXVYX, &Nxy
+      FCONE FCONE);
   if(verbose) {
       Rprintf("first cholesky\n");
   }

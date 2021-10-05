@@ -31,7 +31,7 @@ SEXP gmrfEdge(
 			"L","T", &Ncol, &Nrow,
 			&one, REAL(LinvQab), &Nrow,
 			&one, REAL(GET_SLOT(result, install("x"))), &Ncol
-			);
+			FCONE FCONE);
 
 	UNPROTECT(2);
 	return result;

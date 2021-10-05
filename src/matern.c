@@ -15,7 +15,6 @@ if the precision is computed type is info from dpotrfi
 
 #include"geostatsp.h"
 
-
 void maternArasterBpoints(
     double *Axmin, double *Axres,
     int *AxN,
@@ -241,16 +240,16 @@ void maternAniso(
 
 
   if(*type >1 ){ // cholesky
-      F77_CALL(dpotrf)("L", N, result, N, &Dcol);
+      F77_CALL(dpotrf)("L", N, result, N, &Dcol FCONE);
       *halfLogDet=0;  // the log determinant
       for(Drow = 0; Drow < N2; Drow++)
         *halfLogDet += log(result[Drow*N2+Drow]);
       if(*type == 3){ // precision
           F77_NAME(dpotri)("L", N,
-              result, N,&Dcol);
+              result, N, &Dcol FCONE);
       } else if (*type==4) {// cholkesy of precision
           F77_NAME(dtrtri)("L", "N",N,
-              result, N,&Dcol);
+              result, N, &Dcol FCONE FCONE);
       } else {
           Drow = 0;
       }
@@ -345,16 +344,16 @@ void matern(
   } // Dcol
 
   if(*type >1 ){ // cholesky
-      F77_CALL(dpotrf)("L", N, result, N, &Dcol);
+      F77_CALL(dpotrf)("L", N, result, N, &Dcol FCONE);
       *halfLogDet=0;  // the log determinant
       for(D = 0; D < Nrow; D++)
         *halfLogDet += log(result[D*Nrow+D]);
       if(*type == 3){//precision
           F77_NAME(dpotri)("L", N,
-              result, N,&Dcol);
+              result, N, &Dcol FCONE);
       } else if (*type==4) {// cholesky of precision
           F77_NAME(dtrtri)("L", "N",N,
-              result, N,&Dcol);
+              result, N, &Dcol FCONE FCONE);
       } else {
           D = 0;
       }
@@ -743,13 +742,13 @@ void maternRaster(
   } // y of raster B
 
   if(*type >1 ){ // cholesky
-      F77_CALL(dpotrf)("L", &Ncell, result, &Ncell, &Ncell);
+      F77_CALL(dpotrf)("L", &Ncell, result, &Ncell, &Ncell FCONE);
       if(*type == 3){//precision
           F77_NAME(dpotri)("L", &Ncell,
-              result, &Ncell,&Ncell);
+              result, &Ncell,&Ncell FCONE);
       } else if (*type==4) {// cholesky of precision
           F77_NAME(dtrtri)("L", "N", &Ncell,
-              result, &Ncell,&Ncell);
+              result, &Ncell,&Ncell FCONE FCONE);
       }
   }
 
@@ -840,7 +839,8 @@ void maternRasterConditional(
           "R", "L", "T", "N",
           &Ncell, Ny, &oneD,
           REAL(varY), Ny,
-          REAL(covDataGrid), &Ncell);
+          REAL(covDataGrid), &Ncell
+          FCONE FCONE FCONE FCONE);
 
       // var U
       maternRaster(
@@ -876,14 +876,15 @@ void maternRasterConditional(
           REAL(covDataGrid), &Ncell,
           REAL(covDataGrid), &Ncell,
           &oneD,
-          varGrid, &Ncell);
+          varGrid, &Ncell
+          FCONE FCONE);
 
 
 
       // cholesky
       F77_CALL(dpotrf)("L",
           &Ncell, varGrid,
-          &Ncell, &D);
+          &Ncell, &D FCONE);
 
 
       // multiply, want L %*% Z
@@ -893,7 +894,8 @@ void maternRasterConditional(
           "R", "L", "N", "N",
           &Ncell, Nsim, &oneD,
           varGrid, &Ncell,
-          resultHere, &Ncell);
+          resultHere, &Ncell
+          FCONE FCONE FCONE FCONE);
 
 
       // conditional mean
@@ -903,7 +905,8 @@ void maternRasterConditional(
           "R", "L", "N", "N",
           Ny, Nsim, &oneD,
           REAL(varY), Ny,
-          ydataHere, Ny);
+          ydataHere, Ny
+          FCONE FCONE FCONE FCONE);
 
       // crossprod and add random bit
         F77_NAME(dgemm)(
@@ -914,7 +917,8 @@ void maternRasterConditional(
             &Ncell,
             ydataHere, Ny,
             &oneD,
-            resultHere, &Ncell);
+            resultHere, &Ncell
+            FCONE FCONE);
   } // param loop
 
 //  free(varY);

@@ -11,14 +11,15 @@ if(Sys.info()['sysname'] =='Linux' & requireNamespace("INLA", quietly=TRUE)) {
 }
 
 ## ----packages-----------------------------------------------------------------
-library('mapmisc')
 library("geostatsp")
 data('murder')
 data('torontoPop')
 
 ## ----Covariates, tidy=FALSE---------------------------------------------------
-if(requireNamespace("rgdal") & requireNamespace("rgeos")) {
-	murderT = spTransform(murder, omerc(murder, angle=-20))
+if(requireNamespace("rgdal") & requireNamespace("rgeos") ) {
+# theCrs = mapmisc::omerc(murder, angle=-20)
+	theCrs = CRS("+proj=omerc +lat_0=43.7117469868935 +lonc=-79.3789787759006 +alpha=-20 +gamma=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
+	murderT = spTransform(murder, theCrs)
 	borderT = spTransform(torontoBorder, projection(murderT))
 	borderC = crop(borderT, extent(-12700, 7000, -7500, 3100))
 }
@@ -135,45 +136,45 @@ if(!is.null(resG$parameters)) {
 
 ## ----maps, fig.cap='Random effects and fitted values', fig.subcap=c('gamma, fitted','pc fitted','gamma random','pc random'), echo=FALSE----
 
-if(require('mapmisc', quietly=TRUE) & !is.null(resG$raster)) {
+if(requireNamespace('mapmisc', quietly=TRUE) & !is.null(resG$raster)) {
 	
 	thecex=1.2	
 	
-	colFit = colourScale(resG$raster[['predict.exp']],
+	colFit = mapmisc::colourScale(resG$raster[['predict.exp']],
 			breaks=6, dec=8, style='equal',
 			transform='log')
 	
 	
-	map.new(resG$raster, TRUE)
+	mapmisc::map.new(resG$raster, TRUE)
 	plot(resG$raster[['predict.exp']], 
 			col=colFit$col,breaks=colFit$breaks,
 			legend=FALSE, add=TRUE)
 	points(murderT, col='#00FF0050',cex=0.2)
-	legendBreaks('bottomright', colFit, cex=thecex)
+	mapmisc::legendBreaks('bottomright', colFit, cex=thecex)
 	
 	
-	map.new(resG$raster, TRUE)
+	mapmisc::map.new(resG$raster, TRUE)
 	plot(resP$raster[['predict.exp']], 
 			col=colFit$col,breaks=colFit$breaks,
 			legend=FALSE, add=TRUE)
 	points(murderT, col='#00FFFF50',cex=0.2)
-	legendBreaks('bottomright', colFit, cex=thecex)
+	mapmisc::legendBreaks('bottomright', colFit, cex=thecex)
 	
 	
-	colR = colourScale(resG$raster[['random.mean']],
+	colR = mapmisc::colourScale(resG$raster[['random.mean']],
 			breaks=12, dec=0, style='equal')
 	
-	map.new(resG$raster, TRUE)
+	mapmisc::map.new(resG$raster, TRUE)
 	plot(resG$raster[['random.mean']], 
 			col=colR$col,breaks=colR$breaks,
 			legend=FALSE, add=TRUE)
-	legendBreaks('bottomright', colR, cex=thecex)
+	mapmisc::legendBreaks('bottomright', colR, cex=thecex)
 	
-	map.new(resG$raster, TRUE)
+	mapmisc::map.new(resG$raster, TRUE)
 	plot(resP$raster[['random.mean']], 
 			col=colR$col,breaks=colR$breaks,
 			legend=FALSE, add=TRUE)
-	legendBreaks('bottomright', colR, cex=thecex)
+	mapmisc::legendBreaks('bottomright', colR, cex=thecex)
 	
 	
 } else {

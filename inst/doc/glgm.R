@@ -29,7 +29,6 @@ if(Sys.info()['sysname'] =='Linux' &
 if(!exists('fact')) fact = 1
 
 ## ----packages-----------------------------------------------------------------
-library('mapmisc')
 library("geostatsp")
 data('swissRain')
 

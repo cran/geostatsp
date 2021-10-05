@@ -120,7 +120,8 @@ void maternLogLGivenChol(
 			cholVariance,
 			Nobs,
 			cholCovInvXY,
-			Nobs);
+			Nobs
+			FCONE FCONE FCONE FCONE);
 
 	//  cholCovInvXcross = Matrix::crossprod(cholCovInvX)
 // transpose A, don't transpose B,
@@ -139,13 +140,14 @@ void maternLogLGivenChol(
 			// beta
 	  		&zero	,
 			// C, nrow(c)
-			cholCovInvXcross, Ncov);
+			cholCovInvXcross, Ncov
+			FCONE FCONE);
 
 	//cholCovInvXcrossInv =       Matrix::solve(cholCovInvXcross)
 	//detCholCovInvXcross = Matrix::determinant(cholCovInvXcross)$modulus
 	//    A = L  * L**T,  if UPLO = 'L'
 	// lower or upper, dim, A, nrow, info
-	F77_CALL(dpotrf)("L", Ncov, cholCovInvXcross, Ncov, &infoCholCovInvXcross);
+	F77_CALL(dpotrf)("L", Ncov, cholCovInvXcross, Ncov, &infoCholCovInvXcross FCONE);
 	// cholCovInvXcross is now cholesky of cholCovInvXcross
 	determinants[1]=0.0;  // the log determinant
 	for(D = 0; D < *Ncov; D++)
@@ -157,7 +159,7 @@ void maternLogLGivenChol(
 	// L or U, dim, L, ncol
 	F77_NAME(dpotri)("L", Ncov,
 			cholCovInvXcross, Ncov,
-			&infoInvCholCovInvXcross);
+			&infoInvCholCovInvXcross FCONE);
 	// cholCovInvXcross is now cholCovInvXcrossInv
 
 	//betaHat = as.vector(
@@ -180,7 +182,8 @@ void maternLogLGivenChol(
 			// beta
 	  		&zero,
 			// C, nrow(c)
-			LxLy, Ncov);
+			LxLy, Ncov
+			FCONE FCONE);
 	// LxLy is Ncov by Nrep
 
 	// betaHat = cholCovInvXcrossInv %*% LxLy
@@ -199,7 +202,8 @@ void maternLogLGivenChol(
 			// beta
 	  		&zero,
 			// C, nrow(c)
-			betaHat, Ncov);
+			betaHat, Ncov
+			FCONE FCONE);
 
 
 	// totalSsq Y Vinv Y and
@@ -243,7 +247,7 @@ void maternLogLGivenVarU(
 		varMat[D*N[0]+D] = *varDiag;
 	}
 
-	F77_CALL(dpotrf)("L", N, varMat, N, &infoCholVarmat);
+	F77_CALL(dpotrf)("L", N, varMat, N, &infoCholVarmat FCONE);
 
 	determinants[0]=0.0;  // the log determinant
 	for(D = 0; D < N[0]; D++)

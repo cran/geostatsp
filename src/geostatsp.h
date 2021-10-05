@@ -1,10 +1,21 @@
+/*
+ see https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Fortran-character-strings
+ */
+#define USE_FC_LEN_T
+
 #include<R.h>
+#include <R_ext/BLAS.h>
+#ifndef FCONE
+# define FCONE
+#endif
+
 #include<Rmath.h>
 #include<R_ext/Lapack.h>
 #include<R_ext/Applic.h>
 #include<R_ext/Print.h>
 #include<R_ext/Utils.h>
 #include<Matrix.h>
+
 
 
 /* type = 0, distances is a vector

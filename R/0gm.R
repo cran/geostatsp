@@ -267,6 +267,10 @@ data = stack(data, resample(cellsSmall, data, method='ngb'))
 dataSP = as(data, "SpatialPointsDataFrame")
 dataDF =dataSP@data
 
+# get rid of rows with missing response if lgcp with count response
+if(names(dataDF)[1] == 'count')
+  dataDF = dataDF[!is.na(dataDF$count), ]
+
   # redo factors
 # loop through spatial covariates which are factors
 for(D in intersect(Sfactor, names(covariatesDF))) {

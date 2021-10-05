@@ -37,7 +37,7 @@ matern.dist = function(x,
 		attributes(result)$cholInfo = cres$type
 
 	} else {
-		result = new("dsyMatrix", 
+		result = new("dpoMatrix", 
 			Dim = dim(x), 
 			uplo="L",
 			x=cres$result)
@@ -121,7 +121,7 @@ matern.Raster = function(x,
 		values(x) = resC$result		
 	} else {
 		if(symm){
-			x = new("dsyMatrix", 
+			x = new("dpoMatrix", 
 				Dim = as.integer(rep(Ny,2)), 
 				uplo="L",
 				x=resC$result)
@@ -209,7 +209,7 @@ matern.SpatialPointsXX = function(x,
 		attributes(result)$logDetHalf = resC$halfLogDet
 		attributes(result)$cholInfo = resC$type
 	} else {
-		result = new("dsyMatrix", 
+		result = new("dpoMatrix", 
 			Dim = as.integer(c(length(x), length(x))), 
 			uplo="L",
 			x=resC$result)

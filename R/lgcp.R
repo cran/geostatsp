@@ -32,6 +32,10 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 		cells, fun="count")
 	names(counts) = "count"
 	counts[is.na(counts)] = 0
+
+	if(!missing(border)) {
+		counts = mask(counts, border)
+	}
 	
 	
 # the formula	

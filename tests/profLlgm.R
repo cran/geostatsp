@@ -188,6 +188,7 @@ res= mapply(
 
 lMatrix = matrix(res, length(newParamList[[1]]), length(newParamList[[2]]))
 
+if(requireNamespace("mapmisc", quietly=TRUE)) {
 myCol = mapmisc::colourScale(lMatrix, breaks=8, dec=0)
 
 if(!interactive()) 
@@ -204,6 +205,6 @@ if(!interactive())
 	dev.off()
 
 }
-
+}
 
 

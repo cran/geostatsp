@@ -1,8 +1,8 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistical Modelling with Likelihood and Bayes
-Version: 1.8.5
-Date: 2021-03-11
+Version: 1.8.6
+Date: 2021-09-27
 Depends: Matrix (>= 1.2.0), raster, sp, R (>= 3.5.0)
 Imports: abind, numDeriv, methods, stats
 Suggests: RandomFields (>= 3.3.4), rgdal, parallel, mapmisc, ellipse,
@@ -21,7 +21,7 @@ VignetteBuilder: knitr
 RoxygenNote: 5.0.1
 Repository: CRAN
 Repository/R-Forge/Project: diseasemapping
-Repository/R-Forge/Revision: 2642
-Repository/R-Forge/DateTimeStamp: 2021-03-15 19:40:07
-Date/Publication: 2021-03-19 00:00:03 UTC
-Packaged: 2021-03-15 19:47:32 UTC; rforge
+Repository/R-Forge/Revision: 2883
+Repository/R-Forge/DateTimeStamp: 2021-09-30 00:51:19
+Date/Publication: 2021-10-05 08:10:08 UTC
+Packaged: 2021-09-30 01:08:33 UTC; rforge

@@ -107,6 +107,7 @@ setMethod("RFsimulate",
         theArgs$err.model = err.model
       theArgs$n = n
       theArgs$spConform=TRUE
+      theArgs$grid = FALSE
       
       res= try(do.call(RandomFields::RFsimulate, theArgs))
       
@@ -278,7 +279,7 @@ setMethod("RFsimulate",
             as.integer(1)
           )
         
-        theCov =  new("dsyMatrix", 
+        theCov =  new("dpoMatrix", 
           Dim = as.integer(rep(ncell(xRaster),2)), 
           uplo="L",
           x=resC$result)
@@ -286,8 +287,9 @@ setMethod("RFsimulate",
         Linv = matern(data, param=paramForData, type='inverseCholesky')
         covpreddata = matern(res2, y=data, param=model)
         xcov =  tcrossprod(covpreddata,Linv)
-        
-        theCov  =theCov - tcrossprod(xcov)
+        xcov2 = tcrossprod(xcov)
+
+        theCov  =theCov - xcov2
         theChol = chol(theCov)
         
       } else {
@@ -300,7 +302,7 @@ setMethod("RFsimulate",
       
       if(!is.null(data)) {
         theSim = theSim + xcov %*% 
-          (Linv %*% data.frame(data)[,1])	
+          (Linv %*% as.matrix(data.frame(data)[,1]))	
       }
       theSim = as.data.frame(as.matrix(theSim))
       
@@ -504,7 +506,7 @@ setMethod("RFsimulate",
     
     for(D in rev(Siter)) {
       
-      resHere = 	callGeneric(
+      resHere = callGeneric(
         model=model[D,], 
         x, data= data[,D], 
         err.model= err.model[D], n=1, ...)

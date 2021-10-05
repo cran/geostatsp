@@ -54,6 +54,7 @@ myResR = lgm(formula = sim ~ x,
 #+ simPlot
 Sbreaks = c(-100000,-50,-20,-10, -5,  -2, -1,0)
 
+if(requireNamespace("mapmisc", quietly=TRUE)) {
 myCol = mapmisc::colourScale(
     breaks = Sbreaks + max(myResR$array[,-1,'logLreml',], na.rm=TRUE),
     style='fixed',
@@ -75,6 +76,7 @@ text(myResR$param['propNugget'], myResR$param['oneminusar'], 'mle', pos=3)
 
 points(otherPar['tau']^2/myParam['conditionalVariance'], myParam['oneminusar'], pch=16, col='red')
 text(otherPar['tau']^2/myParam['conditionalVariance'], myParam['oneminusar'], 'truth', pos=3)
+}
 #'
 
 
@@ -197,7 +199,7 @@ swissResR =  lgm(
 #'
 
 #+ swissRainPlot
-
+if(requireNamespace("mapmisc", quietly=TRUE)) {
 myCol = mapmisc::colourScale(
     breaks = Sbreaks + max(swissResR$array[,-1,'logLreml',], na.rm=TRUE),
     style='fixed',
@@ -212,6 +214,7 @@ image(
     log='xy',
     col=myCol$col, breaks=myCol$breaks)
 mapmisc::legendBreaks("topright", breaks = Sbreaks, col=myCol$col)
+}
 #'
 
 
@@ -239,7 +242,7 @@ plot(myResBC$profL$boxcox,type='o',
   ylim=max(c(-10000,myResBC$profL$boxcox[,2]), na.rm=TRUE)-c(3,0))
 
 myResBC$param
-
+if(requireNamespace("mapmisc", quietly=TRUE)){
 myCol = mapmisc::colourScale(
     breaks = Sbreaks,
     style='fixed',
@@ -255,6 +258,7 @@ image(
     col=myCol$col, breaks=myCol$breaks+max(myResBC$array[,,'logLreml',], na.rm=TRUE))
 mapmisc::legendBreaks("topright",  myCol)
 points(myResBC$param['propNugget'], myResBC$param['oneminusar'])
+}
 #'
 
 #' optimizing, doesn't work
