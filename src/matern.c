@@ -440,6 +440,7 @@ int typeStringToInt(SEXP type){
 
 SEXP maternPoints(
     SEXP points,
+    SEXP result,
     SEXP param,
     // range,
     // shape,
@@ -449,102 +450,48 @@ SEXP maternPoints(
     // nugget,
     SEXP type) {
 
-  const char *valid[] = {"SpatialPoints", "SpatialPointsDataFrame"};
-  SEXP halfLogDet, result, dim, resultX, resultUplo;
-  int typeInt, N;
-  double *P;
+  SEXP halfLogDet= NEW_NUMERIC(1);
+  int N= Rf_nrows(points);
 
-  // check points are SpatialPoints*
-  if(strcmp(
-      CHAR(STRING_ELT(getAttrib(points, R_ClassSymbol), 0)),
-      valid[0]
-  ) *	strcmp(
-      CHAR(STRING_ELT(getAttrib(points, R_ClassSymbol), 0)),
-      valid[1]
-  ) != 0) {
-      Rprintf("class %s\n",
-              CHAR(STRING_ELT(getAttrib(points, R_ClassSymbol), 0))
-      );
-      error("invalid class of 'points' in maternPoints, must be SpatialPoints*");
-  }
-
-  N = INTEGER(getAttrib(
-      GET_SLOT(points, install("coords")),
-      R_DimSymbol))[0];
-  P = REAL(GET_SLOT(points, install("coords")));
-
-  typeInt = typeStringToInt(type);
-
-  resultX = PROTECT(NEW_NUMERIC(N*N));
-  halfLogDet = PROTECT(NEW_NUMERIC(1));
-  dim = PROTECT(NEW_INTEGER(2));
-  resultUplo = PROTECT(ScalarString(mkChar("L")));
-
-  INTEGER(dim)[0] = N;
-  INTEGER(dim)[1] = N;
-
-
-  if( (typeInt == 2) | (typeInt == 4)) {
-    // lower triangle
-    result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dtrMatrix"))));
-  } else {
-     // symmetric
-    result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dsyMatrix"))));
-  }
-
-
-  SET_SLOT(result, install("x"), resultX);
-  SET_SLOT(result, install("Dim"), dim);
-  SET_SLOT(result, install("uplo"), resultUplo);
-
-  SEXP type_s = PROTECT(install("type"));
-  SEXP param_s = PROTECT(install("param"));
-  setAttrib(result, type_s, PROTECT(duplicate(type)));
-  setAttrib(result, param_s, PROTECT(duplicate(param)));
 
   maternAniso(
-      P, // x
-      &P[N], // y
+      REAL(points), // x
+      &REAL(points)[N], // y
       &N,
-      REAL(resultX),
+      REAL(GET_SLOT(result, install("x"))),
       &REAL(param)[0],// range,
       &REAL(param)[1],// shape,
       &REAL(param)[2],// variance,
       &REAL(param)[3],// anisoRatio,
       &REAL(param)[4],// anisoAngleRadians,
       &REAL(param)[5],// nugget,
-      &typeInt,
+      INTEGER(type),
       REAL(halfLogDet)
   );
 
-  if(typeInt > 1) {
-      setAttrib(result, install("halfLogDet"), halfLogDet);
-  }
-
-  UNPROTECT(11); // was 9
-  return result;
+  return halfLogDet;
 }
-
 
 
 SEXP maternDistance(
     SEXP distance,
+    SEXP result,
     SEXP param,
     // range, shape,
     // variance, nugget,
-    SEXP type
+    int *type
     //c('variance','cholesky','precision','inverseCholesky')
 ) {
 
-  SEXP result, halfLogDet;
+  SEXP halfLogDet= NEW_NUMERIC(1);
   const char
   *valid[] = {"dsyMatrix"};
-  int typeInt=5, D, D2, N;
-  double *P;
+  int typeInt=*type, D, D2, N;
+  double *P, *Presult;
 
   N = INTEGER(GET_SLOT(distance, install("Dim")))[0];
   P = REAL(GET_SLOT(distance, install("x")));
-  halfLogDet = PROTECT(NEW_NUMERIC(1));
+  Presult = REAL(GET_SLOT(result, install("x")));
 
   // check distance is symmetric
   if(R_check_class_etc(distance, valid)) {
@@ -562,40 +509,13 @@ SEXP maternDistance(
           P[D + D2*N] = P[D2 + D*N];
   }
 
-  typeInt = typeStringToInt(type);
-
-  if( (typeInt == 2) | (typeInt == 4) ) {
-      // lower triangle
-      result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dtrMatrix"))));
-  } else {
-      // symmetric
-      result = PROTECT(NEW_OBJECT(PROTECT(MAKE_CLASS("dsyMatrix"))));
-  }
-
-  SEXP x_s = PROTECT(install("x"));
-  SEXP Dim_s = PROTECT(install("Dim"));
-  SEXP Dimnames_s = PROTECT(install("Dimnames"));
-  SEXP uplo_s = PROTECT(install("uplo"));
-  SEXP L_s = PROTECT(ScalarString(mkChar("L")));
 
 
-  SET_SLOT(result, x_s,
-           PROTECT(duplicate(GET_SLOT(distance, x_s))));
-  SET_SLOT(result, Dim_s,
-           PROTECT(duplicate(GET_SLOT(distance, Dim_s))));
-  SET_SLOT(result, Dimnames_s,
-           PROTECT(duplicate(GET_SLOT(distance, Dimnames_s))));
-  SET_SLOT(result, uplo_s, L_s);
-
-  SEXP type_s = PROTECT(install("type"));
-  SEXP param_s = PROTECT(install("param"));
-  setAttrib(result, type_s, PROTECT(duplicate(type)));
-  setAttrib(result, param_s, PROTECT(duplicate(param)));
 
   matern(
       P,
       &N, //N
-      REAL(GET_SLOT(result,  x_s)),
+      Presult,
       &REAL(param)[0],// range,
       &REAL(param)[1],// shape,
       &REAL(param)[2],// variance,
@@ -603,13 +523,7 @@ SEXP maternDistance(
       &typeInt,
       REAL(halfLogDet));
 
-
-  if(typeInt > 1) {
-      setAttrib(result, install("halfLogDet"), halfLogDet);
-  }
-
-  UNPROTECT(16); // was 14?
-  return result;
+  return halfLogDet;
 }
 
 

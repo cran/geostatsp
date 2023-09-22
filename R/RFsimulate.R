@@ -28,7 +28,7 @@ setGeneric('RFsimulate', function(
 
 
 setMethod("RFsimulate", 
-  signature(model="RMmodel", x="GridTopology"),
+  signature(model="RMmodel", x="SpatRaster"),
   function(model, x,  data = NULL, 
     err.model=NULL, n = 1, ...)  {
     
@@ -37,15 +37,15 @@ setMethod("RFsimulate",
       
       # convert data to an RFspdf (it might be a vanilla spdf)	
       if(!is.null(data)) {
-        if(any(class(data)=='SpatialPointsDataFrame')){
+        if(any(class(data)=='SpatVector')){
           data = RandomFields::conventional2RFspDataFrame(
-            data=as.matrix(data@data[,1]), 
-            coords=as.matrix(data@coords),
+            data=as.matrix(values(data)[,1]), 
+            coords=crds(data),
             n = 1)
           # for some reason there is sometimes an error of
           # Error in simu[index, ] : subscript out of bounds
           # in RandomFields unless I do the following
-          data@coords[1,1] = data@coords[1,1] + 10e-7
+#          data@coords[1,1] = data@coords[1,1] + 10e-7
         } }
       
       theArgs = list(...)
@@ -63,10 +63,7 @@ setMethod("RFsimulate",
       theArgs$n = n
       theArgs$spConform=TRUE
       res = do.call(RandomFields::RFsimulate, theArgs)
-      res = SpatialGridDataFrame(
-        grid = res@grid, data=res@data
-      )
-      
+      res = rast(res)
     } else {
       warning("RandomFields package not available")
       res = NULL
@@ -76,7 +73,7 @@ setMethod("RFsimulate",
 )
 
 setMethod("RFsimulate", 
-  signature(model="RMmodel", x="SpatialPoints"),
+  signature(model="RMmodel", x="SpatVector"),
   function(model, x, 	data = NULL, 
     err.model=NULL, n = 1, ...)  {
     
@@ -84,23 +81,21 @@ setMethod("RFsimulate",
       # convert data to an RFspdf (it might be a vanilla spdf)	
       
       if(!is.null(data)) {
-        if(any(class(data)=='SpatialPointsDataFrame')){
+        if(any(class(data)=='SpatVector')){
           data = RandomFields::conventional2RFspDataFrame(
-            array(
-              as.matrix(data@data),
-              c(dim(data@data),1)
-            ),
-            coordinates(data),
+            as.matrix(values(data)),
+            crds(data),
             n=dim(data)[2]
           )
 #		data=as(data, "RFspatialPointsDataFrame") 
         }
       }
       
+      xCoords = crds(x)
       theArgs = list(...)
       theArgs$model = model
-      theArgs$x = x@coords[,1]
-      theArgs$y = x@coords[,2]
+      theArgs$x = xCoords[,1]
+      theArgs$y = xCoords[,2]
       if(!is.null(data))
         theArgs$data = data
       if(!is.null(err.model))
@@ -121,7 +116,7 @@ setMethod("RFsimulate",
 
 
 setMethod("RFsimulate", 
-  signature(model="numeric", x="SpatialPoints"), 
+  signature(model="numeric", x="SpatVector"), 
   function(model, x,  data = NULL, 
     err.model=NULL, n = 1, ...)  {
     
@@ -140,7 +135,7 @@ setMethod("RFsimulate",
         warning("error in RandomFields")
         theSim=as.data.frame(matrix(NA, length(x), n))
       } else {
-        theSim = theSim@data
+        theSim = values(theSim)
       }
       names(theSim) = gsub("^variable1(\\.n)?","sim", names(theSim))
       
@@ -182,17 +177,15 @@ setMethod("RFsimulate",
       names(theSim) = gsub("1$", "", names(theSim)) 
     }
     
-    res = SpatialPointsDataFrame(
-      SpatialPoints(x),
-      data=theSim) 
-    
+    res = deepcopy(x)
+    terra::values(res) = theSim
     res
   }
 )
 
 setMethod("RFsimulate", 
   signature(model="numeric", 
-    x="GridTopology"), 
+    x="SpatRaster"), 
   function(model, x, data = NULL, 
     err.model=NULL, n = 1, ...)  {
     if (useRandomFields()) { 
@@ -209,18 +202,18 @@ setMethod("RFsimulate",
       
       if(all(class(theSim)%in%c('try-error', 'NULL'))) {
         warning("error in RandomFields")
-        theSim=as.data.frame(matrix(NA, prod(x@cells.dim), n))
+        theSim=as.data.frame(matrix(NA, prod(dim(x)[1:2], n)))
       } else {
-        theSim = theSim@data
+        theSim = values(theSim)
       }
     } else { #RandomFields not available
       modelFull = fillParam(model)
-      res2 = raster(x)
+      res2 = rast(x)
       if(ncell(res2) > 500) {
         message("install the RandomFields package for faster simulations")
       }
       if(n>1) {
-        res2 = brick(res2, nl=n)
+        res2 = rast(res2, nlyrs=n)
       }
       
       theRandom = matrix(
@@ -251,23 +244,19 @@ setMethod("RFsimulate",
         # do all this in C?
         
         
-        xRaster = raster(x)
+        xRaster = rast(x)
         
         resC = .C(
           C_maternRaster, #"maternRasterConditional",
           # raster
           as.double(xmin(xRaster)), 
-            as.double(xres(xRaster)), 
+            as.double(res(xRaster)[1]), 
             as.integer(ncol(xRaster)), 
             # raster y
             as.double(ymax(xRaster)), 
-            as.double(yres(xRaster)), 
+            as.double(res(xRaster)[2]), 
             as.integer(nrow(xRaster)),
-            # data 
-# as.double(y@data[,1]),    
-#          as.double(y@coords[,1]), 
-#          as.double(y@coords[,2]), 
-#          N=as.integer(Ny), 
+
             # conditional covariance matrix
             result=as.double(matrix(0, ncell(xRaster), ncell(xRaster))),
             # parameters
@@ -314,14 +303,12 @@ setMethod("RFsimulate",
     }
     
     
-    res = SpatialGridDataFrame(x,theSim)
-    
-    res
+    result = rast(x, nlyrs = ncol(theSim), vals = theSim, names = colnames(theSim))
   }
 )
 
 setMethod("RFsimulate", 
-  signature("matrix", "Raster"),
+  signature("matrix", "SpatRaster"),
   function(model, x, data=NULL, 
     err.model=NULL, n = nrow(model), ...)  {
     
@@ -330,8 +317,8 @@ setMethod("RFsimulate",
     Siter = round(seq(1,nrow(model), len=n))
     
     if(!is.null(data)) {
-      if(!any(class(data)== "SpatialPointsDataFrame"))
-        warning("data should be a SpatialPointsDataFrame")
+      if(!any(class(data)== "SpatVector"))
+        warning("data should be a SpatVector")
       # check data variables
       if(ncol(data) == 1) {
         data = data[,rep(1,max(Siter))]
@@ -370,7 +357,7 @@ setMethod("RFsimulate",
         err.model=err.model[D], 
         n=1,
         ...)
-      result = brick( 
+      result = c( 
         resultHere,result
       )
     }
@@ -384,64 +371,8 @@ setMethod("RFsimulate",
   }
 )
 
-setMethod("RFsimulate", 
-  signature(model="ANY", x="Raster"), 
-  function(
-    model, x,
-    data=NULL, 
-    err.model=NULL, n = 1, ...)  {
-    
-    theproj = x@crs
-    x = as(x, "GridTopology")
-    res = callGeneric( 
-      model=model, x=x,  
-      data=data, 
-      err.model=err.model, 
-      n=n, ... 
-    )
-    res2 = brick(res)
-    if(nlayers(res2)==1){
-      res2 = res2[[1]]			
-    }
-    res2@crs = theproj
-    names(res2) = gsub("^variable1\\.n","sim", names(res2))
-    
-    return(res2)
-  }
-)
 
 
-RFsimulate.SPgrid	=	function(
-  model, x, 
-  data=NULL, 
-  err.model=NULL, n = 1, ...)  {
-  xOrig = x
-  x= as(x, "GridTopology")
-  
-#			res2 = callGeneric( 
-#					model, x,  
-#					data=data,	
-#					err.model= err.model, 
-#          n=n, ... 
-#			)
-  res2 = callGeneric()
-  if(!length(grep("DataFrame$", class(xOrig)))) {
-    xOrig = as(xOrig, paste(class(xOrig), "DataFrame",sep=""))
-  }
-  xOrig@data = res2@data
-  
-  return(xOrig)
-}
-
-
-setMethod("RFsimulate", 
-  signature("numeric", "SpatialPixels"), 
-  RFsimulate.SPgrid)
-
-
-setMethod("RFsimulate", 
-  signature("numeric", "SpatialGrid"), 
-  RFsimulate.SPgrid)
 
 
 setMethod("RFsimulate", 
@@ -460,7 +391,7 @@ setMethod("RFsimulate",
 )
 
 setMethod("RFsimulate", 
-  signature("matrix", "Spatial"),
+  signature("matrix", "SpatVector"),
   function(model, x,  data=NULL, 
     err.model=NULL, n = nrow(model), ...)  {
     
@@ -470,8 +401,8 @@ setMethod("RFsimulate",
     Siter = round(seq(from=1, to=nrow(model), len=n))
     
     if(!is.null(data)) {
-      if(!any(class(data)== "SpatialPointsDataFrame"))
-        warning("data should be a SpatialPointsDataFrame")
+      if(!any(class(data)== "SpatVector"))
+        warning("data should be a SpatVector")
       # check data variables
       if(ncol(data) == 1) {
         data = data[,rep(1,max(Siter))]
@@ -512,7 +443,7 @@ setMethod("RFsimulate",
         err.model= err.model[D], n=1, ...)
       
       result = cbind(
-        resHere@data[,'sim'],
+        values(resHere)[,'sim'],
         result
       )
     }
@@ -520,7 +451,7 @@ setMethod("RFsimulate",
     if(n>1)
       colnames(result) = paste('sim', 1:n, sep='')
     
-    resHere@data	= as.data.frame(result)
+    values(resHere)	= as.data.frame(result)
     
     resHere
   }

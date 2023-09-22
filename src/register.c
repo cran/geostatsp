@@ -48,13 +48,11 @@ static const R_CMethodDef cMethods[] = {
    {NULL, NULL, 0, NULL}
 };
 
-// .Call 
-//maternPoints, maternDistance gmrflik
 static const R_CallMethodDef callMethods[]  = {
-  {"maternPoints", (DL_FUNC) &maternPoints, 3},
-  {"maternDistance", (DL_FUNC) &maternDistance, 3},
+  {"maternPoints", (DL_FUNC) &maternPoints, 4},
+  {"maternDistance", (DL_FUNC) &maternDistance, 4},
   {"gmrfLik", (DL_FUNC) &gmrfLik, 6},
-  {"gmrfEdge", (DL_FUNC) &gmrfEdge, 3},
+  {"gmrfEdge", (DL_FUNC) &gmrfEdge, 4},
   {NULL, NULL, 0}
 };
 

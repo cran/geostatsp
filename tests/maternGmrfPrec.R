@@ -1,7 +1,7 @@
 library('geostatsp')
 matrix(NNmat(7, 7)[,25], 7, 7)
 
-myr = squareRaster(extent(0,600,0,300), 60)
+myr = squareRaster(ext(0,600,0,300), 60)
 theNN = NNmat(myr)
 
 
@@ -78,7 +78,7 @@ if(Sys.info()['user'] =='patrick') {
 	
 	therast = attributes(precMat)$raster
 	values(therast)=NA
-	varRast = brick(therast, therast,therast,therast,therast,therast)
+	varRast = c(therast, therast,therast,therast,therast,therast)
 	names(varRast) = c('mid','edge','midCor','edgeCor','midAdj','edgeAdj')
 	values(varRast[['mid']]) = as.vector(Matrix::solve(precMat, midVec))
 	values(varRast[['edge']]) = as.vector(Matrix::solve(precMat, edgeVec))
@@ -133,11 +133,11 @@ if(Sys.info()['user'] =='patrick') {
 	yseq = seq(ymin(varRast)+yres(varRast)/2,ymax(varRast), by=yres(varRast))
 	
 	vx= extract(varRast, 
-			SpatialPoints(cbind(xseq,
+			vect(cbind(xseq,
 							rep(xymid[2],length(xseq)))
 			))
 	vy = extract(varRast, 
-			SpatialPoints(cbind(
+			vect(cbind(
 							rep(xymid[1],length(yseq)),
 							yseq)
 			)
@@ -146,8 +146,8 @@ if(Sys.info()['user'] =='patrick') {
 	aseq = seq(0,100,by=xres(varRast))
 	aseq = sort(unique(c(aseq, -aseq)))
 	
-	lur = SpatialPoints(cbind(xymid[1]+aseq,xymid[2]+aseq))
-	lll = SpatialPoints(cbind(xymid[1]-aseq,xymid[2]+aseq))
+	lur = vect(cbind(xymid[1]+aseq,xymid[2]+aseq))
+	lll = vect(cbind(xymid[1]-aseq,xymid[2]+aseq))
 	
 	vur = extract(varRast, 
 			lur		)
@@ -161,11 +161,11 @@ if(Sys.info()['user'] =='patrick') {
 	yseqe = seq(ymin(varRast)+yres(varRast)/2,ymax(varRast), by=yres(varRast))
 	
 	vxe= extract(varRast, 
-			SpatialPoints(cbind(xseqe,
+			vect(cbind(xseqe,
 							rep(xyedg[2],length(xseqe)))
 			))
 	vye = extract(varRast, 
-			SpatialPoints(cbind(
+			vect(cbind(
 							rep(xyedg[1],length(yseqe)),
 							yseqe)
 			)
@@ -174,8 +174,8 @@ if(Sys.info()['user'] =='patrick') {
 	aseqe = seq(0,100,by=xres(varRast))
 	aseqe = sort(unique(c(aseqe, -aseqe)))
 	
-	lure = SpatialPoints(cbind(xyedg[1]+aseqe,xyedg[2]+aseqe))
-	llle = SpatialPoints(cbind(xyedg[1]-aseqe,xyedg[2]+aseqe))
+	lure = vect(cbind(xyedg[1]+aseqe,xyedg[2]+aseqe))
+	llle = vect(cbind(xyedg[1]-aseqe,xyedg[2]+aseqe))
 	
 	vure = extract(varRast, 
 			lure		)

@@ -5,13 +5,13 @@
 \alias{lgm,missing,ANY,ANY,ANY-method}
 \alias{lgm,numeric,ANY,ANY,ANY-method}
 \alias{lgm,character,ANY,ANY,ANY-method}
-\alias{lgm,formula,Spatial,numeric,ANY-method}
-\alias{lgm,formula,Spatial,Raster,missing-method}
-\alias{lgm,formula,Spatial,Raster,list-method}
-\alias{lgm,formula,Spatial,Raster,Raster-method}
-\alias{lgm,formula,Spatial,Raster,data.frame-method}
-\alias{lgm,formula,Raster,ANY,ANY-method}
-\alias{lgm,formula,data.frame,Raster,data.frame-method}
+\alias{lgm,formula,SpatVector,numeric,ANY-method}
+\alias{lgm,formula,SpatVector,SpatRaster,missing-method}
+\alias{lgm,formula,SpatVector,SpatRaster,list-method}
+\alias{lgm,formula,SpatVector,SpatRaster,SpatRaster-method}
+\alias{lgm,formula,SpatVector,SpatRaster,data.frame-method}
+\alias{lgm,formula,SpatRaster,ANY,ANY-method}
+\alias{lgm,formula,data.frame,SpatRaster,data.frame-method}
 
 \title{
  Linear Geostatistical Models
@@ -52,7 +52,7 @@ fixShape=TRUE,
 fixBoxcox=TRUE,
 fixNugget = FALSE,
 ...) 
-\S4method{lgm}{formula,Spatial,numeric,ANY}(
+\S4method{lgm}{formula,SpatVector,numeric,ANY}(
 formula, data, grid, covariates, 
 buffer=0, shape=1, boxcox=1, nugget = 0, 
 expPred=FALSE, nuggetInPrediction=TRUE,
@@ -62,7 +62,7 @@ fixShape=TRUE,
 fixBoxcox=TRUE,
 fixNugget = FALSE,
 ...) 
-\S4method{lgm}{formula,Spatial,Raster,missing}(
+\S4method{lgm}{formula,SpatVector,SpatRaster,missing}(
 formula, data, grid, covariates, 
 buffer=0, shape=1, boxcox=1, nugget = 0, 
 expPred=FALSE, nuggetInPrediction=TRUE,
@@ -72,7 +72,7 @@ fixShape=TRUE,
 fixBoxcox=TRUE,
 fixNugget = FALSE,
 ...) 
-\S4method{lgm}{formula,Spatial,Raster,list}(
+\S4method{lgm}{formula,SpatVector,SpatRaster,list}(
 formula, data, grid, covariates, 
 buffer=0, shape=1, boxcox=1, nugget = 0, 
 expPred=FALSE, nuggetInPrediction=TRUE,
@@ -82,7 +82,7 @@ fixShape=TRUE,
 fixBoxcox=TRUE,
 fixNugget = FALSE,
 ...) 
-\S4method{lgm}{formula,Spatial,Raster,Raster}(
+\S4method{lgm}{formula,SpatVector,SpatRaster,SpatRaster}(
 formula, data, grid, covariates, 
 buffer=0, shape=1, boxcox=1, nugget = 0, 
 expPred=FALSE, nuggetInPrediction=TRUE,
@@ -92,7 +92,7 @@ fixShape=TRUE,
 fixBoxcox=TRUE,
 fixNugget = FALSE,
 ...) 
-\S4method{lgm}{formula,Spatial,Raster,data.frame}(
+\S4method{lgm}{formula,SpatVector,SpatRaster,data.frame}(
 formula, data, grid, covariates, 
 buffer=0, shape=1, boxcox=1, nugget = 0, 
 expPred=FALSE, nuggetInPrediction=TRUE,
@@ -102,7 +102,7 @@ fixShape=TRUE,
 fixBoxcox=TRUE,
 fixNugget = FALSE,
 ...) 
-\S4method{lgm}{formula,Raster,ANY,ANY}(
+\S4method{lgm}{formula,SpatRaster,ANY,ANY}(
 formula, data, grid, covariates, 
 buffer=0, shape=1, boxcox=1, nugget = 0, 
 expPred=FALSE, nuggetInPrediction=TRUE,
@@ -112,7 +112,7 @@ fixShape=TRUE,
 fixBoxcox=TRUE,
 fixNugget = FALSE,
 ...) 
-\S4method{lgm}{formula,data.frame,Raster,data.frame}(
+\S4method{lgm}{formula,data.frame,SpatRaster,data.frame}(
 formula, data, grid, covariates, 
 buffer=0, shape=1, boxcox=1, nugget = 0, 
 expPred=FALSE, nuggetInPrediction=TRUE,
@@ -127,13 +127,13 @@ fixNugget = FALSE,
 \arguments{
 \item{formula}{A model formula for the fixed effects, or a character string specifying the response variable.}
  \item{data}{
-A \code{SpatialPointsDataFrame} or \code{Raster} layer, brick or stack containing the locations and observations, and possibly covariates.
+A \code{SpatVector} or \code{SpatRaster} layer, brick or stack containing the locations and observations, and possibly covariates.
 }
-\item{grid}{Either a \code{\link[raster]{raster}}, or a single integer giving the
+\item{grid}{Either a \code{\link[terra]{SpatRaster}}, or a single integer giving the
 number of cells in the X direction which predictions will be made on.  If the later
 the predictions will be a raster of square cells covering the bounding box of \code{data}.}
 \item{covariates}{
-The spatial covariates used in prediction, either a \code{\link[raster]{raster}} stack or list of rasters.
+The spatial covariates used in prediction, either a \code{\link[terra]{SpatRaster}} stack or list of rasters.
 Covariates in \code{formula} but not in \code{data} will be extracted from \code{covariates}.
 }
 \item{shape}{Order of the Matern correlation}
@@ -159,7 +159,7 @@ done in parallel where possible. }
 specified with a vector \code{param} of named elements}
 }
 \details{
-When \code{data} is a \code{SpatialPointsDataFrame}, parameters are estimated using \code{\link[stats]{optim}} to maximize
+When \code{data} is a \code{SpatVector}, parameters are estimated using \code{\link[stats]{optim}} to maximize
  the
 log-likelihood function computed by  \code{\link{likfitLgm}} and spatial prediction accomplished with \code{\link{krigeLgm}}.
 
@@ -167,7 +167,7 @@ With \code{data} being a \code{Raster} object, a Markov Random Field approximati
 be estimated should be provided as vectors of possible values, with optimization only considering the parameter values supplied.
 }
 \value{
-A list is returned which includes a \code{RasterStack} named \code{predict} having layers:
+A list is returned which includes a \code{SpatRaster} named \code{predict} having layers:
 \item{fixed}{Estimated means from the fixed effects portion of the model}
 \item{random}{Predicted random effect}
 \item{krigeSd}{Conditional standard deviation of predicted random effect (on the transformed scale if applicable)}
@@ -187,6 +187,9 @@ output from the call to the  \code{\link[stats]{optim}} function.
 \examples{
 
 data("swissRain")
+swissRain = unwrap(swissRain)
+swissAltitude = unwrap(swissAltitude)
+swissBorder = unwrap(swissBorder)
  
 swissRes =  lgm( formula="rain", 
 	data=swissRain[1:60,], grid=20,
@@ -200,24 +203,6 @@ swissRes$summary
 
 plot(swissRes$predict[["predict"]], main="predicted rain") 
 plot(swissBorder, add=TRUE)
-
-
-
-\dontrun{
-load(url("http://www.filefactory.com/file/frd1mhownd9/n/CHE_adm0_RData"))
-
-library('RColorBrewer')
-par(mar=c(0,0,0,3))
-plot(gadm) 
-plot(mask(projectRaster(
-	swissRes$predict[["predict"]],  crs=gadm@proj4string),gadm), 
-add=T,alpha=0.6, col=brewer.pal(9, "Blues"))
-plot(gadm, add=TRUE)
-
-}
-
-
-
 
 }
 

@@ -1,27 +1,25 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistical Modelling with Likelihood and Bayes
-Version: 1.8.6
-Date: 2021-09-27
-Depends: Matrix (>= 1.2.0), raster, sp, R (>= 3.5.0)
+Version: 2.0.0
+Date: 2023-09-11
+Depends: Matrix, terra, R (>= 3.5.0)
 Imports: abind, numDeriv, methods, stats
-Suggests: RandomFields (>= 3.3.4), rgdal, parallel, mapmisc, ellipse,
-        pracma, knitr
-Enhances: INLA, diseasemapping, geoR, rgeos, mvtnorm
+Suggests: RandomFields, parallel, mapmisc, ellipse, pracma, knitr
+Enhances: INLA, diseasemapping, geoR, mvtnorm
 LinkingTo: Matrix
 Additional_repositories: https://inla.r-inla-download.org/R/testing
-Author: Patrick Brown <patrick.brown@utoronto.ca>[aut, cre], Robert Hijmans [ctb]
-Maintainer: Patrick Brown <patrick.brown@utoronto.ca>
-Description: Geostatistical modelling facilities using 'Raster' and 'SpatialPoints'
+Authors@R: person("Patrick", "Brown", 
+                    role = c("aut", "cre","cph"),
+                     email = "patrick.brown@utoronto.ca")
+Description: Geostatistical modelling facilities using 'SpatRaster' and 'SpatVector'
     objects are provided. Non-Gaussian models are fit using 'INLA', and Gaussian
-    geostatistical models use Maximum Likelihood Estimation.  For details see Brown (2015) <doi:10.18637/jss.v063.i12>.
+    geostatistical models use Maximum Likelihood Estimation.  For details see Brown (2015) <doi:10.18637/jss.v063.i12>. The 'RandomFields' package is available at <https://www.wim.uni-mannheim.de/schlather/publications/software>.
 License: GPL
 NeedsCompilation: yes
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+Packaged: 2023-09-21 20:59:52 UTC; patrick
+Author: Patrick Brown [aut, cre, cph]
+Maintainer: Patrick Brown <patrick.brown@utoronto.ca>
 Repository: CRAN
-Repository/R-Forge/Project: diseasemapping
-Repository/R-Forge/Revision: 2883
-Repository/R-Forge/DateTimeStamp: 2021-09-30 00:51:19
-Date/Publication: 2021-10-05 08:10:08 UTC
-Packaged: 2021-09-30 01:08:33 UTC; rforge
+Date/Publication: 2023-09-22 09:40:02 UTC

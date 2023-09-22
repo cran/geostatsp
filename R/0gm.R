@@ -41,6 +41,7 @@ gm.dataRaster = function(
   covariates=NULL,
   buffer=0){
 
+
   if(abs(diff(res(grid)))>0.000001 )
     warning("data is not on a square grid")
   
@@ -77,11 +78,15 @@ gm.dataRaster = function(
   inModel = gsub(
     "(,([[:alnum:]]|=|[[:space:]])+)?\\)$",#+?[[:space:]]?\\)[[:space:]]?$",
     "", inModel)
-  
+
+
   offsetToLogOrig = grep(
     "^offset\\([[:print:]]+,log=TRUE\\)$", 
     gsub("[[:space:]]+", "", alltermsFull))
+
+
   offsetToLogOrig = alltermsFull[offsetToLogOrig]
+
   if(length(offsetToLogOrig)) {
     names(offsetToLogOrig) = gsub(
       "^[[:space:]]?offset\\(|,[[:space:]]?log[[:space:]]?=[[:space:]]?TRUE[[:space:]]?\\)[[:space:]]?$",
@@ -98,69 +103,88 @@ gm.dataRaster = function(
   dataFactors = intersect(Sfactor,names(data))
   
   inModel = intersect(inModel, names(covariates))
-  if(length(inModel)) {	
-    if(length(grep("^Raster", class(covariates)))) {
+
+
+  if(length(inModel)) {
+
+    if(length(grep("SpatRaster", class(covariates)))) {
       covariates = covariates[[inModel]]
     } else {
       covariates = covariates[inModel]
     }
+
     dataFactors = intersect(Sfactor, names(data))
+
     notInData = setdiff(names(covariates), names(data))
+
     
     rmethod = rep("bilinear", length(names(covariates)))
     names(rmethod) = names(covariates)
-    rmethod[covFactors] = "ngb"
+    rmethod[covFactors] = "near"
+
     
     notLogOffset = ! names(covariates) %in% names(offsetToLogOrig)
+
     if(any(notLogOffset)){
-      if(length(grep("^Raster", class(covariates)))) {
+      if(length(grep("SpatRaster", class(covariates)))) {
+
         covariatesForStack = covariates[[which(notLogOffset)]]
+
         covariatesForStackData = 
         covariates[[notInData]]
+
       } else {
         covariatesForStack = covariates[notLogOffset]
         covariatesForStackData = 
         covariates[notInData]
       }
+
       covariatesStack = stackRasterList(
         covariatesForStack,
         cellsSmall, method=rmethod)
-      
-      covariatesStack = stack(cellsSmall, covariatesStack)
-      covData = stackRasterList(
-        covariatesForStackData, 
-        data, method=rmethod)
-      
-    } else { # only log offset
-    covariatesStack = cellsSmall
-    covData = NULL
-  }
 
+      covariatesStack = c(cellsSmall, covariatesStack)
+
+      if(length(covariatesForStackData)) {
+        covData = stackRasterList(
+          covariatesForStackData, 
+          data, method=rmethod)
+      } else {
+        covData = NULL
+      }
+
+
+    } else { # only log offset
+      covariatesStack = cellsSmall
+      covData = NULL
+    }
 
   for(D in names(offsetToLogOrig)) {
       # loop through offsets which should
       # be aggregated before taking logs
     offsetToLog = covariates[[D]]
 
-    toCrop = merge(
-      projectExtent(covariatesStack, 
+    toCrop = union(
+      project(
+        ext(covariatesStack),
+        crs(covariatesStack), 
         crs(offsetToLog)
         ),
-      projectExtent(data, 
+      project(ext(data), crs(data),
         crs(offsetToLog)
         )
       )
 
 
-    offsetToLogCrop = raster::crop(
+    offsetToLogCrop = crop(
       offsetToLog, 
       toCrop
       )
 
-    offsetToLogCrop = projectRaster(
+    offsetToLogCrop = project(
       offsetToLogCrop,
-      crs=crs(covariatesStack),
-      method='ngb')
+      y=crs(covariatesStack),
+      method='near')
 
       # aggregate for covariates
     toAggregate = floor(min(res(covariatesStack)/res(offsetToLogCrop)))
@@ -172,9 +196,9 @@ gm.dataRaster = function(
       toAggregate = 1
       offsetToLogAgg = offsetToLogCrop
     }
-    offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
+    offsetToLogAgg = project(offsetToLogAgg, covariatesStack)
 
-    offsetToLogAgg = reclassify(
+    offsetToLogAgg = classify(
       offsetToLogAgg, 
       t(c(-Inf,0,NA)) 
       )
@@ -182,7 +206,7 @@ gm.dataRaster = function(
     offsetToLogLogged = log(offsetToLogAgg) - 
     sum(log(rep_len(toAggregate,2)))
     names(offsetToLogLogged) = paste('log',D,sep='')
-    covariatesStack = stack(covariatesStack, offsetToLogLogged)
+    covariatesStack = c(covariatesStack, offsetToLogLogged)
     toDrop = which(alltermsFull==offsetToLogOrig[D])
 
       # the offsets
@@ -203,10 +227,10 @@ gm.dataRaster = function(
       formula = update.formula(
         drop.terms(terms(formula), dropx=toDrop, keep.response=TRUE),
         as.formula(
-          paste(".~.", 
+          gsub("[+]$", "", paste(".~.", 
             paste("offset(log", D, ")", sep=''),
             offsetNotLogged, 
-            sep = '+')
+            sep = '+'))
           ) 	
         )
     } else {
@@ -230,8 +254,8 @@ gm.dataRaster = function(
     toAggregateData = floor(min(res(data)/res(offsetToLogCrop)))
     if(toAggregateData != toAggregate & toAggregateData > 1 ){
       offsetToLogAgg = aggregate(offsetToLogCrop, fact=toAggregateData, fun=sum)
-      offsetToLogAgg = projectRaster(offsetToLogAgg, covariatesStack)
-      offsetToLogAgg = reclassify(
+      offsetToLogAgg = project(offsetToLogAgg, covariatesStack)
+      offsetToLogAgg = classify(
         offsetToLogAgg, 
         t(c(-Inf,0,NA)) 
         )
@@ -242,41 +266,45 @@ gm.dataRaster = function(
       names(offsetToLogLogged) = paste('log',D,sep='')
     }
 
-    covData = stack(
+    covData = c(
       covData,
       offsetToLogLogged
       )
 
-  } # end in names(offsetToLogOrig)
-  covariatesSP = as(covariatesStack, "SpatialPointsDataFrame")
-  covariatesDF = covariatesSP@data
+  } # end D in names(offsetToLogOrig)
 
-  data = stack(data, covData)			
+  covariatesSP = as.points(covariatesStack)
+  covariatesDF = values(covariatesSP)
+
+  data = c(data, covData)			
 
 
-} else {
-  covariatesDF = data.frame()
-}
+  } else { # if length(inmodel)
+    covariatesDF = data.frame()
+  }
+
+
 
 if(any(res(data)>1.25*res(cellsSmall)))
   warning("data is coarser than grid")
 
-data = stack(data, resample(cellsSmall, data, method='ngb'))	
+data = c(data, resample(cellsSmall, data, method='near'))	
 
 
-dataSP = as(data, "SpatialPointsDataFrame")
-dataDF =dataSP@data
+dataSP = suppressWarnings(as.points(data))
+dataDF = values(dataSP)
 
 # get rid of rows with missing response if lgcp with count response
+
 if(names(dataDF)[1] == 'count')
   dataDF = dataDF[!is.na(dataDF$count), ]
-
+  
   # redo factors
 # loop through spatial covariates which are factors
 for(D in intersect(Sfactor, names(covariatesDF))) {
   theTable = sort(table(dataDF[[D]]), decreasing=TRUE)
   theLevels = levels(covariates[[D]])[[1]]
-  if(is.null(theLevels)) {
+  if(identical(theLevels, "")) {
     theLabels = paste("l", names(theTable),sep="")
   } else {
     theLabels = theLevels[
@@ -289,6 +317,7 @@ for(D in intersect(Sfactor, names(covariatesDF))) {
     labels=theLabels)			
 
 }
+
 
 list(
   data=dataDF,
@@ -309,6 +338,9 @@ gm.dataSpatial = function(
   buffer=0) {
 
   if(missing(covariates)) covariates = list()
+
+
+
 
   # check response variable is in data
     if(!all.vars(formula)[1] %in% names(data)){
@@ -335,6 +367,27 @@ gm.dataSpatial = function(
       }
     }
 
+  # check for missing CRS
+  
+  if(!nchar(crs(data)) | !nchar(crs(grid)) ) {
+    if(nchar(crs(data))) {
+      warning("assigning crs of grid to data")
+      crs(grid) = crs(data)
+    } else if(nchar(crs(grid))) {
+      crs(grid) = crs(data)
+      warning("assigning crs of data to grid")
+    } else if(length(covariates)) {
+        if(nchar(crs(covariates[[1]]))) {
+          warning("assigning crs of first covariate to data")
+          crs(grid) = crs(data) = crs(covariates[[1]])
+        } else {
+          warning("no crs supplied")
+        }
+    } else {
+      warning("no crs supplied")
+    }
+  }
+
     theFactors = grep("^factor", allterms, value=T)
     theFactors = gsub("^factor\\(|\\)$", "", theFactors)
 
@@ -351,7 +404,7 @@ gm.dataSpatial = function(
 
 
     Sfactors = c(
-      names(data)[unlist(lapply(data@data, is.factor))],
+      names(data)[unlist(lapply(values(data), is.factor))],
       covFactors,
       theFactors
       )
@@ -363,7 +416,7 @@ gm.dataSpatial = function(
       warning("can't find variables", cantFind)
 
   # the grid
-    cellsBoth = cellsBuffer(grid, buffer)			
+    cellsBoth = cellsBuffer(grid, buffer)
     cellsSmall = cellsBoth$small
 
   # 
@@ -373,43 +426,29 @@ gm.dataSpatial = function(
 
       rmethod = rep("bilinear", length(names(covariates)))
       names(rmethod) = names(covariates)
-      rmethod[covFactors] = "ngb"
-      rmethod[intersect(names(covariates), termsInF)] = "ngb"
+      rmethod[covFactors] = "near"
+      rmethod[intersect(names(covariates), termsInF)] = "near"
 
       covariatesStack = stackRasterList(
         covariates, 
         template=cellsSmall, 
         method=rmethod)
-      covariatesStack = stack(cellsSmall, covariatesStack)
-
-      covariatesSP = as(covariatesStack, "SpatialPointsDataFrame")
-      covariatesDF = covariatesSP@data
+      covariatesStack = c(cellsSmall, covariatesStack)
+      covariatesSP = suppressWarnings(as.points(covariatesStack))
+      covariatesDF = values(covariatesSP)
     } else {
       covariatesDF = data.frame()
     }
-
-    # ensure row names are identical
-    rownames(data@data) = rownames(data@coords) = 
-        1:length(data)
   # loop through covariates which aren't in data, extract it from `covariates`
     for(D in setdiff(alltermsPlain, names(data))){
       if(is.null(covariates[[D]]))
         warning("cant find covariate '", D, "' in covariates or data")
-      if(!.compareCRS(covariates[[D]], data, unknown=TRUE) ) {
-        if(requireNamespace('rgdal', quietly=TRUE) ) {
-          # sometimes the names are different and an error results from spTransform
-          extractHere = raster::extract(covariates[[D]], 
-            spTransform(data, CRSobj=crs(covariates[[D]])))
-        } else { # don't have gdal
-          warning("need rgdal if covariates and data are different projections")
-        }
-      } else { # identical projections
-        extractHere = raster::extract(covariates[[D]], data) 
-      }
+
+      extractHere = extract(covariates[[D]], 
+            project(data, crs(covariates[[D]])), ID=FALSE)
 
       if(is.data.frame(extractHere)) {
-            # first two columns are poly id and point it
-        data[[D]] = extractHere[,3]
+        data[[D]] = extractHere[,1]
       } else {
         data[[D]] = extractHere
       }
@@ -417,37 +456,45 @@ gm.dataSpatial = function(
 
 
     # reproject data to grid
-    if(requireNamespace('rgdal', quietly=TRUE ) &
-      !is.na(crs(cellsSmall))) {
-        data = spTransform(data, crs(cellsSmall))
+    if(!identical(crs(cellsSmall), crs(data))) {
+        data = project(data, crs(cellsSmall))
     }
-    data$space = suppressWarnings(extract(cellsSmall, data))
+    data$space = suppressWarnings(extract(cellsSmall, data, ID=FALSE, mat=FALSE, dataframe=FALSE))
+
+
   # loop through spatial covariates which are factors
     for(D in intersect(Sfactors, names(covariatesDF))) {
-
       theLevels = levels(covariates[[D]])[[1]]
-      idCol = grep("^id$", names(theLevels), ignore.case=TRUE)[1]
+      idCol = grep("^id$", names(theLevels), ignore.case=TRUE, value=TRUE)[1]
       if(is.na(idCol)) idCol = 1
       if(D %in% names(theLevels)) {
           labelCol = D
       } else {
           labelCol = grep("^category$|^label$", 
-            names(theLevels), ignore.case=TRUE)[1]
+            names(theLevels), ignore.case=TRUE, value=TRUE)[1]
       }
       if(is.na(labelCol)) labelCol = 2
 
-      if(is.factor(data[[D]])) {
+      dataD = unlist(data[[D]])
+      if(is.factor(dataD)) {
+
         # give covariatesDF factor levels from data
-        if(all(levels(data[[D]]) %in% theLevels[,labelCol])) {
+        if(all(levels(dataD) %in% theLevels[,labelCol])) {
           # match factor levels in data to 
           # factor levels in raster
+        theTable = table(dataD)
+        # make baseline category the most populous category
+        # unless the variable was supplied as a factor in the 'data' argument
+        if(D %in% covFactors) {
+          theTable = sort(theTable, decreasing=TRUE)
+        }
+        if(theTable[1]==0) warning("no data in baseline level ", D)
+        levelsHave = names(theTable)[theTable > 0]
           covariatesDF[[D]] = factor(
-            covariatesDF[[D]],
-            levels = theLevels[
-              match(theLevels[,labelCol], levels(data[[D]])), 
-              idCol],
-            labels = levels(data[[D]])
+            as.character(covariatesDF[[D]]),
+            levels = levelsHave
             )
+          data[[D]] = factor(as.character(dataD), levels = levelsHave)
         } else { 
           # levels in data can't be found in raster levels
           # ignore raster levels
@@ -509,7 +556,6 @@ gm.dataSpatial = function(
           labels=theLabels)     
    } # end refactor
    } # end loop D trhoguh factors
-
 
    list(
     data=data,

@@ -18,12 +18,25 @@ Converts a summary table for model parameters on the log scale to the natural or
 	\item{invLogit}{Converts intercept parameter to inverse-logit scale when \code{TRUE}.  Can also be a vector of parameters to inverse-logit transform.}
 }
 
+
+\value{a summary table for log or exponentially transformed model parameters}
+
+
+
+
+
 \examples{
 require("geostatsp")
 data("swissRain")
+swissRain = unwrap(swissRain)
+swissAltitude = unwrap(swissAltitude)
+
 swissRain$lograin = log(swissRain$rain)
 
 if(requireNamespace('INLA', quietly=TRUE)) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
 swissFit =  glgm(formula="lograin", data=swissRain, 
 	grid=20, 
 	covariates=swissAltitude/1000, family="gaussian", 

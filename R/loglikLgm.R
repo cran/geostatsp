@@ -33,7 +33,7 @@ loglikLgm = function(param,
 		theNA = NULL
 	}
 	
-	if(length(grep("SpatialPoints", class(coordinates)))) {
+	if(length(grep("SpatVect", class(coordinates)))) {
 		if(length(theNA))
 			coordinates = coordinates[-theNA,]
 	} else if(	any(class(coordinates) == "dist"))	{
@@ -49,8 +49,8 @@ loglikLgm = function(param,
 			coordinates = coordinates[-theNA,-theNA]
 		}
 	} else {
-		warning("coordinates must be a SpatialPoints object\n or matrix a dist object.  It's being assumed \n it's a matrix of coordinates")
-		coordinates = SpatialPoints(coordinates)
+		warning("coordinates must be a SpatVect object\n or matrix a dist object.  It's being assumed \n it's a matrix of coordinates")
+		coordinates = vect(coordinates)
 		if(length(theNA))				
 			coordinates = coordinates[-theNA,]
 	}
@@ -120,12 +120,12 @@ if(any(class(coordinates)=='matrix')|
 	xcoord = as.vector(coordinates)
 	ycoord = -99
 	aniso=FALSE
-} else if(length(grep("^SpatialPoints", class(coordinates)))){
-	xcoord=coordinates@coords[,1] 
-	ycoord=coordinates@coords[,2]
+} else if(length(grep("^SpatVector", class(coordinates)))){
+	xcoord=crds(coordinates)[,1] 
+	ycoord=crds(coordinates)[,2]
 	aniso=TRUE
 } else {
-	warning('coordinates should be SpatialPoints or matrix')
+	warning('coordinates should be SpatVector or matrix')
 	xcoord=ycoord=aniso=NULL
 }
 
@@ -218,30 +218,33 @@ likfitLgm = function(
 		if(is.matrix(coordinates)){
 			if(ncol(coordinates)!= 2 | nrow(coordinates) != nrow(data))
 				stop("anisotropic model requested but coordinates appears to be a distance matrix")
+		coordinates = vect(coordinates)
 		}
-		coordinates = SpatialPoints(coordinates)
-		maxDist = dist(t(bbox(coordinates)))
+		maxDist = dist(matrix(ext(coordinates), ncol=2) )
 	} else { # isotropic
 
 	if(is.matrix(coordinates)){
 		if(ncol(coordinates)== 2) {# assume the columns are x and y coordinates
-		coordinates = dist(coordinates)
-	} else {
-		coordinates = as(coordinates, 'dsyMatrix')
+			coordinates = dist(coordinates)
+		} else {
+			coordinates = as(coordinates, 'dsyMatrix')
+		}
 	}
-}
 
 if(any(class(coordinates)=='dist'))
 	coordinates = as(as.matrix(coordinates), 'dsyMatrix')
 
 
-if(length(grep("^Spatial", class(coordinates)))) {
-	coordinates = as(Matrix(spDists(coordinates),sparse=FALSE), 'dsyMatrix')
+if(length(grep("SpatVect", class(coordinates)))) {
+	if(!nchar(crs(coordinates))) terra::crs(coordinates) = "+proj=utm +zone=1"
+	coordinates=new("dsyMatrix", Dim = rep(length(coordinates), 2), 
+		x = as.vector(as.matrix(terra::distance(coordinates))), uplo='L')
 }
 
 
-maxDist = max(coordinates,na.rm=TRUE)
-}
+	maxDist = max(coordinates,na.rm=TRUE)
+} # end isotropic
+
 trend = formula
 theFactors = NULL
 if(any(class(trend)=="formula")) {
@@ -284,7 +287,7 @@ if(any(class(trend)=="formula")) {
 }
 
 if(any(theNA)) {
-	if(length(grep("^SpatialPoints", class(coordinates)))) {
+	if(length(grep("^SpatVector", class(coordinates)))) {
 		coordinates = coordinates[noNA]	
 	} else {
 		if(ncol(coordinates) == nrow(coordinates)) {
@@ -459,8 +462,8 @@ forO$pars = c(forO$pars, rep(0.0, ncol(covariates)+ncol(covariates)^2))
 
 
 if(aniso){
-	xcoord=coordinates@coords[,1] 
-	ycoord=coordinates@coords[,2]
+	xcoord=crds(coordinates)[,1] 
+	ycoord=crds(coordinates)[,2]
 } else {
 	xcoord = as.vector(coordinates)
 	ycoord = -99
@@ -515,6 +518,18 @@ if(all(paramToEstimate=='variance') &
 
 	names(fromOptim$start) = names(paramsForC)
 
+	if(fromOptim$start['anisoRatio']<1){
+	  fromOptim$start['anisoRatio'] <- 1/fromOptim$start['anisoRatio']
+	  if(fromOptim$start['anisoAngleRadians'] + pi/2 >= pi/2){
+	    fromOptim$start['anisoAngleRadians'] <- fromOptim$start['anisoAngleRadians'] - pi/2 
+	  }else{
+	    fromOptim$start['anisoAngleRadians'] <- fromOptim$start['anisoAngleRadians'] + pi/2  
+	  }
+	}
+	
+	
+	
+	
 	result = list(
 		optim = list(
 			mle=fromOptim$start,
@@ -570,7 +585,10 @@ if(estimateVariance) {
 	result$parameters[c('nugget', 'variance')] = 
 	result$parameters[c('nugget', 'variance')] * 
 	result$optim$totalVarHat  
+
+	result$varBetaHat = result$varBetaHat*	result$optim$totalVarHat  
 }
+
 
 names(result$optim$logL) = paste(
 	names(result$optim$logL),
@@ -606,18 +624,18 @@ result$parameters["boxcox"]
 result$data$resid = result$data$obsBC - result$data$fitted
 
 
-if(length(grep("^Spatial", class(coordinatesOrig)))){
+if(length(grep("^SpatVector", class(coordinatesOrig)))){
 
 	forDf = rep(NA, length(noNA))
 	forDf[noNA] = seq(1, sum(noNA))
 
 	theDf = result$data[forDf,] 
 
-	result$data = SpatialPointsDataFrame(
-		coords=SpatialPoints(coordinatesOrig),
-		data=theDf)
+	result$data = vect(
+		x=crds(coordinatesOrig),
+		atts=theDf,
+		crs = crs(coordinatesOrig))
 
-	result$data@proj4string = coordinatesOrig@proj4string
 }
 
 

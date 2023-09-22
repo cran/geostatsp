@@ -1,25 +1,31 @@
 # land type, categorical variable
-options("rgdal_show_exportToProj4_warnings"="none") 
 
 library("geostatsp")
 data("swissRain")
+swissRain = unwrap(swissRain)
+swissAltitude = unwrap(swissAltitude)
+swissLandType = unwrap(swissLandType)
+swissBorder = unwrap(swissBorder)
+
 swissRain$lograin = log(swissRain$rain)
-swissRain$elevation = extract(swissAltitude, swissRain)
+swissRain$elevation = extract(swissAltitude, swissRain, ID=FALSE)
 swissAltitude[1:50,1:50] = NA
 
-swissRaster = raster(extent(swissBorder), ncols=20, nrows=20, 
-		crs=swissRain@proj4string)	
+swissRaster = rast(extent=ext(swissBorder), ncols=20, nrows=20, 
+		crs=crs(swissRain))	
 
 
-swissRain$land = raster::extract(swissLandType, swissRain)
+swissRain$land = extract(swissLandType, swissRain, ID=FALSE)
 # get rid of land types with few observations
 landTable = table(swissRain$land)
-landTable = as.numeric(names(landTable)[landTable > 5])
-swissRain2 = swissRain [swissRain$land %in% landTable, ]
+landTable = as.character(names(landTable)[landTable > 5])
+swissRain2 = swissRain[as.character(swissRain$land) %in% landTable, ]
+swissRain2$land = factor(swissRain2$land,
+	levels = names(sort(table(swissRain2$land), decreasing=TRUE))[1:5])
 
 swissFit3 = likfitLgm(
-    data=swissRain2[1:60,], 
-		formula=lograin~ elevation + factor(land),
+    data=swissRain2, 
+		formula=lograin~ elevation + land,
 		param=c(range=46500, nugget=0.05,shape=1,  
 				anisoAngleDegrees=35, anisoRatio=12),
 		paramToEstimate = c("range","nugget", 
@@ -40,44 +46,12 @@ plot(swissKrige3[["predict"]])
 plot(swissBorder, add=TRUE)
 dev.off()
 
-if(interactive()  | Sys.info()['user'] =='patrick') {
-
-# now change land to a factor
-landTypes = swissLandType@data@attributes[[1]]
-# remove land types with no observations on them
-landTypes=landTypes[landTypes[,1] %in% unique(swissRain2$land),]
-
-swissRain2$landFac = factor(swissRain2$land, 
-		levels=landTypes[,1],
-		labels=landTypes[,2])
-
-swissFit4 = likfitLgm(data=swissRain2[1:60,], 
-		formula=lograin~ elevation + landFac,
-		param=c(range=46500, nugget=0.05,shape=1,  
-				anisoAngleDegrees=35, anisoRatio=12),
-		paramToEstimate = c("range","nugget", 
-				"anisoAngleDegrees", "anisoRatio"),
-		parscale = c(range=5000,nugget=0.01, 
-				anisoRatio=1,anisoAngleDegrees=5)
-)
-swissKrige4 = krigeLgm(data=swissRain2[1:60,], formula = swissFit4$model$formula,
-		param=swissFit4$param, 
-		covariates = list(elevation = swissAltitude,landFac=swissLandType),
-		grid = swissRaster,expPred=TRUE )
-
-
-
-
-pdf("krige4.pdf")
-plot(swissKrige4[["predict"]])	
-plot(swissBorder, add=TRUE)
-dev.off()
 
   
 
-swissRain2$landFac2 = as.character(swissRain2$landFac)
+swissRain2$landFac2 = as.character(swissRain2$land)
 
-swissFit5= likfitLgm(lograin~ elevation + factor(landFac2),
+swissFit5= likfitLgm(lograin~ elevation + landFac2,
 		data=swissRain2, 
 		param=c(range=46500, nugget=0.05,shape=1,  
 				anisoAngleDegrees=35, anisoRatio=12),
@@ -98,4 +72,8 @@ plot(swissKrige5[["predict"]])
 plot(swissBorder, add=TRUE)
 dev.off()
 
-}
+
+
+
+
+

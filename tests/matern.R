@@ -1,5 +1,3 @@
-options("rgdal_show_exportToProj4_warnings"="none") 
-options(CBoundsCheck=TRUE)
 library("geostatsp")
 
 param = c(range=1, shape=1.5,	anisoRatio=2, anisoAngleDegrees=-25)
@@ -14,12 +12,12 @@ matern(c(0, 0.001, 100000), param=param)
 
 
 # example with raster
-myraster = raster(nrows=40,ncols=60,xmn=-3,xmx=3,ymn=-2,ymx=2)
+myraster = rast(nrows=40,ncols=60,xmin=-3,xmax=3,ymin=-2,ymax=2)
 
 # plot correlation of each cell with the origin
 myMatern = matern(myraster, y=c(0,0), param=param)
-as.matrix(myMatern)[1:3,1:3]
-
+myMatern[1:3,1:3]
+ 
 
 
 bob = function(x) {
@@ -61,7 +59,7 @@ bob(matern(myraster, y=c(0,0),
 				
 
 # correlation matrix for all cells with each other
-myraster = raster(nrows=4,ncols=6,xmn=-3,xmx=3,ymn=-2,ymx=2)
+myraster = rast(nrows=4,ncols=6,xmin=-3,xmax=3,ymin=-2,ymax=2)
 myMatern = matern(myraster, param=c(range=0, shape=2))
 
 dim(myMatern)
@@ -70,10 +68,11 @@ myMatern[1:3,1:3]
 param = c(range=0.2, shape=1.5)
 set.seed(0)
 
-mypoints = SpatialPointsDataFrame(cbind(runif(10), runif(10)), 
-		data=data.frame(id=1:10))
+mypoints = vect(cbind(runif(10), runif(10)), 
+		crs = "epsg:2000",
+		atts=data.frame(id=1:10))
 
-myDist = forceSymmetric(spDists(mypoints), uplo='L')
+myDist = forceSymmetric(as.matrix(distance(mypoints)))
 
 myDist3 = myDist[lower.tri(myDist)]
 
@@ -93,7 +92,5 @@ class(myMatern3)
 sum((myMatern1 - myMatern2)^2)
 (myMatern1 - myMatern3)[1:8, 1:4]
 sum((myMatern1 - myMatern3)^2, na.rm=TRUE)
-
-
 
 

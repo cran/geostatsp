@@ -105,7 +105,7 @@ setMethod("lgm",
 # numeric cells, create raster from data bounding box
 
 setMethod("lgm", 
-	signature("formula", "Spatial", "numeric", "ANY"),
+	signature("formula", "SpatVector", "numeric", "ANY"),
 	function(formula, data, grid, covariates, 
 		buffer=0,
 		shape=1, boxcox=1, nugget = 0, 
@@ -126,7 +126,7 @@ setMethod("lgm",
 
 # missing covariates, create empty list
 setMethod("lgm", 
-	signature("formula", "Spatial", "Raster", "missing"),
+	signature("formula", "SpatVector", "SpatRaster", "missing"),
 	function(formula, data, grid, covariates, 
 		buffer=0,
 		shape=1, boxcox=1, nugget = 0, 
@@ -156,7 +156,7 @@ setMethod("lgm",
 
 
 setMethod("lgm",
-	signature("formula", "Spatial", "Raster", "list"),
+	signature("formula", "SpatVector", "SpatRaster", "list"),
 	function(formula, data, grid, covariates, 
 		buffer=0,
 		shape=1, boxcox=1, nugget = 0, 
@@ -181,7 +181,7 @@ setMethod("lgm",
 	)
 
 setMethod("lgm",
-	signature("formula", "Spatial", "Raster", "Raster"),
+	signature("formula", "SpatVector", "SpatRaster", "SpatRaster"),
 	function(formula, data, grid, covariates, 
 		buffer=0,
 		shape=1, boxcox=1, nugget = 0, 
@@ -207,7 +207,7 @@ setMethod("lgm",
 
 # the real work
 setMethod("lgm", 
-	signature("formula", "Spatial", "Raster","data.frame"), 
+	signature("formula", "SpatVector", "SpatRaster","data.frame"), 
 	function(formula, data, grid, covariates, 
 		buffer=0,
 		shape=1, boxcox=1, nugget = 0, 
@@ -219,14 +219,15 @@ setMethod("lgm",
 		fixNugget = FALSE,
 		...) {
 
+
 		locations = grid
 
 		dots <- list(...)  
+
 		param=dots$param	
 		if(!length(param)) {
 			param=c()
 		}
-
 
 		paramToEstimate	= c(
 			"variance", "range", "shape","nugget","boxcox"
@@ -250,7 +251,6 @@ setMethod("lgm",
 			param = c(param, Spar)
 
 # to do: make sure factors in rasters are set up correctly
-	   # have baseline as first entry in cov@data@attributes,
 	   # NA's for levels without data
 	   # have most common level the baseline
 
@@ -261,8 +261,6 @@ setMethod("lgm",
 			dots$data=data
 			dots$paramToEstimate=paramToEstimate
 			dots$reml = reml
-
-
 			likRes = do.call(likfitLgm, dots)
 
 # call krige	
@@ -278,6 +276,7 @@ setMethod("lgm",
 
     # add confidence intervals for covariance parameters
 			theInf=informationLgm(res)
+
 			res$varBetaHat = list(beta=res$varBetaHat)
 			names(res) = gsub("varBetaHat", "varParam", names(res))
 			res$varParam$information = theInf$information
@@ -293,7 +292,6 @@ setMethod("lgm",
 				res$summary ['anisoAngleDegrees','Estimated'] = 
 				res$summary ['anisoAngleRadians','Estimated']
 			}
-
 
 
 			if(FALSE){
@@ -318,7 +316,6 @@ setMethod("lgm",
 			res$summary = res$summary[c(notInOrder,theOrder),]
 
 
-
 	   # if range is very big, it's probably in metres, convert to km
 			if(res$summary['range','estimate']>1000) {
 				logicalCol = names(res$summary) == "Estimated"
@@ -327,7 +324,6 @@ setMethod("lgm",
 				rownames(res$summary) = gsub("^range$", "range/1000", 
 					rownames(res$summary))
 			}
-
 			class(res) = c('lgm',class(res))    
 			return(res)
 		}

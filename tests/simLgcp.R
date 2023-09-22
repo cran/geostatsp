@@ -1,12 +1,22 @@
-options("rgdal_show_exportToProj4_warnings"="none") 
+
+if(requireNamespace("INLA", quietly=TRUE) ) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+} 
+
 library('geostatsp')
+
+# exclude this line to use the RandomFields package
+options(useRandomFields = FALSE)
+
 mymodel = c(mean=-1.5, variance=1, 
 				range=2, shape=2)
 
-myraster = raster(nrows=15,ncols=15,xmn=0,xmx=10,ymn=0,ymx=10)
+myraster = rast(nrows=15,ncols=15,xmin=0,xmax=10,ymin=0,ymax=10)
 
 # some covariates, deliberately with a different resolution than myraster
-covA = covB = myoffset = raster(extent(myraster), 10, 10)
+covA = covB = myoffset = rast(ext(myraster), 10, 10)
 values(covA) = as.vector(matrix(1:10, 10, 10))
 values(covB) = as.vector(matrix(1:10, 10, 10, byrow=TRUE))
 values(myoffset) = round(seq(-1, 1, len=ncell(myoffset)))
@@ -24,9 +34,7 @@ res = lgcp(data=myLgcp$events,
 		formula = ~ a + b + offset(offsetFooBar),
 		grid=squareRaster(myoffset, 15), 
 		covariates=myCovariate,
-		priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41)),
-		control.mode=list(theta=c(0.022, -0.5),restart=TRUE)
-)
+		prior=list(sd=0.2, range=0.4))
 
 res$parameters$summary[,c(1,3,5)]
 
@@ -46,8 +54,6 @@ plot(lgcpRoc[,'onemspec'] ,
 )
 
 }
-
- 
 
 
 

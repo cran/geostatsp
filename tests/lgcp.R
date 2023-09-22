@@ -1,29 +1,21 @@
-options("rgdal_show_exportToProj4_warnings"="none") 
-if(Sys.info()['sysname'] =='Linux' &
-  requireNamespace("INLA", quietly=TRUE)) {   
-  INLA::inla.setOption(inla.call = 
-      system.file(paste(
-          "bin/linux/",          
-          ifelse(
-            .Machine$sizeof.pointer == 4, 
-            "32", "64"),
-          'bit/inla.static', sep=''),
-        package="INLA")) 
-}
-
 
 havePackages = c(
     'INLA' = requireNamespace('INLA', quietly=TRUE)
 )
 
+if(requireNamespace("INLA", quietly=TRUE) ) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+}
+
 print(havePackages)
 
 # as in example
 require('geostatsp')
-myPoints = SpatialPoints(cbind(rbeta(100,2,2), rbeta(100,3,4)))
-myPoints@bbox = cbind(c(0,0), c(1,1))
+myPoints = vect(cbind(rbeta(100,2,2), rbeta(100,3,4)))
 
-mycov = raster(matrix(rbinom(100, 1, 0.5), 10, 10), 0, 1, 0, 1)
+mycov = rast(matrix(rbinom(100, 1, 0.5), 10, 10), extent=ext(0, 1, 0, 1))
 names(mycov)="x1"
 
 if(all(havePackages)) {
@@ -60,16 +52,18 @@ knitr::kable(res$parameters$summary, digits=3)
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 }
+}
 
-if(interactive()  | Sys.info()['user'] =='patrick') {
 
 # some missing values
-
-temp = values(mycov)
+mycov2 = deepcopy(mycov)
+temp = values(mycov2)
 temp[1:4] = NA
-values(mycov) = temp
+values(mycov2) = temp
 
-res = lgcp(data=myPoints, grid=20, covariates=mycov,
+if(all(havePackages)) {
+
+res = lgcp(data=myPoints, grid=20, covariates=mycov2,
 		formula=~factor(x1),
 		priorCI=list(sd=c(0.9, 1.1), range=c(0.4, 0.41))
 )
@@ -79,15 +73,24 @@ if(length(res$parameters)) {
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 }
+}
+
 
 data('murder')
+murder = unwrap(murder)
 data('torontoPop')
+torontoPdens = unwrap(torontoPdens)
+torontoIncome = unwrap(torontoIncome)
+torontoBorder = unwrap(torontoBorder)
+
 myCov = list(
     pop=torontoPdens,
     inc = log(torontoIncome)
 )
 
 formula = ~ inc + offset(pop, log=TRUE)
+
+if(all(havePackages)) {
 
 resL=lgcp(formula, data=murder, 
     grid=squareRaster(murder, 30),
@@ -107,7 +110,6 @@ if(length(resL$parameters)) {
 
 
 }	
-}
 
 
 # check spdfToBrock
@@ -116,6 +118,7 @@ if(requireNamespace('diseasemapping', quietly=TRUE)){
 	require('diseasemapping')
 	
 	data('kentucky')
+	kentucky = unwrap(kentucky)
 	
 	popList = list(
 			'2002' = kentucky[,c('M.50', 'M.55', 'M.60')],
@@ -138,8 +141,10 @@ if(requireNamespace('diseasemapping', quietly=TRUE)){
     	logSumExpected=TRUE
 	)
 	
-	sum(unlist(lapply(popList, function(qq) apply(qq@data, 2, sum, na.rm=TRUE))))
+	sum(unlist(lapply(popList, function(qq) apply(values(qq), 2, sum, na.rm=TRUE))))
 	sum(exp(values(popBrick2)), na.rm=TRUE)*prod(res(popBrick2))
 			
 }
 	
+
+

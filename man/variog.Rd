@@ -1,10 +1,10 @@
 \name{variog}
 \alias{variog}
 \alias{variog.default}
-\alias{variog.SpatialPointsDataFrame}
+\alias{variog.SpatVector}
 \alias{variogMcEnv}
 \alias{variogMcEnv.default}
-\alias{variogMcEnv.SpatialPointsDataFrame}
+\alias{variogMcEnv.SpatVector}
 
 
 \title{Compute Empirical Variograms and Permutation Envelopes}
@@ -18,14 +18,14 @@ These are wrappers for \code{\link[geoR]{variog}} and \code{\link[geoR]{variog.m
 
 \usage{
 variog(geodata, \ldots)
-\method{variog}{SpatialPointsDataFrame}(geodata, formula, \ldots)
+\method{variog}{SpatVector}(geodata, formula, \ldots)
 \method{variogMcEnv}{default}(geodata, \ldots)
-\method{variogMcEnv}{SpatialPointsDataFrame}(geodata, formula, \ldots)
+\method{variogMcEnv}{SpatVector}(geodata, formula, \ldots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{geodata}{
-	An object of class \code{SpatialPointsDataFrame} or of a class suitable for 
+	An object of class \code{SpatVector} or of a class suitable for 
 	 \code{\link[geoR]{variog}} in the \code{geoR} package.}
 	\item{formula}{A formula specifying the response variable and fixed effects portion of the model.
 	The variogram is performed on the residuals.}
@@ -45,6 +45,7 @@ As \code{\link[geoR]{variog}} or \code{\link[geoR]{variog.mc.env}}
 }
 \examples{
 data("swissRain")
+swissRain = unwrap(swissRain)
 swissRain$lograin = log(swissRain$rain)
 swissv= variog(swissRain, formula=lograin ~ 1,option="bin")
 swissEnv = variogMcEnv(swissRain, lograin ~ 1, obj.var=swissv,nsim=9) 
@@ -52,4 +53,5 @@ if(!is.null(swissv)){
 	plot(swissv, env=swissEnv, main = "Swiss variogram")
 }
 }
+
 

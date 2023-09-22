@@ -21,7 +21,7 @@ posterior distributions of random effects, as produced by \code{inla}.
 }
 \item{random}{Calculate exceedances for the random effects, rather than the
 predicted observations (including fixed effects). }
-\item{template}{A \code{Raster} or \code{SpatialPolygonsDataFrame} or \code{SpatialPointsDataFrame} 
+\item{template}{A \code{SpatRaster} or \code{SpatVector}
 object which the results will be contained in.
 }
 \item{templateIdCol}{The data column in \code{template} corresponding to names of \code{marginals}
@@ -42,8 +42,11 @@ Either a vector of exceedance probabilities or an object of the same class as \c
 
 \examples{
 	data('swissRain')
+	swissRain = unwrap(swissRain)
+	swissAltitude = unwrap(swissAltitude)
+	swissBorder = unwrap(swissBorder)
 	swissFit =  lgm("rain", swissRain, grid=30, 
-	boxcox=0.5,fixBoxcox=TRUE,	covariates=swissAltitude)
+		boxcox=0.5,fixBoxcox=TRUE,	covariates=swissAltitude)
 	swissExc = excProb(swissFit, 20)
 	mycol = c("green","yellow","orange","red")
 	mybreaks = c(0, 0.2, 0.8, 0.9, 1)
@@ -51,13 +54,23 @@ Either a vector of exceedance probabilities or an object of the same class as \c
 	plot(swissExc, breaks=mybreaks, col=mycol,add=TRUE,legend=FALSE)
 	plot(swissBorder, add=TRUE)
 	legend("topleft",legend=mybreaks, col=c(NA,mycol))
-\dontrun{
+
+\donttest{
+
+if(requireNamespace("INLA", quietly=TRUE) ) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+
 	swissRain$sqrtrain = sqrt(swissRain$rain)
 	swissFit2 =  glgm(formula="sqrtrain",data=swissRain, grid=40, 
 	covariates=swissAltitude,family="gaussian")
 	swissExc = excProb(swissFit2, threshold=sqrt(30))
 	swissExc = excProb(swissFit2$inla$marginals.random$space, 0,
 		template=swissFit2$raster)
+	
+}
+
 }
 
 }

@@ -1,13 +1,15 @@
-options("rgdal_show_exportToProj4_warnings"="none") 
+
 library('geostatsp')
 data('swissRain')
+swissRain = unwrap(swissRain)
+swissAltitude = unwrap(swissAltitude)
 
 Ncores = c(1,2)[1+(.Platform$OS.type=='unix')]
 
 
 
 sr2 = swissRain
-sr2$elev = raster::extract(swissAltitude, sr2)
+sr2$elev = extract(swissAltitude, sr2)
 swissFit = likfitLgm(
     data=sr2, 
     formula=rain~ elev,
@@ -206,5 +208,4 @@ if(!interactive())
 
 }
 }
-
 

@@ -12,7 +12,7 @@ Rongelap data
 }
 \usage{data(rongelapUTM)}
 \format{
-A SpatialPolygonsDataFrame, with columns \code{count} being the 
+A \code{SpatVector}, with columns \code{count} being the 
 radiation count and \code{time} being the length of time
 the measurement was taken for.  A UTM coordinate reference system is used, where coordinates are in metres.
 }
@@ -23,14 +23,18 @@ the measurement was taken for.  A UTM coordinate reference system is used, where
 
 \examples{
 data("rongelapUTM")
+rongelapUTM = unwrap(rongelapUTM)
 plot(rongelapUTM, main="Rongelap island")
-\dontrun{
-load(url("http://www.filefactory.com/file/54e8egxfddul/n/MHL_adm0_RData"))
 
-rongelapLL = spTransform(rongelapUTM, gadm@proj4string)
-plot(rongelapLL)
-plot(gadm, add=T)
+if(require('mapmisc')) {
+
+  bgMap = openmap(rongelapUTM, buffer=200)
+  plot(bgMap)
+  points(rongelapUTM)
+  scaleBar(rongelapUTM, 'left')
+
 }
+
 
 
 }

@@ -4,7 +4,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	
 	if(!missing(border)){
 		if(!.compareCRS(data, border))
-			border = spTransform(border, data@proj4string)
+			border = project(border, crs(data))
 	}
 	
 	if(is.numeric(grid)) {
@@ -20,16 +20,15 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 # create data
 	
 	if(!missing(border)) {
-		inBorder = over(
+		inBorder = extract(
 			data, 
-			as(border, 'SpatialPolygons')
+			as.polygons(border)
 			)
 		data = data[!is.na(inBorder),]
 	}
 	
-	counts = rasterize(
-		SpatialPoints(data), 
-		cells, fun="count")
+	counts = terra::rasterize(
+		data, cells, fun="count")
 	names(counts) = "count"
 	counts[is.na(counts)] = 0
 
@@ -63,37 +62,36 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 
 	if(!missing(border)) {
 		# set values of the offset to zero outside the border
-#	instead of masking as was done formerly with	counts = raster::mask(counts, border)
 		
 		if(length(offsetToLogOrig)) {
 			if(offsetToMask %in% names(covariates)) {
 				if(!.compareCRS(covariates[[offsetToMask]], border)) {
-					borderM = spTransform(border, 
-						covariates[[offsetToMask]]@crs)
+					borderM = project(border, crs(covariates[[offsetToMask]]))
 				} else {
 					borderM = border
 				}
-				covariates[[offsetToMask]] = raster::mask(
+				covariates[[offsetToMask]] = mask(
 					covariates[[offsetToMask]], borderM
 					)
 			}
 		}
 	}
-	
+
 	
 	# cell size offset
 
-	if(length(grep("^Raster", class(covariates)))) {
+	if(length(grep("SpatRaster", class(covariates)))) {
 		# add a raster layer for log cell size
-		logCellSize = raster(covariates)
-		values(logCellSize) = sum(log(res(cells)))
+		covariates = deepcopy(covariates)
+		logCellSize = rast(covariates, nlyrs=1)
+		terra::values(logCellSize) = sum(log(res(cells)))
 		names(logCellSize) = 'logCellSize'
-		covariates = addLayer(logCellSize, covariates)
+		add(covariates) = logCellSize
 	} else {
 		# create a raster and put it in the covariate list
 		logCellSize = cells
 		names(logCellSize) = "logCellSize"
-		values(logCellSize) =  sum(log(res(cells)) )
+		terra::values(logCellSize) =  sum(log(res(cells)) )
 		if(length(covariates)){
 			covariates = c(covariates, logCellSize=logCellSize)
 		} else {
@@ -109,7 +107,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 	dots$data = counts
 	dots$grid = cells
 	dots$covariates=covariates
-	
+
 
 	result = do.call(glgm, dots)
 

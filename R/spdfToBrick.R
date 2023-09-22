@@ -8,7 +8,7 @@ spdfToBrick = function(x,
   
   
   
-  if(any(class(x)=='SpatialPolygonsDataFrame')){
+  if(any(class(x)=='SpatVector')){
 		if(ncol(x)==1) {
 			pattern=names(x)
 		}
@@ -24,16 +24,14 @@ spdfToBrick = function(x,
   
   forRaster = NULL
   
-  haveRgdal = requireNamespace('rgdal', quietly=TRUE)
 
   for(Dcensus in rev(names(x))){
     
-    if(haveRgdal &
-        !identical(
+    if(!identical(
             crs(x[[Dcensus]]),
             crs(template)
             )){
-      x[[Dcensus]] = spTransform(
+      x[[Dcensus]] = project(
           x[[Dcensus]],
           crs(template)
       )
@@ -52,7 +50,10 @@ spdfToBrick = function(x,
 		nCellTable = table(values(Sid))
 		nCellPerPoly[as.numeric(names(nCellTable))] = nCellTable
 		
-		dataHere = as.matrix(x[[Dcensus]]@data[,
+		dataHere = as.matrix(
+			values(
+				x[[Dcensus]]
+			)[,
         grep(pattern, names(x[[Dcensus]])), drop=FALSE
     ]) / nCellPerPoly
 
@@ -66,8 +67,8 @@ spdfToBrick = function(x,
 		# polygons not assigned to cells
 		notInRaster = which(! Sx %in% values(Sid))
 		if(length(notInRaster)){
-			polyCentres = SpatialPoints(x[[Dcensus]][notInRaster,])
-			polyCell = cellFromXY(template, polyCentres@coords)
+			polyCentres = centroids(x[[Dcensus]][notInRaster,])
+			polyCell = cellFromXY(template, crds(polyCentres))
 			
 			dataNotInRaster = aggregate(
 					dataHere[notInRaster,,drop=FALSE], 
@@ -97,11 +98,13 @@ spdfToBrick = function(x,
 	}
   
   if(is.matrix(forRaster)){
-    result = brick(template, nl=ncol(forRaster))
-    values(result) = forRaster
+    result = rast(template, nlyrs=ncol(forRaster))
+    terra::values(result) = forRaster
+    names(result) = colnames(forRaster)
   } else if(is.vector(forRaster)){
     result = template
-    values(result) = forRaster
+    terra::values(result) = forRaster
+    names(result) = 'expected'
   } else {
     warning("no data extracted")
     result = template

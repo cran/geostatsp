@@ -13,7 +13,7 @@ Location and prevalence data from villages, elevation an vegetation index for th
 }
 \usage{data("loaloa")}
 \format{
-\code{loaloa} is a SpatialPolygonsDataFrame of the data, with columns \code{N} being the number 
+\code{loaloa} is a \code{SpatVector} containing the data, with columns \code{N} being the number 
 of individuals tested and \code{y} being the number of positives.
 \code{elevationLoa} is a raster of elevation data.
 \code{eviLoa} is a raster of vegetation index for a specific date. \code{ltLoa} is land type.
@@ -23,7 +23,7 @@ of individuals tested and \code{y} being the number of positives.
 
 \source{
 \url{http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets} for the loaloa data,
-\url{https://lpdaac.usgs.gov/product_search/?collections=Combined+MODIS&collections=Terra+MODIS&collections=Aqua+MODIS&view=list} for EVI and land type and  
+\url{https://lpdaac.usgs.gov/data/} for EVI and land type and  
 \url{https://srtm.csi.cgiar.org} for the elevation data.
 }
 
@@ -31,22 +31,27 @@ of individuals tested and \code{y} being the number of positives.
 
 
 data("loaloa")
+loaloa = unwrap(loaloa)
 plot(loaloa, main="loaloa villages")
 
 # elevation
+elevationLoa = unwrap(elevationLoa)
 plot(elevationLoa, col=terrain.colors(100), main="elevation")
 points(loaloa)
 
 # vegetation index
+eviLoa = unwrap(eviLoa)
 plot(eviLoa, main="evi")
 points(loaloa)
 
+tempLoa = unwrap(tempLoa)
 plot(tempLoa, main="temperature")
 points(loaloa)
 
 
 
 # land type, a categorical variable
+ltLoa = unwrap(ltLoa)
 plot(ltLoa)
 if(requireNamespace("mapmisc")){
 	mapmisc::legendBreaks("bottomleft",ltLoa, bty='n')

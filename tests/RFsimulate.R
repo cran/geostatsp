@@ -3,66 +3,49 @@ library("geostatsp")
 model <- c(var=5, range=20,shape=0.5)
 
 # any old crs
-theCrs = CRS("+proj=utm +zone=17 +datum=NAD27 +units=m +no_defs")
+theCrs = "+proj=utm +zone=17 +datum=NAD27 +units=m +no_defs"
 
-if (requireNamespace("RandomFields", quietly = TRUE)) { 
-  myraster = raster(nrows=50,ncols=50,xmn=100,ymn=100,xmx=110,ymx=110, 
+# don't test using the randomFields package, it's currently broken on some R builds
+options(useRandomFields = FALSE)
+
+  myraster = rast(nrows=20,ncols=20,extent = ext(100,110,100,110), 
     crs=theCrs)
-} else {
-  myraster = raster(nrows=20,ncols=20,xmn=100,ymn=100,xmx=110,ymx=110, 
-    crs=theCrs)
-}
 
 set.seed(0)
-simu = RFsimulate(rbind(a=model, b=model+0.1), 
-  x=myraster, n=3
-)
-
-set.seed(0)
-simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
-  x=as(myraster,"SpatialPixels"),
-  n=3
+simu = RFsimulate(model = rbind(a=model, b=model+0.1), 
+  x=myraster, n=4
 )
 
 
-par(mfrow=c(length(names(simu2)),2))
+par(mfrow=c(ceiling(length(names(simu))/2), 2))
 
-for(D in 1:length(names(simu2))) {
+for(D in 1:length(names(simu))) {
   plot(simu[[D]])
-  plot(raster(simu2,layer=D))
 }
 
 
-if(interactive()  | Sys.info()['user'] =='patrick') {
+xPoints = suppressWarnings(
+  as.points(myraster)[
+      sample(ncell(myraster), 12),]
+)
   simu2 = RFsimulate(
     model = rbind(a=model, b=model+0.1), 
-    x=as(myraster,"SpatialPoints")[
-      sample(ncell(myraster), 12),]
+    x= xPoints
    )
   
-  simu2 = RFsimulate(rbind(a=model, b=model+0.1), 
-    x=as(myraster,"SpatialGrid")
-  )
   
-  for(Dn in c(1,3)) {
-    set.seed(0) 
-    simu <- RFsimulate(model, x=myraster, n=Dn)
-    set.seed(0) 
-    simu2 <- RFsimulate(model, x=as(myraster,"SpatialPixels"), n=Dn)
-    
-    print(projection(simu))
-    print(projection(simu2))
-    
-    par(mfrow=c(nlayers(simu),2))
-    for(D in 1:nlayers(simu)) {
+    par(mfrow=c(nlyr(simu),2))
+    for(D in 1:nlyr(simu)) {
       plot(simu[[D]])
-      plot(raster(simu2,layer=D))
+      plot(simu2)
     }
-  }
   
   
   
   data("swissRain")
+  swissRain = unwrap(swissRain)
+  swissAltitude = unwrap(swissAltitude)
+  swissBorder = unwrap(swissBorder)
   swissRain$sqrtrain = sqrt(swissRain$rain)
   
 # estimate parameters
@@ -156,15 +139,11 @@ if(interactive()  | Sys.info()['user'] =='patrick') {
     swissRes$param[ "CHE_alt" ] * swissAltSmall
   
 # define a function to identify the location of maximum rainfall	
-  maxRainLocation = function(x, ...) {
-    rain =  (rainMean + x)^2
-    which.max(rain)
-  }
   
-  
-  swissLocation = raster::cellStats(swissSim,   maxRainLocation)
-  swissLocation = xyFromCell(swissSim, swissLocation)
+  swissLocation = terra::global(swissSim,   which.max)
+  swissLocation = xyFromCell(swissSim, unlist(swissLocation))
   plot(swissRes$predict[["predict"]])
   plot(swissBorder, add=TRUE)
   points(swissLocation)
-}
+  
+  

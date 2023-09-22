@@ -9,8 +9,8 @@
 
 .compareCRS <- function(x, y, unknown=FALSE, verbatim=FALSE, verbose=FALSE) {
 	
-	x <- tolower(projection(x))
-	y <- tolower(projection(y))
+	x <- tolower(crs(x, proj=TRUE))
+	y <- tolower(crs(y, proj=TRUE))
 	
 	step1 <- function(z, verbatim) {
 		z <- gsub(' ', '', z)
@@ -60,10 +60,10 @@
 cellsBuffer = function(cells, buffer) {
 	cells = squareRaster(cells)
   
-	buffer =  ceiling(buffer/xres(cells))
+	buffer =  ceiling(buffer/res(cells)[1])
 	
-	cellsInla = raster::extend(cells, c(buffer, buffer))
-	values(cellsInla ) =  
+	cellsInla = extend(cells, c(buffer, buffer))
+	terra::values(cellsInla) =   
 			c(t(matrix(seq(1,ncell(cellsInla)), 
 									nrow=nrow(cellsInla), ncol=ncol(cellsInla))))
 	names(cellsInla) = "space"

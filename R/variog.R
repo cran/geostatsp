@@ -11,15 +11,17 @@ variog.default <- function(geodata, ...) {
 result
 }
 			
-variog.SpatialPointsDataFrame = function(geodata,formula, ...) {
+variog.SpatVector = function(geodata,formula, ...) {
 	
-  rownames(geodata@data) = rownames(geodata@coords) = 1:length(geodata)
+  rownames(terra::values(geodata)) =  1:length(geodata)
+  theCoords = crds(geodata)
+  rownames(theCoords) = 1:length(geodata)
   
-	theResid = lm(formula, data=geodata@data)$resid
+	theResid = lm(formula, data=values(geodata))$resid
  
 	if (requireNamespace("geoR", quietly = TRUE)) { 
 		
-		result = geoR::variog(coords=geodata@coords[names(theResid),], 
+		result = geoR::variog(coords=theCoords[names(theResid),], 
         data=theResid, ...)
  
 	} else {
@@ -42,13 +44,16 @@ variogMcEnv.default = function(geodata, ...) {
 	result
 }
 
-variogMcEnv.SpatialPointsDataFrame = function(geodata,formula, ...) {
+variogMcEnv.SpatVector = function(geodata,formula, ...) {
   
-  rownames(geodata@data) = rownames(geodata@coords) = 1:length(geodata)
+  rownames(terra::values(geodata)) =  1:length(geodata)
+  theCoords = crds(geodata)
+  rownames(theCoords) = 1:length(geodata)
   
-	theResid = lm(formula, data=geodata@data)$resid
+  
+	theResid = lm(formula, data=values(geodata))$resid
 	if (requireNamespace("geoR", quietly = TRUE)) { 
-		result = geoR::variog.mc.env(coords=geodata@coords[names(theResid),], data=theResid, ...)
+		result = geoR::variog.mc.env(coords=theCoords[names(theResid),], data=theResid, ...)
 	} else {
 			result = NULL
 	}

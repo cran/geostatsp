@@ -2,9 +2,8 @@
 \alias{matern}
 \alias{matern.default}
 \alias{matern.dist}
-\alias{matern.Raster}
-\alias{matern.SpatialPoints}
-\alias{matern.SpatialPointsDataFrame}
+\alias{matern.SpatRaster}
+\alias{matern.SpatVector}
 \alias{fillParam}
 
 \title{Evaluate the Matern correlation function}
@@ -15,7 +14,7 @@ Returns the Matern covariance for the distances supplied.
 	matern( x, param=c(range=1, variance=1, shape=1),
 	type=c('variance','cholesky','precision', 'inverseCholesky'),
 	y=NULL)
-	\method{matern}{SpatialPoints}(x,  param,
+	\method{matern}{SpatVector}(x,  param,
 	type=c('variance','cholesky','precision', 'inverseCholesky'),
 	y=NULL)
 	\method{matern}{default}( x, param,
@@ -24,18 +23,15 @@ Returns the Matern covariance for the distances supplied.
 	\method{matern}{dist}( x, param,
 	type=c('variance','cholesky','precision', 'inverseCholesky'),
 	y=NULL)
-	\method{matern}{Raster}( x,  param,
-	type=c('variance','cholesky','precision', 'inverseCholesky'),
-	y=NULL)
-	\method{matern}{SpatialPointsDataFrame}(x, param,
+	\method{matern}{SpatRaster}( x,  param,
 	type=c('variance','cholesky','precision', 'inverseCholesky'),
 	y=NULL)
 	fillParam(param)
 }
 
 \arguments{
-	\item{x}{A vector or matrix of distances, or \code{Raster} or
-	 \code{SpatialPoints} of locations, see Details below.}
+	\item{x}{A vector or matrix of distances, or \code{SpatRaster} or
+	 \code{SpatVector} of locations, see Details below.}
 	\item{param}{A vector of named model parameters with, at a minimum names
  \code{range} and  \code{shape} (see Details), and optionally \code{variance} (defaults to 1) and
  \code{nugget} (defaults to zero).  
@@ -57,7 +53,7 @@ Returns the Matern covariance for the distances supplied.
 \value{
 	When \code{x} is a vector or matrix or object of class \code{dist}, a vector or matrix
 	of covariances is returned.  
-	With \code{x} being \code{SpatialPoints},  \code{y} must also be \code{SpatialPoints} and 
+	With \code{x} being \code{SpatVector} ,  \code{y} must also be \code{SpatVector}  and 
 	a matrix of correlations between \code{x} and \code{y}
 	is returned.	
 	When \code{x} is a Raster, and \code{y} is a single location 
@@ -84,7 +80,7 @@ The \code{range} argument is sqrt(8*shape)*phi.geoR, sqrt(8*shape)*scale.whittle
 2*scale.matern.RandomFields.
 
 Geometric anisotropy is only available when 
-\code{x} is a \code{Raster} or \code{SpatialPoints}.  The parameter 'anisoAngle' refers to 
+\code{x} is a \code{SpatRaster} or \code{SpatVector}.  The parameter 'anisoAngle' refers to 
 rotation of the coordinates anti-clockwise by the specified amount prior to 
 calculating distances, which has the effect that the contours of the correlation function
 are rotated clockwise by this amount. \code{anisoRatio} is the amount the Y coordinates are 
@@ -121,7 +117,7 @@ legend('topright', fill=c('red','blue'),
 
 
 # example with raster
-myraster = raster(nrows=40,ncols=60,xmn=-3,xmx=3,ymn=-2,ymx=2)
+myraster = rast(nrows=40,ncols=60,extent=ext(-3, 3,-2,2))
 param = c(range=2, shape=2,	anisoRatio=2, 
 	anisoAngleDegrees=-25,variance=20)
 
@@ -133,7 +129,7 @@ plot(myMatern, main="anisortopic matern")
 
 
 # correlation matrix for all cells with each other
-myraster = raster(nrows=4,ncols=6,xmn=-3,xmx=3,ymn=-2,ymx=2)
+myraster = rast(nrows=4,ncols=6,extent = ext(-3, 3, -2, 2))
 myMatern = matern(myraster, param=c(range=2, shape=2))
 dim(myMatern)
 
@@ -141,18 +137,18 @@ dim(myMatern)
 values(myraster) = seq(1, ncell(myraster))
 mydf = as.data.frame(myraster, xy=TRUE)
 plot(mydf$x, mydf$y, type='n', main="cell ID's")
-text(mydf$x, mydf$y, mydf$layer)
+text(mydf$x, mydf$y, mydf$lyr.1)
 # correlation between bottom-right cell and top right cell is
 myMatern[6,24]
 
 # example with points
-mypoints = SpatialPoints(
+mypoints = vect(
 	cbind(runif(8), runif(8))
 	)
 # variance matrix from points
 m1=matern(mypoints, param=c(range=2,shape=1.4,variance=4,nugget=1))
 # cholesky of variance from distances
-c2=matern(dist(mypoints@coords), param=c(range=2,shape=1.4,variance=4,nugget=1),type='cholesky')
+c2=matern(dist(crds(mypoints)), param=c(range=2,shape=1.4,variance=4,nugget=1),type='cholesky')
 
 # check it's correct
 quantile(as.vector(m1- tcrossprod(c2)))

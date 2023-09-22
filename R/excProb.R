@@ -45,7 +45,7 @@ elementsColumnwise = FALSE # default is indexes for x[[index]] refer to
 if(is.list(x))	{
   # if model is from lgm
 	if(length(grep("^predict|^param|^summary", names(x)))>2){
-		template = raster(x$predict)
+		template = rast(x$predict)
 		if(!random) {
 			# check for boxcox
 			if(any(names(x$predict)=="predict.boxcox")) {
@@ -103,7 +103,7 @@ if(is.list(x))	{
 	# make sure probabilities are between zero and 1
 excProbAll = pmax(pmin(excProbAll, 1),0)
 
-if(length(grep("^Raster", class(template)))) {
+if(length(grep("^SpatRaster", class(template)))) {
 	# fill in NA's for cells with no predictions
 	if(any(names(template)=='space')){
 		# names of excProbAll should refer to space ID's
@@ -114,26 +114,26 @@ if(length(grep("^Raster", class(template)))) {
 				sep='')
 		excProbAll = excProbAll[allNames]
 	}
-	template = raster(template)
+	template = rast(template[[1]])
 	if(elementsColumnwise) {
-		values(template) = matrix(excProbAll, 
+		terra::values(template) = matrix(excProbAll, 
 							nrow=nrow(template),ncol=ncol(template),
 							byrow=FALSE)
 	} else {
-		values(template) = excProbAll
+		terra::values(template) =excProbAll  
 	}
 	excProbAll = template
 	names(excProbAll) = paste("exc","random"[random], threshold, sep="")
 	
 } 
 
-if(length(grep("(SpatialPolygonsDataFrame|SpatialPointsDataFrame)", class(template)))) {
+if(length(grep("SpatVector", class(template)))) {
 	newcol=paste("exc", "random"[random],threshold, sep="")
 	if(is.null(templateIdCol)) {
 		template[[newcol]] = excProbAll
 	} else {
 	template[[newcol]] = 
-			excProbAll[template@data[templateIdCol]]
+			excProbAll[values(template)[templateIdCol]]
 	}
 	excProbAll = template
 } 

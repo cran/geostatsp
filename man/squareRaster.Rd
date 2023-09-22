@@ -3,9 +3,9 @@
 \alias{squareRaster}
 \alias{squareRaster-methods}
 \alias{squareRaster,matrix-method}
-\alias{squareRaster,Raster-method}
-\alias{squareRaster,Spatial-method}
-\alias{squareRaster,Extent-method}
+\alias{squareRaster,SpatRaster-method}
+\alias{squareRaster,SpatVector-method}
+\alias{squareRaster,SpatExtent-method}
 
 
 
@@ -16,32 +16,31 @@ extent and number of cells specified is returned.
 }
 \usage{
 \S4method{squareRaster}{matrix}(x,cells=NULL, buffer=0)
-\S4method{squareRaster}{Raster}(x,cells=NULL, buffer=0)
-\S4method{squareRaster}{Spatial}(x,cells=NULL, buffer=0)
-\S4method{squareRaster}{Extent}(x,cells=NULL, buffer=0)
+\S4method{squareRaster}{SpatRaster}(x,cells=NULL, buffer=0)
+\S4method{squareRaster}{SpatVector}(x,cells=NULL, buffer=0)
+\S4method{squareRaster}{SpatExtent}(x,cells=NULL, buffer=0)
 }
 
 \arguments{
 	\item{x}{
-	A bounding box from a  
-	\code{SpatialPoints} or \code{SpatialPolygons} object or an 
-	\code{Extent} from a Raster. }
+	A spatial object}
 \item{cells}{The number of cells in the x direction.  If NULL the number of columns of x is used.  }
 \item{buffer}{Additional area to add around the resulting raster}
 }
 
 \value{
-A \code{rasterLayer} with square cells
+A \code{SpatRaster} with square cells
 }	
 
 \examples{
 
-myraster = raster(matrix(0,10,10),xmn=0,xmx=10,ymn=0,ymx=12.3)
+myraster = rast(matrix(0,10,10),extent=c(0,10,0,12.3))
 
 squareRaster(myraster)
 
-squareRaster(extent(myraster), cells=10)
+squareRaster(myraster, buffer=3, cells=20)
 
-squareRaster(bbox(myraster), cells=10)
+squareRaster(ext(myraster), cells=10)
+
 
 }

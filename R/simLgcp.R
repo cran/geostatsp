@@ -3,22 +3,22 @@ simPoissonPP = function(intensity) {
 	intensity = intensity * prod(res(intensity))
 	
 	tosub = data.frame(id=NA,v=0)
-	intensity = subs(intensity, tosub, subsWithNA=FALSE)
+	intensity = subst(intensity, tosub$id, tosub$v)
 
-  if(any(maxValue(intensity)>1000))
-    warning("A large number of events are being simulated, more than", maxValue(intensity))
+  if(any(minmax(intensity)>1000))
+    warning("A large number of events are being simulated, more than ", max(minmax(intensity)))
   
   
 	NperCell = intensity
-	values(NperCell)= rpois(
-      ncell(intensity)*nlayers(intensity), 
+	terra::values(NperCell)= rpois(
+      ncell(intensity)*nlyr(intensity), 
       values(intensity))
 	
-	if(any(maxValue(NperCell)>1000))
-		warning("A large number of events are being simulated, more than", maxValue(NperCell))
+	if(any(minmax(NperCell)>1000))
+		warning("A large number of events are being simulated, more than", max(minmax(NperCell)))
 	
-	events= vector('list', nlayers(intensity))
-	for(D in 1:nlayers(intensity)) {
+	events= vector('list', nlyr(intensity))
+	for(D in 1:nlyr(intensity)) {
 	eventsD = rep(1:ncell(NperCell), values(NperCell[[D]]))
 	
 	if(length(eventsD)>1e6)
@@ -32,12 +32,12 @@ simPoissonPP = function(intensity) {
 	)
 	
   if(nrow(eventsD)){
-  	events[[D]] = SpatialPoints(eventsD)
-	  crs(events[[D]]) = crs(intensity)	
+  	events[[D]] = vect(eventsD)
+	  terra::crs(events[[D]]) = crs(intensity)	
   } else {
     events[[D]] = NULL
   }
-	}
+	} # D loop
 
 	if(length(events)==1) {
 		names(events) = 'events'
@@ -85,12 +85,12 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 
 	
 	
-	thefixed = raster(randomEffect)
-  values(thefixed) = themean
+	thefixed = rast(randomEffect)
+  terra::values(thefixed) = themean
   for(Dbeta in names(covariates))
     thefixed = thefixed + betas[Dbeta]*covariates[[Dbeta]]
 
-  linearPredictor = brick(thefixed)[[rep(1, n)]]
+  linearPredictor = thefixed[[rep(1, n)]]
 	linearPredictor = linearPredictor +randomEffect 
 	names(linearPredictor) = gsub("^sim", "linearPredictor", names(randomEffect))
 	
@@ -112,7 +112,7 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 	return(c(
 			events, 
 			list(
-				raster = stack(randomEffect,
+				raster = c(randomEffect,
 						linearPredictor, intensity,
 						intSansOffset,
 						covariates),

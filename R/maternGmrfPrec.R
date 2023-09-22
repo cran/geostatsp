@@ -206,10 +206,7 @@ maternGmrfPrec.dgCMatrix = function(N,
 		
 		Nx = ncol(theraster)
 		Ny = nrow(theraster)
-		param['cellSize'] = 
-				( attributes(theraster)$extent@xmax - 
-					attributes(theraster)$extent@xmin) /
-				Nx		
+		param['cellSize'] = diff(ext(theraster)[1:2])/Nx		
 	}
 	
 	gmrfOrder = param['shape']+1
@@ -388,7 +385,7 @@ maternGmrfPrec.dgCMatrix = function(N,
 	theX = distVecFull * paramInfo$theo['cellSize']
 	toKeep = which(theX< 1.75*paramInfo$theo['range'])
 	
-	if(adjustEdges == FALSE) {	
+	if(identical(adjustEdges, FALSE)) {	
 		varMid = Matrix::solve(Matrix::forceSymmetric(theNNmat),midVec)
 		
 		ev = data.frame(
@@ -490,7 +487,7 @@ maternGmrfPrec.dgCMatrix = function(N,
 	# edge correction
 	
 	
-	if(adjustEdges!=FALSE){
+	if(!identical(adjustEdges, FALSE)){
 		if(is.logical(adjustEdges)) {
 			adjustEdges='theo'
 		}
@@ -515,17 +512,25 @@ maternGmrfPrec.dgCMatrix = function(N,
 		
 		paramForM = paramInfo[[adjustEdges]]
 		outerCoordsCartesian = xyFromCell(
-				theraster, outerCells, spatial=TRUE
+				theraster, outerCells
 		)
 		
-		precOuter = .Call(
+		precOuter = new('dsyMatrix', uplo = 'L', 
+			x = rep(0.0, length(outerCells)^2), 
+			Dim = rep(length(outerCells),2))
+
+		# precStep1 = matern(vect(outerCoordsCartesian), fillParam(paramForM)[c('range','shape','variance','anisoRatio','anisoAngleRadians','nugget')])
+		# precOuterR = t(Aic) %*% Aic + precStep1
+
+		.Call(
 			C_gmrfEdge, 
 				as.matrix(Aic),
 				outerCoordsCartesian, 
 				fillParam(paramForM)[c(
 								'range','shape','variance',
 								'anisoRatio','anisoAngleRadians','nugget')
-				])
+				],
+				precOuter)
 		
 		theNNmat[outerCells,outerCells] = precOuter
 		#	theNNmat = forceSymmetric(theNNmat)

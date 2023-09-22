@@ -13,34 +13,29 @@ knitr::knit_hooks$set(
         0), cex = 1.25)
 })
 
-options("rgdal_show_exportToProj4_warnings"="none")
-
-if(Sys.info()['sysname'] =='Linux' &
-  requireNamespace("INLA", quietly=TRUE)) {   
-  INLA::inla.setOption(inla.call = 
-      system.file(paste(
-          "bin/linux/",          
-          ifelse(
-            .Machine$sizeof.pointer == 4, 
-            "32", "64"),
-          'bit/inla.static', sep=''),
-        package="INLA")) 
-}
-if(!exists('fact')) fact = 1
 
 ## ----packages-----------------------------------------------------------------
 library("geostatsp")
 data('swissRain')
+swissRain = unwrap(swissRain)
+swissAltitude = unwrap(swissAltitude)
+swissBorder = unwrap(swissBorder)
 
 
-
-print(requireNamespace('INLA', quietly=TRUE))
+if(requireNamespace("INLA", quietly=TRUE) ) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+} else {
+  print("INLA not installed")
+}
 
 swissRain$lograin = log(swissRain$rain)
 
-swissAltitudeCrop = raster::mask(swissAltitude,swissBorder)
+swissAltitudeCrop = mask(swissAltitude,swissBorder)
 
 ## ----cells--------------------------------------------------------------------
+if(!exists('fact')) fact = 1
 fact
 (Ncell = 25*fact)
 
@@ -104,10 +99,11 @@ if(requireNamespace('INLA', quietly=TRUE)) {
 altSeq = exp(seq(
     log(100), log(5000),
     by = log(2)/5))
+altMat = cbind(altSeq[-length(altSeq)], altSeq[-1], seq(1,length(altSeq)-1))
 
-swissAltCut = raster::cut(
+swissAltCut = classify(
   swissAltitudeCrop, 
-  breaks=altSeq
+  altMat
 )
 names(swissAltCut) = 'bqrnt'
 
@@ -201,7 +197,8 @@ if(requireNamespace('INLA', quietly=TRUE)) {
 
 ## ----covInData, fig.cap = 'covaraites in data', fig.subcap = c('predict.mean','range')----
 newdat = swissRain
-newdat$elev = extract(swissAltitude, swissRain)
+newdat$elev = extract(swissAltitude, swissRain, ID=FALSE)
+swissLandType = unwrap(swissLandType)
 if(requireNamespace('INLA', quietly=TRUE)) {
   swissFit =  glgm(lograin~ elev + land,
     newdat, Ncell, 
@@ -296,7 +293,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
 
 ## ----covInDataLevels----------------------------------------------------------
 newdat = swissRain
-newdat$landOrig = factor(unlist(raster::factorValues(swissLandType, raster::extract(swissLandType, swissRain),att='Category')))
+newdat$landOrig = extract(swissLandType, swissRain, ID=FALSE)
 newdat$landRel = relevel(newdat$landOrig, 'Mixed forests')
 
 
@@ -372,6 +369,11 @@ if(requireNamespace('INLA', quietly=TRUE)) {
 
 ## ----longTestsLoa, fig.cap='categorical', fig.subcap = c('predict','range')----
   data('loaloa')
+  loaloa = unwrap(loaloa)
+  ltLoa = unwrap(ltLoa)
+  elevationLoa = unwrap(elevationLoa)
+  eviLoa = unwrap(eviLoa)
+
   rcl = rbind(
     # wedlands and mixed forests to forest
     c(5,2),c(11,2),
@@ -379,22 +381,23 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     c(9,8),
     # croplands and urban changed to crop/natural mosaid
     c(12,14),c(13,14))
-  ltLoaR = reclassify(ltLoa, rcl)
+  ltLoaR = classify(ltLoa, rcl)
   levels(ltLoaR) = levels(ltLoa)
-  
-  
+    
   elevationLoa = elevationLoa - 750
-  elevLow = reclassify(elevationLoa, c(0, Inf, 0))
-  elevHigh = reclassify(elevationLoa, c(-Inf, 0, 0))
+  elevLow = min(elevationLoa, 0)
+  elevHigh = max(elevationLoa, 0)
+
+  eviLoa2 = (eviLoa - 1e7)/1e6
   
   covList = list(elLow = elevLow, elHigh = elevHigh, 
-    land = ltLoaR, evi=eviLoa)
+    land = ltLoaR, evi=eviLoa2)
 
 if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
   
   
   loaFit = glgm(
-    y ~ land + evi + elHigh + elLow + 
+    y ~ 1 + land + evi + elHigh + elLow + 
       f(villageID, prior = 'pc.prec', param = c(log(2), 0.5),
        model="iid"),
     loaloa,
@@ -404,7 +407,7 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
     shape=2, buffer=25000,
     prior = list(
       sd=log(2), 
-      range = list(prior = 'invgamma', param = c(shape=2,rate=1))),
+      range = 100*1000),
     control.inla = list(strategy='gaussian')
     )
   
@@ -435,8 +438,8 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
 
 ## ----noData, fig.height=3, fig.width=4, fig.cap = 'no data, pc priors', fig.subcap = c('beta','sd','range','scale')----
   
-  data2 = SpatialPointsDataFrame(cbind(c(1,0), c(0,1)),
-    data=data.frame(y=c(0,0), offset=c(-50,-50), x=c(-1,1)))
+  data2 = vect(cbind(c(1,0), c(0,1)),
+    atts=data.frame(y=c(0,0), offset=c(-50,-50), x=c(-1,1)))
 
 if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
   
@@ -613,9 +616,9 @@ if(requireNamespace('INLA', quietly=TRUE) ) {
       control.inla = list(strategy='gaussian'),
 )
 
-if(!is.null(swissFit$inla$summary.random$space)) {
+if(length(swissFit$parameters)) {
   swissFit$rasterTwo = setValues(
-    raster::brick(swissFit$raster, nl=2),
+    rast(swissFit$raster, nlyrs=2),
     as.matrix(swissFit$inla$summary.random$space[
       ncell(theGrid)+values(swissFit$raster[['space']]), 
       c('mean','0.5quant')]))

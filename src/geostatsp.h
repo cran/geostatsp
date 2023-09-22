@@ -15,7 +15,7 @@
 #include<R_ext/Print.h>
 #include<R_ext/Utils.h>
 #include<Matrix.h>
-
+#include <Rdefines.h>
 
 
 /* type = 0, distances is a vector
@@ -78,10 +78,11 @@ void maternForL(
 
 SEXP maternDistance(
 		SEXP distance,
+		SEXP result,
 		SEXP params,
 		// range, shape,
 		// variance, nugget,
-		SEXP type
+		int *type
 		//c('variance','cholesky','precision','inverseCholesky')
 );
 
@@ -95,6 +96,7 @@ SEXP maternPoints(
 		// anisoRatio,
 		// anisoAngleRadians,
 		// nugget,
+		SEXP result,
 		SEXP type);
 
 void maternArasterBpoints(
@@ -215,7 +217,8 @@ SEXP gmrfLik(
 SEXP gmrfEdge(
 		SEXP LinvQab, // dense rectangular matrix
 		SEXP points, // SpatialPoints*
-		SEXP params
+		SEXP params,
+		SEXP result
 );
 
 void maternRaster(

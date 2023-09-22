@@ -313,28 +313,6 @@ void maternLogLOpt(
 	totalSsqOpt = (double *) calloc(2*N[1],sizeof(double));
 
 
-#ifdef UNDEF
-	resultGr = (double *) calloc(SparamOpt[0]*6,sizeof(double));
-
-	result = maternLogLObj(junk,paramArg, optimEx);
-	scalarsF[0] = result;
-	scalarsF[1] = totalVarHatOpt[0];
-	scalarsF[2] =maternLogLObj(junk,paramArg, optimEx);
-
-	maternLogLgr(
-			junk,
-			paramArg,
-			resultGr,
-			optimEx);
-
-	for(Dparam=0;Dparam<SparamOpt[0]*6;++Dparam){
-		parLim[Dparam] = resultGr[Dparam];
-	}
-	free(resultGr);
-# endif
-
-//#ifdef UNDEF
-
 	if(scalarsInt[0]){
 		verboseOpt=1;
 	} else {

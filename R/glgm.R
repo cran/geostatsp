@@ -74,7 +74,7 @@ setMethod("glgm",
 
 # extrat covariates for data, convert covariates to a stack
 setMethod("glgm", 
-  signature(formula="formula", data="Raster", grid="ANY", covariates="ANY"),
+  signature(formula="formula", data="SpatRaster", grid="ANY", covariates="ANY"),
   function(
     formula, 
     data,
@@ -85,8 +85,10 @@ setMethod("glgm",
     prior, 
     ...) {
 
+
     if(is.numeric(grid))
       grid = squareRaster(data, grid)
+
 
     dataCov = gm.dataRaster(
       formula, data,
@@ -114,7 +116,7 @@ setMethod("glgm",
 
 
 setMethod("glgm", 
-  signature(formula="formula", data="Spatial", grid="ANY", covariates="ANY"),
+  signature(formula="formula", data="SpatVector", grid="ANY", covariates="ANY"),
   function(    formula, 
     data,
     grid,
@@ -131,13 +133,11 @@ setMethod("glgm",
       formula, data, 
       grid, covariates, buffer)
 
-#    data = dataCov$data@data 
-#    grid = dataCov$grid
-#    covariates = dataCov$covariates
+
 
     callGeneric(
       formula,
-      data=dataCov$data@data,
+      data=values(dataCov$data),
       grid=dataCov$grid,
       covariates=dataCov$covariates,
       buffer,
@@ -156,7 +156,7 @@ setMethod("glgm",
   signature(
     formula="formula", 
     data="data.frame",
-    grid="Raster", 
+    grid="SpatRaster", 
     covariates="data.frame"), 
   function(
     formula, 
@@ -167,7 +167,6 @@ setMethod("glgm",
     shape=1, 
     prior, 
     ...) {
-
 # undocumented options for ...
     getRidDots = c(
       'priorCI', # legacy prior specification
@@ -175,18 +174,19 @@ setMethod("glgm",
       'spaceFormula') # override the space formula
 
     if(!any(names(grid)=='space')) {
-      grid = setValues(raster(grid), 1:ncell(grid))
+      grid = rast(grid)
+      terra::values(grid) = 1:ncell(grid)
       names(grid) = 'space'
     }
 
     allVars = allVarsP(formula)
+
 
     if(!all(allVars %in% names(data)) )
       warning("some covariates seem to be missing: formula ", 
         paste(allVars, collapse=" "), ", data: ", 
         paste(names(data), collapse=" "))
 
-#    cells = raster::trim(grid[['space']])
     cells = grid[['space']]
     firstCell = values(cells)[1]
     cellDim = dim(cells)[1:2]
@@ -363,8 +363,9 @@ setMethod("glgm",
     # get rid of observations with NA's in covariates
   allVars = allVarsP(formulaOrig)
 
+
   if(length(allVars)) {
-    theNA = apply(data[,c(allVars,'space'),drop=FALSE], 
+    theNA = apply(data[,unique(c(allVars,'space')),drop=FALSE], 
       1, function(qq) any(is.na(qq)))
   } else {
     theNA = rep(FALSE, ncol(data))
@@ -377,7 +378,6 @@ setMethod("glgm",
     forInla$Ntrials = thedots$Ntrials[!theNA]
   if(any(names(thedots)=='weights'))
     forInla$weights = thedots$weights[!theNA]
-
 
 
     # if model is gaussian, add prior for nugget
@@ -521,14 +521,13 @@ setMethod("glgm",
 
 
     forRast = 	as.matrix(inlaResult$summary.random[["space"]][values(cells),])
-    resRasterRandom = 
-    brick(extent(cells), nrows=nrow(cells),
+    resRasterRandom = rast(extent=ext(cells), nrows=nrow(cells),
       ncols=ncol(cells), crs=crs(cells),
-      nl=dim(forRast)[2])
-    names(resRasterRandom) = 
-    paste("random.", colnames(forRast),sep="")
+      nlyrs=dim(forRast)[2])
+    names(resRasterRandom) = paste("random.", colnames(forRast),sep="")
 
-    values(resRasterRandom) = as.vector(forRast)
+
+    terra::values(resRasterRandom) = as.vector(forRast)
 
   } else {
     return(list(inla=inlaResult, parameters=params))
@@ -603,22 +602,17 @@ setMethod("glgm",
 
 
     resRasterFitted = 
-    brick(extent(cells), nrows=nrow(cells),
+    rast(extent=ext(cells), nrows=nrow(cells),
       ncols=ncol(cells), crs=crs(cells),
-      nl=ncol(linc))
+      nlyrs=ncol(linc))
     names(resRasterFitted) = 
     paste("predict.", colnames(linc),sep="")
 
-    values(resRasterFitted) = as.vector(linc)
+    terra::values(resRasterFitted) = as.vector(linc)
   }  else {
     resRasterFitted = NULL
   }    
 
-
-
-
-# sum(c(0,diff(params$range$posterior[,"x"])) * params$range$posterior[,"y"])
-# sum(c(0,diff(params$range$prior[,"x"])) * params$range$prior[,"y"])
 
 
   params$summary = inlaResult$summary.fixed
@@ -828,10 +822,11 @@ setMethod("glgm",
 
 getRid = c('random.ID', 'predict.ID', 'predict.space', 'predict.kld')
 
-  resRaster=brick(stack(
+  resRaster= c(
     resRasterRandom[[setdiff(names(resRasterRandom), getRid)]], 
     resRasterFitted[[setdiff(names(resRasterFitted), getRid)]], 
-    cells[[setdiff(names(cells), getRid)]]))
+    cells[[setdiff(names(cells), getRid)]])
+
 
   result=list(inla=inlaResult,
     raster=resRaster,

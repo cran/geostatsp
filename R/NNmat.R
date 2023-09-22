@@ -53,10 +53,10 @@ NNmat = function(N,Ny=N, nearest=3, adjustEdges=FALSE) {
   UseMethod("NNmat")	
 }
 
-NNmat.Raster = function(N, Ny=N, nearest=3, adjustEdges=FALSE) {
+NNmat.SpatRaster = function(N, Ny=N, nearest=3, adjustEdges=FALSE) {
   res = NNmat(ncol(N),nrow(N), nearest, adjustEdges)
   
-  attributes(res)$raster= raster(N)
+  attributes(res)$raster= rast(N)
   
   res
 }	
@@ -68,17 +68,17 @@ NNmat.default = function(N, Ny=N, nearest=3, adjustEdges=FALSE) {
   }
   
   Nx = N
-  theraster = raster(extent(0,Nx, 0, Ny), nrows = Ny, ncol = Nx)
+  theraster = rast(extent = ext(0,Nx, 0, Ny), nrows = Ny, ncol = Nx)
   Ncell = ncell(theraster)
-  cellSeq = values(theraster) = 1:Ncell
-
+  cellSeq = 1:Ncell
+  terra::values(theraster) = cellSeq
   # find id's of cells on the border (for edge correction)  
 
  if(any(dim(theraster)[1:2] <= 2*nearest)) {
   stop("grid too small for this many neighbours") 
  }
-  innerCells = raster::crop(theraster, 
-      extend(extent(theraster), as.integer(-nearest))
+  innerCells = crop(theraster, 
+    ext(as.vector(ext(theraster)) + nearest * c(1,-1,1,-1))
   )
   
   innerCells = sort(values(innerCells))

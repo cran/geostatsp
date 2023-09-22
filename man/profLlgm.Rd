@@ -65,6 +65,8 @@ if(interactive() | Sys.info()['user'] =='patrick') {
 
 library('geostatsp')
 data('swissRain')
+swissRain = unwrap(swissRain)
+swissAltitude = unwrap(swissAltitude)
 
 swissFit = lgm(data=swissRain, formula=rain~ CHE_alt,
 		grid=10, covariates=swissAltitude,

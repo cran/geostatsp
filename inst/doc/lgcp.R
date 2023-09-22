@@ -2,27 +2,28 @@
 knitr::opts_chunk$set(out.width='0.48\\textwidth', 
 	fig.align='default', fig.height=3, fig.width=6,
 	tidy = FALSE)
-if(Sys.info()['sysname'] =='Linux' & requireNamespace("INLA", quietly=TRUE)) {   
-	INLA::inla.setOption(inla.call = 
-		system.file(paste("bin/linux/",          
-			ifelse(.Machine$sizeof.pointer == 4, "32", "64"),
-			'bit/inla.static', sep=''),
-		package="INLA")) 
-}
 
 ## ----packages-----------------------------------------------------------------
 library("geostatsp")
 data('murder')
 data('torontoPop')
+murder = unwrap(murder)
+torontoBorder = unwrap(torontoBorder)
+torontoPdens = unwrap(torontoPdens)
+torontoIncome = unwrap(torontoIncome)
+
+## ----inlaOpts-----------------------------------------------------------------
+if(requireNamespace("INLA", quietly=TRUE) ) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+}
 
 ## ----Covariates, tidy=FALSE---------------------------------------------------
-if(requireNamespace("rgdal") & requireNamespace("rgeos") ) {
-# theCrs = mapmisc::omerc(murder, angle=-20)
-	theCrs = CRS("+proj=omerc +lat_0=43.7117469868935 +lonc=-79.3789787759006 +alpha=-20 +gamma=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
-	murderT = spTransform(murder, theCrs)
-	borderT = spTransform(torontoBorder, projection(murderT))
-	borderC = crop(borderT, extent(-12700, 7000, -7500, 3100))
-}
+	theCrs = "+proj=omerc +lat_0=43.7117469868935 +lonc=-79.3789787759006 +alpha=-20 +gamma=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
+	murderT = project(murder, theCrs)
+	borderT = project(torontoBorder, crs(murderT))
+	borderC = crop(borderT, ext(-12700, 7000, -7500, 3100))
 
 covList = list(
 		pop=torontoPdens,
@@ -31,7 +32,7 @@ covList = list(
 formulaHere = ~ inc + offset(pop, log=TRUE)
 
 ## ----lgcpGamma, tidy=FALSE----------------------------------------------------
-if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=TRUE) & requireNamespace("INLA", quietly=TRUE)) {
+if(requireNamespace("INLA", quietly=TRUE)) {
 	resG=lgcp(
 		formula = formulaHere, 
 		data=murderT, 
@@ -48,7 +49,7 @@ if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=T
 }
 
 ## ----lgcpPc, tidy=FALSE-------------------------------------------------------
-if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=TRUE) & requireNamespace("INLA", quietly=TRUE)) {
+if(requireNamespace("INLA", quietly=TRUE)) {
 	resP=lgcp(formulaHere, data=murderT, 
 			grid=squareRaster(borderC, 30),
 			covariates=covList,
@@ -65,7 +66,7 @@ if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=T
 ## ----lgcpTable, tidy=FALSE----------------------------------------------------
 sdSeq = seq(0,4,len=501)
 rangeSeq = seq(0,15*1000, len=501)
-if(requireNamespace("rgdal", quietly=TRUE) & requireNamespace("rgeos", quietly=TRUE) & requireNamespace("INLA", quietly=TRUE)) {
+if( requireNamespace("INLA", quietly=TRUE)) {
 	resT=lgcp(formulaHere, 
 			data=murderT, 
 			grid=squareRaster(borderC, 30),

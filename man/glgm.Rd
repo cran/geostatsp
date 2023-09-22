@@ -3,9 +3,9 @@
 \alias{glgm}
 \alias{glgm-methods}
 \alias{glgm,ANY,ANY,ANY,ANY-method}
-\alias{glgm,formula,Raster,ANY,ANY-method}
-\alias{glgm,formula,Spatial,ANY,ANY-method}
-\alias{glgm,formula,data.frame,Raster,data.frame-method}
+\alias{glgm,formula,SpatRaster,ANY,ANY-method}
+\alias{glgm,formula,SpatVector,ANY,ANY-method}
+\alias{glgm,formula,data.frame,SpatRaster,data.frame-method}
 
 
 \alias{lgcp}
@@ -18,15 +18,15 @@ Fits a generalized linear geostatistical model or a log-Gaussian Cox process
 using \code{inla} }
 \usage{
 \S4method{glgm}{ANY,ANY,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
-\S4method{glgm}{formula,Raster,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
-\S4method{glgm}{formula,Spatial,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
-\S4method{glgm}{formula,data.frame,Raster,data.frame}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
+\S4method{glgm}{formula,SpatRaster,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
+\S4method{glgm}{formula,SpatVector,ANY,ANY}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
+\S4method{glgm}{formula,data.frame,SpatRaster,data.frame}(formula, data,  grid, covariates, buffer=0, shape=1, prior, ...) 
 lgcp(formula=NULL, data,  grid, covariates=NULL, border, ...)
 }
  
 \arguments{
 \item{data}{
-An object of class \code{ SpatialPointsDataFrame} containing the data.
+An object of class \code{ SpatVector} containing the data.
 }
 \item{grid}{Either an integer giving the number of cells in the x direction, or a raster object which 
 will be used for the spatial random effect.  If the cells in the raster are not square, the resolution in the y direction 
@@ -46,7 +46,7 @@ can be overridden with a
 \item{prior}{list with elements named \code{range}, \code{sd}, \code{sdObs}.  See Details.}
 \item{shape}{Shape parameter for the Matern correlation function, must be 1 or 2.}
 \item{buffer}{Extra space padded around the data bounding box to reduce edge effects.}
-\item{border}{boundary of the region on which an LGCP is defined, passed to \code{\link[raster]{mask}}}
+\item{border}{boundary of the region on which an LGCP is defined, passed to \code{\link[terra]{mask}}}
 \item{...}{Additional options passed to  
 \Sexpr[results=rd]{c(
   '\\\\code{inla} in the \\\\code{INLA} package', 
@@ -94,16 +94,21 @@ A list with two components named  \code{inla}, \code{raster}, and \code{paramete
   \url{https://www.r-inla.org}
 }
 \examples{
-# use the 'safe' version of INLA on linux systems
-if(Sys.info()['sysname'] =='Linux' &
-  requireNamespace("INLA", quietly = TRUE)) {   
-  INLA::inla.setOption(inla.call = system.file(paste("bin/linux/",          
-          ifelse(.Machine$sizeof.pointer == 4, "32", "64"),
-          'bit/inla.static', sep=''), package="INLA")) }
 
 # geostatistical model for the swiss rainfall data
+
+if(requireNamespace("INLA", quietly=TRUE) ) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+} 
+
 require("geostatsp")
 data("swissRain")
+swissRain = unwrap(swissRain)
+swissAltitude = unwrap(swissAltitude)
+swissBorder = unwrap(swissBorder)
+
 swissRain$lograin = log(swissRain$rain)
 swissFit =  glgm(formula="lograin", data=swissRain, 
 	grid=30, 
@@ -150,19 +155,25 @@ if(!is.null(swissFit$parameters) ) {
 
 # a log-Gaussian Cox process example
 
-myPoints = SpatialPoints(cbind(rbeta(100,2,2), rbeta(100,3,4)))
-myPoints@bbox = cbind(c(0,0), c(1,1))
+myPoints = vect(cbind(rbeta(100,2,2), rbeta(100,3,4)))
 
-mycov = raster(matrix(rbinom(100, 1, 0.5), 10, 10), 0, 1, 0, 1)
+
+mycov = rast(matrix(rbinom(100, 1, 0.5), 10, 10), extent=ext(0, 1, 0, 1))
 names(mycov)="x1"
 
+
+if(requireNamespace("INLA", quietly=TRUE) ) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+}
 
 res = lgcp(
 	formula=~factor(x1),
 	data=myPoints, 
-	grid=20, covariates=mycov,
+	grid=squareRaster(ext(0,1,0,1), 20), covariates=mycov,
 	prior=list(sd=c(0.9, 1.1), range=c(0.4, 0.41),
-	control.inla = list(strategy='gaussian'))
+	control.inla = list(strategy='gaussian'), verbose=TRUE)
 )
 if(length(res$parameters)) {  
 	plot(res$raster[["predict.exp"]])

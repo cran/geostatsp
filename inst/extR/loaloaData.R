@@ -82,18 +82,29 @@
 	ltLoa = ratify(ltLoa)
 	
 	
-	landTable = XML::readHTMLTable(RCurl::getURL(
-					'https://lpdaac.usgs.gov/dataset_discovery/modis/modis_products_table/mcd12q1'
+	landTableAll = XML::readHTMLTable(RCurl::getURL(
+#					'https://lpdaac.usgs.gov/dataset_discovery/modis/modis_products_table/mcd12q1'
+					'https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MCD12Q1#bands'
 			), header=TRUE, stringsAsFactors = FALSE)
 	
-	landTable = landTable[[2]][,1:2]
-	
+	landTable = landTableAll[[2]]
+	landTable$ID = as.numeric(landTable$Value)
+	landTable$label = gsub("[:].*", "", landTable$Description)
+
+	bob = levels(stuff)[[1]]
+	bob = cbind(bob, landTable[match(levels(stuff2)[[1]]$ID, landTable$Value), c('Color','short')])
+	levels(stuff2) = bob[,c('ID','label')]
+	coltab(stuff2) = bob[,c('ID','Color')]
 	
 	landTableM = colourScale(
-			x=ltLoa, labels=landTable, style='unique', breaks=10,
+			x=stuff, labels=landTable, style='unique', breaks=10,
 			col='Set3', exclude=0
 	)
 	
+	stuff7 = deepcopy(stuff)
+	coltab(stuff7) = landTableM$colortable
+	levels(stuff7) = landTableM$levels
+
 	ltLoa@legend@colortable = landTableM$colortable
 	levels(ltLoa)[[1]] = landTableM$levels
 	

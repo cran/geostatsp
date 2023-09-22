@@ -7,10 +7,11 @@ grfConditional = function(data, y=1,
 	if(is.numeric(locations)){
 		# locations is number of cells in the x direction
 		Nx = locations[1]
-		myExtent = 	extent(data)
-		Ny = round(locations*diff(data@bbox[2,])/diff(data@bbox[1,]))
-		myExtent@ymax = myExtent@ymin + Ny * diff(data@bbox[1,])/Nx
-		locations = raster(myExtent, Ny, Nx,
+		myExtent = 	ext(data)
+		Ny = round(locations*diff(ext(data)[3:4])/diff(ext(data[1:2])))
+		myExtent = ext(c(as.vector(myExtent)[-4], 
+			ymin(myExtent) + Ny * diff(ext(data[1:2]))/Nx))
+		locations = rast(extent=myExtent, nrow=Ny, ncol=Nx,
 				crs=crs(data))	
 	}
 	if(nrow(locations) * ncol(locations) > 10^7) warning("there are lots of cells in the prediction raster,\n this might take a very long time")
@@ -45,7 +46,7 @@ grfConditional = function(data, y=1,
 
 
 
-rasterCopy = raster(locations)
+rasterCopy = rast(locations)
 
 simFun = function(D) {
 
@@ -58,15 +59,15 @@ simFun = function(D) {
 	
 	modelv = modelRandomFields(param[D,])
 	
-	given = SpatialPointsDataFrame(
-			data=data.frame(y=y[D,]),
-			coords=coordinates(data)
+	given = vect(
+			atts=data.frame(y=y[D,]),
+			x=crds(data)
 	)
-	given = as(given, "RFspatialPointsDataFrame")
-	given@.RFparams = list(n=1, vdim=1)
+#	given = as(given, "RFspatialPointsDataFrame")
+#	given@.RFparams = list(n=1, vdim=1)
 	
 	
-	res = raster(RandomFields::RFsimulate(
+	res = rast(RandomFields::RFsimulate(
 			model=modelv,
 			x=as(locations, "GridTopology"),
 			data=given			
@@ -83,8 +84,8 @@ simFun = function(D) {
 	
 	
 	if(nuggetInPrediction){
-		values(rasterCopy) =  
-				rnorm(ncell(res), sd=sqrt(param[,"nugget"]))
+		terra::setValues(rasterCopy,
+				rnorm(ncell(res), sd=sqrt(param[,"nugget"])))
 		res = res + rasterCopy
 	}		
 	if(!is.null(fun)) {
@@ -101,7 +102,7 @@ simFun = function(D) {
 	
 }
 	if(all(unlist(sapply(result, class))=="RasterLayer"))
-		result = do.call(brick, result)
+		result = do.call(c, result)
 
 result	
 }

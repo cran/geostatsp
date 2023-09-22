@@ -20,24 +20,24 @@ spatialRocPolyTemplate = function(
 spatialRocRasterTemplate = function(
 		truth, fit
 ) {
-	if(length(grep("^Raster", class(fit)))) {
-		template = raster(fit)
+	if(length(grep("SpatRaster", class(fit)))) {
+		template = rast(fit)
 	} else {
-		template = raster(fit[[1]]$raster)
+		template = rast(fit[[1]]$raster, nlyr=1)
 	}
-	values(template) = seq(1, ncell(template))
+	terra::values(template) = seq(1, ncell(template))
 	names(template) = 'fitID'
 	
 	# remove cells with no predictions
 
-	if(length(grep("^Raster", class(fit)))) {
+	if(length(grep("SpatRaster", class(fit)))) {
 		template = mask(template, fit[[1]])
 	} else {
 		template = mask(template, fit[[1]]$raster$predict.mean)
 	}
 	
 	templateID = stackRasterList(
-			list(fitID = template), truth, method='ngb'
+			list(fitID = template), truth, method='near'
 	)
 
 	# and cells with no truth
@@ -74,7 +74,7 @@ spatialRocSims = function(
 		
 	templateID = mask(templateID, truthCut[[1]])
 	
-	truthCdf = zonal(
+	truthCdf = terra::zonal(
 			truthCut,
 			templateID,
 			function(x,...) {
@@ -83,18 +83,19 @@ spatialRocSims = function(
 	)
 	
 	
-	rownames(truthCdf) = truthCdf[,'zone']
-	truthCdf = truthCdf[,grep('zone', colnames(truthCdf), invert=TRUE)]
+	theRowNames = rownames(truthCdf) = truthCdf[,'fitID']
+	truthCdf = truthCdf[,grep('fitID', colnames(truthCdf), invert=TRUE, value=TRUE)]
+	rownames(truthCdf) = theRowNames
 	colnames(truthCdf) = paste(
 			rep(names(marginals), 
-					rep(length(Slevels),nlayers(truthCut))
+					rep(length(Slevels),nlyr(truthCut))
 			), 
-			rep(Slevels, nlayers(truthCut)),
+			rep(Slevels, nlyr(truthCut)),
 			sep="_"
 	)
 	truthCdf = array(
 			truthCdf,
-			c(nrow(truthCdf), length(Slevels), nlayers(truthCut)),
+			c(nrow(truthCdf), length(Slevels), nlyr(truthCut)),
 			dimnames = list(
 					rownames(truthCdf),
 					Slevels,
@@ -131,7 +132,7 @@ spatialRocSims = function(
 		
 		
 
-		if(length(grep("^Raster", class(marginals[[Dsim]])))) {		
+		if(length(grep("SpatRaster", class(marginals[[Dsim]])))) {		
 			# local-em
 			
 			pMat = cbind('1'=1,as.data.frame(
@@ -261,15 +262,16 @@ spatialRoc = function(fit,
 		names(truth) = tname
 	} 
 
-	if(is.null(border))
-		if(any(names(fit[[1]])=='data'))
+	if(is.null(border)) {
+		if(any(names(fit[[1]])=='data')) {
 			border = fit[[1]]$data
+		}
+	}
 		
 	if(!is.null(border))
 		truth = mask(truth, border)
 
-	truthCut = cut(truth, breaks=breaks)
-	names(truthCut) = names(truth)
+	truthCut = terra::classify(truth, rcl=breaks)
 	
 	
 	if(isLocalEm) {
@@ -368,10 +370,10 @@ spatialRoc = function(fit,
 				      length(unique(resultOneMSpec[!is.na(resultOneMSpec)])) == 1) {
 				    resultOut[,D] = NA
 				  } else {
-				    resultOut[,D] = approx(
+				    resultOut[,D] = suppressWarnings(approx(
 				      resultOneMSpec, 
 				      resultSens, 
-				      xout = resultOut[,'onemspec'])$y
+				      xout = resultOut[,'onemspec'], rule=2)$y)
 				  }
 				}
 				resultOrig = result

@@ -37,10 +37,10 @@ Alternately, \code{data} can be a vector of observations and \code{formula} can 
 a model matrix.
 }
  \item{data}{
-	An object of class \code{SpatialPointsDataFrame}, a vector of observations, 
+	An object of class \code{SpatVect}, a vector of observations, 
 	or a data frame containing observations and covariates.
 }
-\item{coordinates}{A \code{SpatialPoints} object containing the locations of each observation, 
+\item{coordinates}{A \code{SpatVect} object containing the locations of each observation, 
 which defaults to \code{data}.  Alternately, \code{coordinates} can be a
  \code{\link[Matrix]{symmetricMatrix-class}} or \code{dist} object 
 reflecting the distance matrix of these coordinates (though this is only permitted if the 
@@ -92,23 +92,25 @@ and the variance matrix of the coefficient MLE's.
 }
 \examples{
 n=40
-mydat = SpatialPointsDataFrame(
+mydat = vect(
 	cbind(runif(n), seq(0,1,len=n)), 
-	data=data.frame(cov1 = rnorm(n), cov2 = rpois(n, 0.5))
+	atts=data.frame(cov1 = rnorm(n), cov2 = rpois(n, 0.5))
 	)
 
 # simulate a random field
 trueParam = c(variance=2^2, range=0.35, shape=2, nugget=0.5^2)
 set.seed(1)
 
-mydat@data= cbind(mydat@data , RFsimulate(model=trueParam,x=mydat)@data)
+oneSim = RFsimulate(model=trueParam,x=mydat)
+
+values(mydat) = cbind(values(mydat) , values(oneSim))
 
 # add fixed effects
 mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 
 	mydat$sim + rnorm(length(mydat), 0, sd=sqrt(trueParam["nugget"]))
 
-spplot(mydat, "sim", col.regions=rainbow(10), main="U")
-spplot(mydat, "Y", col.regions=rainbow(10), main="Y")
+plot(mydat, "sim", col=rainbow(10), main="U")
+plot(mydat, "Y", col=rainbow(10), main="Y")
 
 
 myres = likfitLgm(
@@ -118,11 +120,8 @@ myres = likfitLgm(
 	paramToEstimate = c("range","nugget")
 	)
 
-
-
 myres$summary[,1:4]
 
-if(interactive()  | Sys.info()['user'] =='patrick') {
 
 # plot variograms of data, true model, and estimated model
 myv = variog(mydat, formula=Y ~ cov1 + cov2,option="bin", max.dist=0.5)
@@ -221,7 +220,7 @@ myres$summary
 
 par(mfrow=c(1,2))
 
-myraster = raster(nrows=30,ncols=30,xmn=0,xmx=1,ymn=0,ymx=1)
+myraster = rast(nrows=30,ncols=30,xmin=0,xmax=1,ymin=0,ymax=1)
 covEst = matern(myraster, y=c(0.5, 0.5), par=myres$param)
 covTrue = matern(myraster, y=c(0.5, 0.5), par=trueParamAniso)
 
@@ -229,6 +228,7 @@ plot(covEst, main="estimate")
 plot(covTrue, main="true")
 
 par(mfrow=c(1,1))
+
 }
-}
+
 

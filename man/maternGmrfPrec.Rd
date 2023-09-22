@@ -4,7 +4,7 @@
 \alias{maternGmrfPrec.dgCMatrix}
 \alias{NNmat}
 \alias{NNmat.default}
-\alias{NNmat.Raster}
+\alias{NNmat.SpatRaster}
 \title{Precision matrix for a Matern spatial correlation}
 \description{
 Produces the precision matrix for a Gaussian random field on a regular square lattice, using a Markov random field approximation. 
@@ -19,7 +19,7 @@ maternGmrfPrec(N, ...)
   param=c(variance=1, range=1, shape=1, cellSize=1),
   adjustEdges=FALSE, ...)
 NNmat(N, Ny=N, nearest=3, adjustEdges=FALSE)
-\method{NNmat}{Raster}(N, Ny=N, nearest=3, adjustEdges=FALSE)
+\method{NNmat}{SpatRaster}(N, Ny=N, nearest=3, adjustEdges=FALSE)
 \method{NNmat}{default}(N, Ny=N, nearest=3, adjustEdges=FALSE)
 }
 
@@ -42,7 +42,7 @@ Gaussian random field or (from the \code{NNmat} function)  a matrix denoting nei
 
  }
 \details{ The numbering of cells
-is consistent with the \code{raster} package.  Cell 1 is the top left cell, with cell 2 being the cell to the right and numbering
+is consistent with the \code{terra} package.  Cell 1 is the top left cell, with cell 2 being the cell to the right and numbering
 continuing row-wise.
 
 The 
@@ -68,7 +68,7 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 
 	params=c(range = 3,	shape=2, variance=5^2)
 	
-	myGrid = squareRaster(extent(0,20,0,10), 40)
+	myGrid = squareRaster(ext(0,20,0,10), 40)
 		
 	# precision matrix without adjusting for edge effects
 	precMat =maternGmrfPrec(N=myGrid, param=params) 
@@ -91,7 +91,7 @@ if `knight' neighbours; and 6 if third `rook' neighbours.
 		N = myGrid, param=params, 
 		adjustEdges=TRUE) 
 
-if(interactive() | Sys.info()['user'] =='patrick') {	
+\donttest{	
 
 # variance matrices
 	varMat = Matrix::solve(precMat)

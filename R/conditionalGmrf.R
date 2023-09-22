@@ -134,14 +134,14 @@ conditionalGmrf = function(param,
 	}
 	   
   if(!is.null(template)){
-    resRast = raster::brick(raster(template), nl=prod(dim(result)[-1]))
+    resRast = rast(template, nlyrs=prod(dim(result)[-1]))
     names(resRast) = as.vector(do.call(
 					function(a,b) outer(a,b,paste,sep="_"),
 					dimnames(result)[-1] ))
 	if(dim(result)[[2]]==1) {
 		names(resRast) = dimnames(result)[[3]]
 	}
-	values(resRast) = as.vector(result)
+	terra::setValues(resRast, as.vector(result))
     result = resRast		
   }
   result

@@ -24,7 +24,7 @@ True value of the spatial surface, or result from \code{\link{simLgcp}} function
 Assumed to be on the log scale if \code{random=TRUE} and on the natural scale otherwise.
 }
   \item{border}{
-optional, \code{SpatialPolygonsDataFrame} specifying region that calculations will be restricted to.
+optional, \code{SpatVector} specifying region that calculations will be restricted to.
 }
   \item{random}{
 compute ROC's for relative intensity (\code{FALSE}) or random effect (\code{TRUE})

@@ -16,8 +16,11 @@ Mercer and Hall wheat yield data, based on version in Cressie (1993), p. 455.
 
 \examples{
 	data("wheat")
-	raster::plot(wheat, main="Mercer and Hall Data")
+	wheat = unwrap(wheat)
+	plot(wheat, main="Mercer and Hall Data")
 }
+
+
 
 
 

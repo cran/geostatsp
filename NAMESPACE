@@ -17,16 +17,13 @@ export(modelRandomFields)
 
 export(matern)
 
-S3method(matern, Raster)
-S3method(matern, SpatialPointsDataFrame)
-S3method(matern, SpatialPoints)
+S3method(matern, SpatRaster)
+S3method(matern, SpatVector)
 S3method(matern, dist)
 S3method(matern, dsyMatrix)
 S3method(matern, default)
 export(fillParam)
 
-#S3method(as.im, RasterLayer)
-export(asImRaster)
 
 
 export(squareRaster)
@@ -37,34 +34,28 @@ S3method(maternGmrfPrec, default)
 
 export(NNmat)
 S3method(NNmat, default)
-S3method(NNmat,Raster)	
+S3method(NNmat,SpatRaster)	
 
 export(variog)
-S3method(variog, SpatialPointsDataFrame)
+S3method(variog, SpatVector)
 S3method(variog, default)
 
 
 export(variogMcEnv)
-S3method(variogMcEnv, SpatialPointsDataFrame)
+S3method(variogMcEnv, SpatVector)
 S3method(variogMcEnv, default)
 
 # Import all packages listed as Imports or Depends
 import(
-  sp,
-  raster,
   Matrix, methods
 )
+import(terra, except='na.omit')
 
 importFrom(numDeriv,hessian)
 importFrom(abind, abind)
+
 #importFrom(pracma, trapz)
 
-# the following are imports from packages listed as Suggests
-# calls to these functions are made with ::
-# the imports below are unnecessary but here for completeness
-#importFrom(geoR, variog, variog.mc.env)
-#importFrom(spatstat,as.im,as.im.matrix)
-#importFrom(parallel, mcmapply)
 
 
 # only needed because INLA is requireNamespace instead of require

@@ -645,7 +645,7 @@ summaryGmrfFit.array = function(x) {
       list(as.vector(outer(dimnames(x2)[[1]], dimnames(x2)[[2]], paste))),
       dimnames(x2)[-(1:2)]))
   if(length(dim(x3))==2){
-    res = summaryGmrfFit.matrix(x3,npar=2)
+    res = summaryGmrfFit.matrix(x3)
   } else if(length(dim(x3))==3){
     res=NULL
     for(D  in seq(dim(x3)[2],1)){
@@ -658,7 +658,7 @@ summaryGmrfFit.array = function(x) {
 }
 
 
-summaryGmrfFit.matrix = function(x,npar=1) {
+summaryGmrfFit.matrix = function(x) {
   
   if(any(rownames(x)=='logL.ml')){
     x = t(x)

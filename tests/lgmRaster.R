@@ -1,18 +1,15 @@
-options("rgdal_show_exportToProj4_warnings"="none") 
 #+ setup
 library('geostatsp')
 #'
 
 #' # simulated data
 
+# exclude this line to use the RandomFields package
+options(useRandomFields = FALSE)
 
-#+ simData
-if(.Platform$OS.type == 'windows') {
-	Ncell =  30
-} else {
-	Ncell = 40
-}
-myRaster = squareRaster(extent(0,6000,0,6000), Ncell)
+Ncell =  40
+
+myRaster = squareRaster(ext(0,6000,0,6000), Ncell)
 
 myParam=c(oneminusar=0.1, conditionalVariance=2.5^2,shape=2)
 myQ = maternGmrfPrec(myRaster, param=myParam)
@@ -44,11 +41,10 @@ plot(myY)
 
 #+ simGrid
 myResR = lgm(formula = sim ~ x, 
-    data=raster::stack(myY, myCov), 
+    data=c(myY, myCov), 
     oneminusar = exp(seq(log(0.05), log(0.2),len=25)),
     nugget = exp(seq(log(5), log(100),len=21)), shape=2, 
-    adjustEdges=TRUE,
-    mc.cores=1+(.Platform$OS.type=='unix') )		
+    adjustEdges=TRUE)		
 #'
 
 #+ simPlot
@@ -170,12 +166,13 @@ if(requireNamespace("mvtnorm", quietly=TRUE))
 
 #+ swissRain
 data('swissRainR')
+swissRainR= unwrap(swissRainR)
 
-anotherx = raster(swissRainR[['alt']])
+anotherx = rast(swissRainR[['alt']])
 values(anotherx) = seq(0,1,len=ncell(anotherx))
 names(anotherx) = "myvar"
 
-swissRainR2 = brick(swissRainR[['alt']], 
+swissRainR2 = c(swissRainR[['alt']], 
     sqrt(swissRainR[['prec1']]),
     anotherx)
 #'
@@ -183,19 +180,18 @@ swissRainR2 = brick(swissRainR[['alt']],
 #+ aggregateIfWindows
 
 if(.Platform$OS.type=='windows') {
-  swissRainR2 = raster::aggregate(swissRainR2, fact=2)
+  swissRainR2 = aggregate(swissRainR2, fact=2)
 }
 #'
 
 #+ swissRainFit
 
 swissResR =  lgm(
-    formula=layer ~ alt+ myvar, 
+    formula=prec1 ~ alt+ myvar, 
     data=swissRainR2, shape=2,
-    oneminusar = exp(seq(log(0.05), log(0.1), len=11)),
+    oneminusar = exp(seq(log(0.01), log(0.1), len=11)),
     nugget = exp(seq(log(0.25), log(2.5), len=11)),
-    adjustEdges=TRUE,
-    mc.cores=1+(.Platform$OS.type=='unix') )		
+    adjustEdges=TRUE )		
 #'
 
 #+ swissRainPlot
@@ -223,15 +219,15 @@ mapmisc::legendBreaks("topright", breaks = Sbreaks, col=myCol$col)
 #+ boxCox
 
 
-yBC = sqrt(myY + 1 - minValue(myY))
+yBC = sqrt(myY + 1 - min(minmax(myY)))
 names(yBC) = names(myY)
 myResBC = lgm(
     formula = sim ~ x, 
-    data=raster::stack(yBC, myCov), 
+    data=c(yBC, myCov), 
     oneminusar = exp(seq(log(0.05), log(0.15), len=11)),
     nugget = exp(seq(log(5), log(50), len=11)),
     shape=2, reml=FALSE, 
-    mc.cores=1+(.Platform$OS.type=='unix'), 
+    mc.cores=1, 
     fixBoxcox=FALSE,
     adjustEdges=FALSE)
 #'
@@ -268,7 +264,7 @@ points(myResBC$param['propNugget'], myResBC$param['oneminusar'])
 if(Sys.info()['user'] =='patrick' & FALSE) {
   myResRopt = lgm(
       formula = sim ~ x, 
-      data=raster::stack(myY, myCov), 
+      data=c(myY, myCov), 
       oneminusar = seq(0.05, 0.2,len=4),
       shape=2)		
   
@@ -300,16 +296,15 @@ if(Sys.info()['user'] =='patrick' & FALSE) {
   
 # optimize only nugget
   swissResROptNug =  lgm(
-      formula=layer ~ alt+ myvar, 
+      formula=prec1 ~ alt+ myvar, 
       data=swissRainR2, shape=2,
       oneminusar=seq(0.05, 0.1, len=4),
       adjustEdges=FALSE,fixNugget=TRUE,
-      mc.cores=1+(.Platform$OS.type=='unix')
+      mc.cores=1
   )
   
   plot(swissResROptNug$profL$range, type='l')
 }
-
 
 
 #'

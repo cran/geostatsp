@@ -20,9 +20,9 @@ setMethod("resampleMethods",
 )
 
 setMethod("resampleMethods", 
-    signature("ANY", "ANY", "SpatialPointsDataFrame"), 
+    signature("ANY", "ANY", "SpatVector"), 
     function(formula, covariates, data=NULL){
-      data=data@data
+      data=values(data)
       callGeneric(formula, covariates, data)
     }
 )
@@ -30,9 +30,9 @@ setMethod("resampleMethods",
 
 # convert covariates to a list      
 setMethod("resampleMethods", 
-    signature("ANY", "Raster", "data.frame"), 
+    signature("ANY", "SpatRaster", "data.frame"), 
     function(formula, covariates, data=NULL){
-      covariatesList = vector('list', nlayers(covariates))
+      covariatesList = vector('list', nlyr(covariates))
       names(covariatesList) = names(covariates)
       for(D in names(covariates))
         covariatesList[[D]] = covariates[[D]]
@@ -60,8 +60,9 @@ setMethod("resampleMethods",
 setMethod("resampleMethods", 
 		signature("formula", "list", "data.frame"), 
 		function(formula, covariates, data=NULL){
+
 # decide which method to use when reprojecting covariates
-			# factors must be ngb, numerics are bilinear
+			# factors must be near, numerics are bilinear
       
       allVars = all.vars(formula)
       allVars = intersect(allVars, names(covariates))
@@ -71,8 +72,10 @@ setMethod("resampleMethods",
       factorsInFormula = grep("^factor\\(", allterms, value=TRUE)
       factorsInFormula = gsub("^factor\\(|\\)$", "", factorsInFormula)
       
-      factorsInCovariates = unlist(lapply(covariates, is.factor))
+      factorsInCovariates = unlist(lapply(covariates, terra::is.factor))
+
       factorsInCovariates=names(factorsInCovariates)[factorsInCovariates]
+
 
       varsInData = intersect(allVars, names(data))
       factorsInData = unlist(
@@ -84,7 +87,7 @@ setMethod("resampleMethods",
       names(method)=names(covariates)
       method[names(method) %in% 
               c(factorsInFormula, factorsInCovariates, factorsInData)
-      ] = "ngb" 
+      ] = "near" 
 			method
     }
 )
