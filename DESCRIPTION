@@ -1,8 +1,8 @@
 Package: geostatsp
 Type: Package
 Title: Geostatistical Modelling with Likelihood and Bayes
-Version: 2.0.0
-Date: 2023-09-11
+Version: 2.0.1
+Date: 2023-09-22
 Depends: Matrix, terra, R (>= 3.5.0)
 Imports: abind, numDeriv, methods, stats
 Suggests: RandomFields, parallel, mapmisc, ellipse, pracma, knitr
@@ -18,8 +18,8 @@ Description: Geostatistical modelling facilities using 'SpatRaster' and 'SpatVec
 License: GPL
 NeedsCompilation: yes
 VignetteBuilder: knitr
-Packaged: 2023-09-21 20:59:52 UTC; patrick
+Packaged: 2023-09-22 16:22:24 UTC; patrick
 Author: Patrick Brown [aut, cre, cph]
 Maintainer: Patrick Brown <patrick.brown@utoronto.ca>
 Repository: CRAN
-Date/Publication: 2023-09-22 09:40:02 UTC
+Date/Publication: 2023-09-22 21:50:06 UTC

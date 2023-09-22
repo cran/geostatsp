@@ -1,5 +1,26 @@
 ## ----knitr, include=FALSE-----------------------------------------------------
 require('knitr')
+# very basic output that doesnt require extra latex packages
+
+knit_hooks$set(source  =function(x, options) {
+  paste0(c('\\begin{verbatim}', x, '\\end{verbatim}', ''),
+      collapse = '\n')
+})
+knit_hooks$set(plot = function (x, options) 
+    {
+      paste0(knitr::hook_plot_tex(x, options), "\n")
+   })
+knit_hooks$set(chunk = function(x, options) {x})
+
+hook_output <- function(x, options) {
+  if (knitr:::output_asis(x, options)) return(x)
+  paste0('\\begin{verbatim}\n', x, '\\end{verbatim}\n')
+}
+
+knit_hooks$set(output = hook_output)
+knit_hooks$set(message = hook_output)
+knit_hooks$set(warning = hook_output)
+
 knitr::opts_chunk$set(out.width='0.48\\textwidth', 
   fig.align='default', fig.height=4, fig.width=6,
   tidy = FALSE, margins = 1)
@@ -20,8 +41,11 @@ data('swissRain')
 swissRain = unwrap(swissRain)
 swissAltitude = unwrap(swissAltitude)
 swissBorder = unwrap(swissBorder)
+swissRain$lograin = log(swissRain$rain)
 
+swissAltitudeCrop = mask(swissAltitude,swissBorder)
 
+## ----inla, include=FALSE------------------------------------------------------
 if(requireNamespace("INLA", quietly=TRUE) ) {
   INLA::inla.setOption(num.threads=2)
   # not all versions of INLA support blas.num.threads
@@ -30,19 +54,14 @@ if(requireNamespace("INLA", quietly=TRUE) ) {
   print("INLA not installed")
 }
 
-swissRain$lograin = log(swissRain$rain)
-
-swissAltitudeCrop = mask(swissAltitude,swissBorder)
 
 ## ----cells--------------------------------------------------------------------
 if(!exists('fact')) fact = 1
 fact
-(Ncell = 25*fact)
+(Ncell = round(25*fact))
 
-## ----swissWithFormula, fig.cap = 'Swiss rain as in help file', fig.subcap = c('random','fitted', 'sd','range')----
-if(requireNamespace('INLA', quietly=TRUE)) {
-  
-  swissFit =  glgm(
+## ----swissINla----------------------------------------------------------------
+swissFit =  glgm(
     formula = lograin~ CHE_alt,
     data = swissRain, 
     grid = Ncell,
@@ -53,18 +72,25 @@ if(requireNamespace('INLA', quietly=TRUE)) {
       sd=c(1,0.5), 
       sdObs = 1,
       range=c(500000, 0.5)),
-    control.inla = list(strategy='gaussian'),
-    verbose=TRUE
+    control.inla = list(strategy='gaussian')
   )
-  if(length(swissFit$parameters)) {
-    knitr::kable(swissFit$parameters$summary, digits=3)
 
+## ----swissParams--------------------------------------------------------------
+if(length(swissFit$parameters)) {
+    knitr::kable(swissFit$parameters$summary[,c(1,3,5)], digits=3)
+} else {
+    print("INLA was not run, install the INLA package to see results")
+}
 
+## ----swissExc-----------------------------------------------------------------
+if(length(swissFit$parameters)) {
   swissExc = excProb(
     x=swissFit,  random=TRUE,
     threshold=0)
-  
-  
+} 
+
+## ----swissWithFormula, fig.cap = 'Swiss rain as in help file', fig.subcap = c('random','fitted', 'sd','range')----
+if(length(swissFit$parameters)) {
   plot(swissExc, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
     col=c('green','yellow','orange','red'))	
   
@@ -89,10 +115,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-  } else {
-    print("INLA was not run, probably INLA isn't configured correctly")
-  }
-}
+  } 
 
 ## ----swissNonParam, fig.cap = 'Swiss rain elevation rw2', fig.subcap = c('elevation effect','fitted')----
 
@@ -107,7 +130,6 @@ swissAltCut = classify(
 )
 names(swissAltCut) = 'bqrnt'
 
-if(requireNamespace('INLA', quietly=TRUE)) {
   
   swissFitNp = glgm(
     formula = lograin ~ f(bqrnt, model = 'rw2', scale.model=TRUE, 
@@ -123,7 +145,8 @@ if(requireNamespace('INLA', quietly=TRUE)) {
       sdObs = c(u=1, alpha=0.4)), 
     control.inla=list(strategy='gaussian')
   )
-  if(length(swissFitNp$parameters)) {
+
+if(length(swissFitNp$parameters)) {
   knitr::kable(swissFitNp$parameters$summary, digits=3)
   
   matplot(
@@ -142,27 +165,18 @@ if(requireNamespace('INLA', quietly=TRUE)) {
   plot(swissExcP, breaks = c(0, 0.2, 0.8, 0.95, 1.00001), 
     col=c('green','yellow','orange','red'))	
   plot(swissBorder, add=TRUE)
-  } else {
-    print("INLA was not run, probably INLA isn't configured correctly")
-  }
- 
-}
+} 
 
 ## ----asHelpFile---------------------------------------------------------------
-
-if(requireNamespace('INLA', quietly=TRUE)) {
-  swissFit =  glgm("lograin", swissRain, Ncell, 
+swissFit =  glgm("lograin", swissRain, Ncell, 
     covariates=swissAltitude, family="gaussian", buffer=20000,
     priorCI=list(sd=c(0.2, 2), range=c(50000,500000), sdObs = 2), 
     control.inla=list(strategy='gaussian')
-  )
-  if(length(swissFit$parameters))  
+)
+if(length(swissFit$parameters))  
     knitr::kable(swissFit$parameters$summary[,c(1, 3:5, 8)], digits=4)
-}
 
 ## ----swissINterceptOnly, fig.cap = 'Swiss intercept only', fig.subcap = c('exc prob','range')----
-if(requireNamespace('INLA', quietly=TRUE)) {
-  
   swissFit =  glgm(
     formula=lograin~1, 
     data=swissRain, 
@@ -175,6 +189,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
   )
   
   if(length(swissFit$parameters)) {
+
   knitr::kable(swissFit$parameters$summary[,c(1, 3:5, 8)], digits=3)
   
   swissExc = excProb(
@@ -189,17 +204,12 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-  } else {
-    print("INLA was not run, probably INLA isn't configured correctly")
-  }
-
 }
 
 ## ----covInData, fig.cap = 'covaraites in data', fig.subcap = c('predict.mean','range')----
 newdat = swissRain
 newdat$elev = extract(swissAltitude, swissRain, ID=FALSE)
 swissLandType = unwrap(swissLandType)
-if(requireNamespace('INLA', quietly=TRUE)) {
   swissFit =  glgm(lograin~ elev + land,
     newdat, Ncell, 
     covariates=list(land=swissLandType),
@@ -209,6 +219,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
+
   if(length(swissFit$parameters)) {
   knitr::kable(swissFit$parameters$summary, digits=3)
   
@@ -220,16 +231,10 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-  } else {
-    print("INLA was not run, probably INLA isn't configured correctly")
-  }
-
 }
 
 ## ----swissFitNamedList--------------------------------------------------------
-if(requireNamespace('INLA', quietly=TRUE)) {
-  
-  swissFit =  glgm(lograin~ elev,
+swissFit =  glgm(lograin~ elev,
     swissRain, Ncell, 
     covariates=list(elev=swissAltitude), 
     family="gaussian", buffer=20000,
@@ -239,13 +244,11 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
-  if(length(swissFit$parameters))
+if(length(swissFit$parameters))
     swissFit$parameters$summary[,c(1,3,5)]
-}
 
 ## ----swissFitCategorical, fig.cap = 'categorical covariates', fig.subcap = c('map','range')----
-if(requireNamespace('INLA', quietly=TRUE)) {
-  swissFit =  glgm(
+swissFit =  glgm(
     formula = lograin ~ elev + factor(land),
     data = swissRain, grid = Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
@@ -256,7 +259,7 @@ if(requireNamespace('INLA', quietly=TRUE)) {
       prec=list(prior="loggamma", 
           param=c(.1, .1))))
   )
-    if(length(swissFit$parameters)) {
+if(length(swissFit$parameters)) {
 
   knitr::kable(swissFit$parameters$summary[,c(1,3,5)], digits=3)
   
@@ -269,38 +272,30 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-    }
 } 
 
 ## ----someMissing--------------------------------------------------------------
 temp = values(swissAltitude)
 temp[seq(10000,12000)] = NA
 values(swissAltitude) = temp
-if(requireNamespace('INLA', quietly=TRUE)) {
   
-  swissFitMissing =  glgm(rain ~ elev + land,swissRain,  Ncell, 
+swissFitMissing =  glgm(rain ~ elev + land,swissRain,  Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
     family="gaussian", buffer=20000,
     prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
     control.inla = list(strategy='gaussian'),
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
-  )
-    if(length(swissFitMissing$parameters))
+)
+if(length(swissFitMissing$parameters))
       knitr::kable(swissFitMissing$parameters$summary[,1:5], digits=3)
-  
-}
 
 ## ----covInDataLevels----------------------------------------------------------
 newdat = swissRain
 newdat$landOrig = extract(swissLandType, swissRain, ID=FALSE)
 newdat$landRel = relevel(newdat$landOrig, 'Mixed forests')
 
-
-
-if(requireNamespace('INLA', quietly=TRUE)) {
-  
-  swissFit =  glgm(
+swissFit =  glgm(
     formula = lograin~ elev + landOrig,
     data=newdat, 
     covariates=list(elev = swissAltitude),
@@ -310,8 +305,9 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.inla = list(strategy='gaussian'),
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
-  )
-  swissFitR =  glgm(
+)
+
+swissFitR =  glgm(
     formula = lograin~ elev + landRel,
     data=newdat, 
     grid=squareRaster(swissRain,Ncell), 
@@ -320,27 +316,31 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
     control.inla = list(strategy='gaussian'),
     control.family=list(hyper=list(prec=list(prior="loggamma", 
-          param=c(.1, .1)))),
-    verbose= TRUE
+          param=c(.1, .1))))
   )
 
-  if(length(swissFit$parameters)) {
-    levels(newdat$landOrig)
-    levels(newdat$landRel)
+## ----covInDataLevelsResults1--------------------------------------------------
+levels(newdat$landOrig)
+levels(newdat$landRel)
+
+## ----covInDataLevelsResults2--------------------------------------------------
+if(length(swissFit$parameters)) {
     levels(swissFit$inla$.args$data$landOrig)
     levels(swissFitR$inla$.args$data$landRel)
-    knitr::kable(swissFit$parameters$summary, digits=3)
-    knitr::kable(swissFitR$parameters$summary, digits=3)
   }
+
+## ----covInDataLevelsResults3--------------------------------------------------
+if(length(swissFit$parameters)) {
+    knitr::kable(swissFit$parameters$summary[,c(1,3,5)], digits=3)
+    knitr::kable(swissFitR$parameters$summary[,c(1,3,5)], digits=3)
 }
 
-## ----interactions, fig.cap = 'interactions', fig.subcap = c('map','range')----
+## ----interactionsData---------------------------------------------------------
 newdat = swissRain
-newdat$elev = extract(swissAltitude, swissRain)
+newdat$elev = extract(swissAltitude, swissRain, ID=FALSE)
 
-if(requireNamespace('INLA', quietly=TRUE)) {
-  
-  swissFit =  glgm(
+## ----interactionsRun----------------------------------------------------------
+swissFit =  glgm(
     formula = lograin~ elev : land,
     data=newdat, 
     grid=squareRaster(swissRain,Ncell), 
@@ -350,13 +350,14 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     control.inla = list(strategy='gaussian'),
     control.family=list(hyper=list(prec=list(prior="loggamma", 
           param=c(.1, .1))))
-  )
+)
+if(length(swissFit$parameters)) {
+  knitr::kable(swissFit$parameters$summary[,c(1,3,5)], digits=3)
+}
 
-  if(length(swissFit$parameters)) {
-
-    knitr::kable(swissFit$parameters$summary, digits=3)
-  
-    plot(swissFit$raster[['predict.mean']])
+## ----interactions, fig.cap = 'interactions', fig.subcap = c('map','range')----
+if(length(swissFit$parameters)) {
+   plot(swissFit$raster[['predict.mean']])
     plot(swissBorder, add=TRUE)    
 
     matplot(
@@ -364,10 +365,9 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     swissFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
-  }
 }
 
-## ----longTestsLoa, fig.cap='categorical', fig.subcap = c('predict','range')----
+## ----categoricalData----------------------------------------------------------
   data('loaloa')
   loaloa = unwrap(loaloa)
   ltLoa = unwrap(ltLoa)
@@ -381,22 +381,20 @@ if(requireNamespace('INLA', quietly=TRUE)) {
     c(9,8),
     # croplands and urban changed to crop/natural mosaid
     c(12,14),c(13,14))
-  ltLoaR = classify(ltLoa, rcl)
-  levels(ltLoaR) = levels(ltLoa)
+ltLoaR = classify(ltLoa, rcl)
+levels(ltLoaR) = levels(ltLoa)
     
-  elevationLoa = elevationLoa - 750
-  elevLow = min(elevationLoa, 0)
-  elevHigh = max(elevationLoa, 0)
+elevationLoa = elevationLoa - 750
+elevLow = min(elevationLoa, 0)
+elevHigh = max(elevationLoa, 0)
 
-  eviLoa2 = (eviLoa - 1e7)/1e6
-  
-  covList = list(elLow = elevLow, elHigh = elevHigh, 
+eviLoa2 = (eviLoa - 1e7)/1e6
+
+covList = list(elLow = elevLow, elHigh = elevHigh, 
     land = ltLoaR, evi=eviLoa2)
 
-if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
-  
-  
-  loaFit = glgm(
+## ----longTestsLoa-------------------------------------------------------------
+ loaFit = glgm(
     y ~ 1 + land + evi + elHigh + elLow + 
       f(villageID, prior = 'pc.prec', param = c(log(2), 0.5),
        model="iid"),
@@ -410,38 +408,36 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
       range = 100*1000),
     control.inla = list(strategy='gaussian')
     )
-  
-    if(length(loaFit$parameters)) {
 
-  loaFit$par$summary[,c(1,3,5)]
-  
+## ----longTestsTable-----------------------------------------------------------
+if(length(loaFit$parameters)) {
+  knitr::kable(loaFit$par$summary[,c(1,3,5)], digits=3)
+} 
+
+## ----longTestsLoaPLot, fig.cap='categorical', fig.subcap = c('predict','range')----
+if(length(loaFit$parameters)) {
   plot(loaFit$raster[['predict.exp']])
 
-    matplot(
+matplot(
       loaFit$parameters$range$posterior[,'x'],
       loaFit$parameters$range$posterior[,c('y','prior')],
     lty=1, col=c('black','red'), type='l',
     xlab='range', ylab='dens')
 }
-}
 
 ## ----LongTestsSwiss-----------------------------------------------------------
-if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
-  
-# prior for observation standard deviation
-  swissFit =  glgm( formula="lograin",data=swissRain, grid=Ncell,
+swissFit =  glgm( formula="lograin",data=swissRain, grid=Ncell,
     covariates=swissAltitude, family="gaussian", buffer=20000,
     prior=list(sd=0.5, range=200000, sdObs=1), 
     control.inla = list(strategy='gaussian')
-  )
-}
+)
 
 ## ----noData, fig.height=3, fig.width=4, fig.cap = 'no data, pc priors', fig.subcap = c('beta','sd','range','scale')----
   
-  data2 = vect(cbind(c(1,0), c(0,1)),
-    atts=data.frame(y=c(0,0), offset=c(-50,-50), x=c(-1,1)))
+data2 = vect(cbind(c(1,0), c(0,1)),
+    atts=data.frame(y=c(0,0), offset=c(-50,-50), x=c(-1,1)),
+    crs = '+proj=merc')
 
-if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
   
 resNoData = res = glgm(
   data=data2, grid=Ncell, 
@@ -456,7 +452,7 @@ resNoData = res = glgm(
     control.inla = list(strategy='gaussian')
   )
   
-  if(length(res$parameters)) {
+if(length(res$parameters)) {
 # beta
   plot(res$inla$marginals.fixed[['x']], col='blue', type='l',
     xlab='beta',lwd=3)
@@ -489,11 +485,8 @@ resNoData = res = glgm(
       type='l', col=c('red','blue'),xlab='scale',lwd=3, ylab='dens')
     legend("topright", col=c("red","blue"),lty=1,legend=c("post'r","prior"))
 }
-}
 
 ## ----noDataQuantile, fig.height=3, fig.width=4, fig.cap = 'no data quantile priors', fig.subcap = c('intercept','sd','range','scale')----
-
-if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
 
 
   resQuantile = res = glgm(
@@ -510,7 +503,7 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
     control.inla = list(strategy='gaussian')
   )
   
-  if(length(res$parameters)) {
+if(length(res$parameters)) {
 # beta
   plot(res$inla$marginals.fixed[['x']], col='blue', type='l',
     xlab='beta',lwd=3)
@@ -544,13 +537,10 @@ if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
 #      ylim = c(0, 10^(-3)), xlim = c(0,1000),
       type='l', col=c('red','blue'),xlab='scale',lwd=3, ylab='dens')
     legend("topright", col=c("red","blue"),lty=1,legend=c("post'r","prior"))
-  }
 }
 
 ## ----noDataLegacy, fig.height=3, fig.width=4, fig.cap='No data, legacy priors', fig.subcap = c('intercept','beta','sd','range')----
 
-if(requireNamespace('INLA', quietly=TRUE)  & fact > 1) {
-  
 resLegacy = res = glgm(data=data2, 
     grid=20, 
     formula=y~1 + x+offset(offset), 
@@ -567,7 +557,7 @@ resLegacy = res = glgm(data=data2,
     control.mode=list(theta=c(2, 2),restart=TRUE)
   )
   
-   if(length(res$parameters)) {
+if(length(res$parameters)) {
 # intercept
   plot(res$inla$marginals.fixed[['(Intercept)']], col='blue', type='l',
     xlab='intercept',lwd=3)
@@ -596,7 +586,6 @@ resLegacy = res = glgm(data=data2,
       res$parameters$range$posterior[,c('y','prior')], 
       type='l', col=c('red','blue'),xlab='range',lwd=3, ylab='dens')
     legend("topright", col=c("blue","red"),lty=1,legend=c("prior","post'r"))
-   }
 }
 
 ## ----spaceFormula, fig.cap='spatial formula provided', fig.subcap = c('one','two')----
@@ -604,8 +593,7 @@ resLegacy = res = glgm(data=data2,
 swissRain$group = 1+rbinom(length(swissRain), 1, 0.5)
 theGrid = squareRaster(swissRain, Ncell, buffer=10*1000)
 
-if(requireNamespace('INLA', quietly=TRUE) ) {
-  swissFit = glgm(
+swissFit = glgm(
     formula = rain ~ 1,
     data=swissRain, 
     grid=theGrid, 
@@ -625,6 +613,5 @@ if(length(swissFit$parameters)) {
   plot(swissFit$raster[['random.mean']])
 
   plot(swissFit$rasterTwo[['mean']])
-  }
 }
 

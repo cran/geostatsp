@@ -92,7 +92,7 @@
 	landTable$label = gsub("[:].*", "", landTable$Description)
 
 	bob = levels(stuff)[[1]]
-	bob = cbind(bob, landTable[match(levels(stuff2)[[1]]$ID, landTable$Value), c('Color','short')])
+	bob = cbind(bob, landTable[match(levels(stuff2)[[1]]$ID, landTable$Value), c('Color','label')])
 	levels(stuff2) = bob[,c('ID','label')]
 	coltab(stuff2) = bob[,c('ID','Color')]
 	

@@ -195,18 +195,16 @@ mydat$U = geostatsp::RFsimulate(trueParamAniso,mydat)$sim
 mydat$Y = -3 + 0.5*mydat$cov1 + 0.2*mydat$cov2 + 
 	mydat$U + rnorm(length(mydat), 0, sd=sqrt(trueParamAniso["nugget"]))
 
+oldpar = par(no.readonly = TRUE)
 
-
-par(mfrow=c(1,2))
-oldmar = par("mar")
-par(mar=rep(0.1, 4))
+par(mfrow=c(1,2), mar=rep(0.1, 4))
 
 plot(mydat, col=as.character(cut(mydat$U, breaks=50, labels=heat.colors(50))),
 	pch=16, main="aniso")
  
 plot(mydat, col=as.character(cut(mydat$Y, breaks=50, labels=heat.colors(50))),
 	pch=16,main="iso")
-par(mar=oldmar)
+
 
 
 myres = likfitLgm( 
@@ -218,6 +216,7 @@ myres = likfitLgm(
 
 myres$summary
 
+par(oldpar)
 par(mfrow=c(1,2))
 
 myraster = rast(nrows=30,ncols=30,xmin=0,xmax=1,ymin=0,ymax=1)
@@ -227,7 +226,7 @@ covTrue = matern(myraster, y=c(0.5, 0.5), par=trueParamAniso)
 plot(covEst, main="estimate")
 plot(covTrue, main="true")
 
-par(mfrow=c(1,1))
+par(oldpar)
 
 }
 

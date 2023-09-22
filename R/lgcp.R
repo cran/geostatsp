@@ -7,6 +7,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 			border = project(border, crs(data))
 	}
 	
+
 	if(is.numeric(grid)) {
 		if(!missing(border)){
 			cells = squareRaster(border,grid)
@@ -17,13 +18,15 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 		cells = squareRaster(grid)
 	}
 	
-# create data
-	
+
+# points in border
+
 	if(!missing(border)) {
-		inBorder = extract(
-			data, 
-			as.polygons(border)
-			)
+		inBorder = terra::relate(
+			data,
+			as.polygons(border),
+			'within'
+			)[,1]
 		data = data[!is.na(inBorder),]
 	}
 	
@@ -36,7 +39,7 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 		counts = mask(counts, border)
 	}
 	
-	
+
 # the formula	
 	if(is.null(formula)) {
 		formula = as.formula(

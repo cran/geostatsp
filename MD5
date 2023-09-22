@@ -1,4 +1,4 @@
-ad3dcedd5dc83cfcbcf3575d62fe45c2 *DESCRIPTION
+9be6858e0b0ca63128fb326ba4762dc0 *DESCRIPTION
 45f35e8c7a0b0b97dadddd7c394b8e04 *NAMESPACE
 5871209fafd45f97032aeb415abdd679 *R/0gm.R
 30124373fa21ffbb4158f9bcbdd33948 *R/NNmat.R
@@ -11,7 +11,7 @@ ccf7092e7ae3732415ef9dffc11a36f5 *R/conditionalGmrf.R
 fe9cce18b12874c515fba3c2a466e42e *R/grfConditional.R
 693048a7fbe89cfd7fca2b442eb49639 *R/informationLgm.R
 f33d691680cba714beae28cf1b605432 *R/krige.R
-aa0c6417e406bf518cc2173f5cd740da *R/lgcp.R
+49f86219f35e472c3ff585d1f1ed7930 *R/lgcp.R
 abc944bdf548e0bfbeb2e9b20a5dd414 *R/lgm.R
 cbc54afd1b106e9c07e77429ac6933f8 *R/lgm.Raster.R
 f02b88e854a1051e8a53d5112486cf3f *R/loglikGmrf.R
@@ -33,8 +33,8 @@ ed75eef44400c32cde4e28000e8919e9 *R/squareRaster.R
 18f104d8429316e40ae0a257859caba4 *R/stackRasterList.R
 27e1fa100b2c113bba685b242934b732 *R/utils.R
 4a45f0003c92f47835121d12e4b3c9cd *R/variog.R
-2c1f70844e33818e8c572237e433501f *build/geostatsp.pdf
-17f6ff0cb58237edc87cd872dfa22ad1 *build/stage23.rdb
+803b566ec6838f4637cb0baa45e60579 *build/geostatsp.pdf
+14bcdd2a7e25d908e5aa584ac72f6a62 *build/stage23.rdb
 411dcb14c9c160ce5134534036a7432b *build/vignette.rds
 ec434a2f57f852ecc704e49462342c70 *data/datalist
 969d6ebe6294f046034c49eb44d118b5 *data/gambiaUTM.RData
@@ -46,14 +46,14 @@ aa0049030ea42d3fa3e7d20087362d9a *data/rongelapUTM.RData
 64215b1bebf2a0f1884e6327a90089f3 *data/torontoPop.RData
 6c2bc15c3895b1acbb254bf2e53b7d6e *data/wheat.RData
 3e2b6839bc6b9121c760eb4f73c066d0 *inst/CITATION
-3bbd22a1c4dec272a342cc03ebc2a58f *inst/doc/glgm.R
-99b1d75383d0eca78b7ef8de1029e6dc *inst/doc/glgm.Rnw
-64c96542e200ebfe41af0429e2cca18a *inst/doc/glgm.pdf
-db16e097cb8cf5076711eda0d4a2cca0 *inst/doc/lgcp.R
-b1228c0aad0472e2e58ca857a7f9bf8b *inst/doc/lgcp.Rnw
-a9b2f090925504a9344f635a88d7e13f *inst/doc/lgcp.pdf
+847c5f463f21e7d5b7722e76da5fd329 *inst/doc/glgm.R
+6776b3670ed754e53f7bd01b5c9ec466 *inst/doc/glgm.Rnw
+326796b744b0d6dab05ff3017c1f77f7 *inst/doc/glgm.pdf
+7a93d19654d244d9c36bc3330708c04d *inst/doc/lgcp.R
+c2df6b7e55d0c9b9c67f9199d578bba5 *inst/doc/lgcp.Rnw
+b4401a25a551b74c00d8355155cae78b *inst/doc/lgcp.pdf
 bcdf577fcf13596205126370b3a2af5f *inst/extR/gmrfShape4.R
-c08777c5ca89bfb5e2dcf42355c8181c *inst/extR/loaloaData.R
+fd12c48a429d8fcebdd659a51b4f7b52 *inst/extR/loaloaData.R
 b7fc1089d48930a6b4b48b3e332d7a01 *man/RFsimulate.Rd
 8df6d35abd2a1a233889038993e2c14e *man/conditionalGmrf.Rd
 b48c4151da71acf2dfc2b835b75099f5 *man/excProb.Rd
@@ -62,7 +62,7 @@ b48c4151da71acf2dfc2b835b75099f5 *man/excProb.Rd
 f5414be09ec5509c286580bdf01fa412 *man/inla.models.Rd
 b4cc4129fab5c6e95e2a7d6af3b18070 *man/krige.Rd
 a45bc44f07f25b7287f38859bdc3c5f8 *man/lgm.Rd
-178930bb746c3708bd60eec96a6b1d3a *man/likfitLgm.Rd
+04cb72c6846f87e3f7ddce1f23483b6b *man/likfitLgm.Rd
 fb63d472e723e2cf71ebe984c43d7787 *man/loaloa.Rd
 21965c5e1837fe742c8fbc4af0dd7f0b *man/matern.Rd
 5d42c30c38a49d2d77754bac15e4ce84 *man/maternGmrfPrec.Rd
@@ -100,6 +100,6 @@ d531072610853e42359c92059c5e3f54 *tests/likfitLgm.R
 5258c53e5f96d42e5faad82fffd6663e *tests/profLlgm.R
 c4ea8d5edc9985333a26bbbc027a0e10 *tests/simLgcp.R
 5469c49033e802fb8e018a219bc577d5 *tests/stackRasterList.R
-99b1d75383d0eca78b7ef8de1029e6dc *vignettes/glgm.Rnw
-b1228c0aad0472e2e58ca857a7f9bf8b *vignettes/lgcp.Rnw
+6776b3670ed754e53f7bd01b5c9ec466 *vignettes/glgm.Rnw
+c2df6b7e55d0c9b9c67f9199d578bba5 *vignettes/lgcp.Rnw
 272e56098e387489316cbd5a12c264f9 *vignettes/xxMakefilexx
