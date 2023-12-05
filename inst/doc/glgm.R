@@ -34,7 +34,6 @@ knitr::knit_hooks$set(
         0), cex = 1.25)
 })
 
-
 ## ----packages-----------------------------------------------------------------
 library("geostatsp")
 data('swissRain')
@@ -51,9 +50,8 @@ if(requireNamespace("INLA", quietly=TRUE) ) {
   # not all versions of INLA support blas.num.threads
   try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
 } else {
-  print("INLA not installed")
+  print("INLA not installed, examples won't be run")
 }
-
 
 ## ----cells--------------------------------------------------------------------
 if(!exists('fact')) fact = 1

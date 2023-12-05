@@ -146,6 +146,8 @@ double logLoneNuggetMoreArguments(
   double result, *tempPointer;
   int oneI=1, D;
 
+  double xisqTausqTwo[2] = {xisqTausq, 0.0}; // because cholmod wants vector of length 2
+
   /*
    * V = xisq Q^(-1) + tausq I
    *   =  xisq ( Q^(-1) + (tausq/xisq) I)
@@ -169,7 +171,7 @@ double logLoneNuggetMoreArguments(
   // factorize beta*I+A or beta*I+A’*A
   M_cholmod_factorize_p(
       Q,
-      &xisqTausq, // beta
+      xisqTausqTwo, // beta
       (int*)NULL, 0 /*fsize*/,
       L, // resulting factorization
       &c // common
@@ -322,7 +324,7 @@ SEXP gmrfLik(
 
   int Drep, dooptim, verbose=0; // length(xisqTausq)
   int oneI=1;
-  double	oneD=1.0, zeroD=0.0;
+  double	oneD[2]={1.0,0.0}, zeroD[2]={0.0, 0.0};
   double optTol, optMin, optMax; // default interval for optimizer
   int NxisqMax = 100, Nxyvarmat, twoNxyvarmat; // number of xisqTausq's to retain when optimizing
   double *YXVYX, *YXYX, *determinant, *determinantForReml;
@@ -360,7 +362,7 @@ SEXP gmrfLik(
       if(REAL(xisqTausq)[0]>0.0) {
           warning(
               "first element of xisqTausq is %f, must be zero\n",
-              REAL(xisqTausq));
+              REAL(xisqTausq)[0]);
       }
       if(optMin < -998.9) {
           verbose = 1;
@@ -431,13 +433,13 @@ SEXP gmrfLik(
       // nrows of op(A), ncol ob(B), ncol op(A) = nrow(opB)
       &Nxy, &Nxy, &Nobs,
       // alpha
-      &oneD,
+      oneD,
       // A, nrow(A)
       obsCov->x, &Nobs,
       // B, nrow(B)
       obsCov->x, &Nobs,
       // beta
-      &zeroD,
+      zeroD,
       // C, nrow(&c)
       YXYX, &Nxy
       FCONE FCONE);
@@ -451,7 +453,7 @@ SEXP gmrfLik(
   // Lx is Q YX
   M_cholmod_sdmult(
       Q,
-      0, &oneD, &zeroD, // transpose, scale, scale
+      0, oneD, zeroD, // transpose, scale, scale
       obsCov,Lx,// in, out
       &c);
   // now compute t(YX) Lx
@@ -464,13 +466,13 @@ SEXP gmrfLik(
       // nrows of op(A), ncol ob(B), ncol op(A) = nrow(opB)
       &Nxy, &Nxy, &Nobs,
       // alpha
-      &oneD,
+      oneD,
       // A, nrow(A)
       obsCov->x, &Nobs,
       // B, nrow(B)
       Lx->x, &Nobs,
       // beta
-      &zeroD,
+      zeroD,
       // C, nrow(c)
       YXVYX, &Nxy
       FCONE FCONE);

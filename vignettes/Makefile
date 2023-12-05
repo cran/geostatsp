@@ -8,9 +8,7 @@ clean:
 	'$(R_HOME)/bin/Rscript' -e "knitr::knit('%<')" $(Rargs)
 
 %.pdf: %.tex
-	cp $< /tmp/$<;
 	xelatex $<;
-	xelatex $<;
-	'$(R_HOME)/bin/Rscript' -e "tools::compactPDF('$@.pdf', gs_quality='ebook')" 
+	xelatex $<
 
 

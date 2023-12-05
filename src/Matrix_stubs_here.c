@@ -1,2 +1,2 @@
 #include"geostatsp.h"
-#include<Matrix_stubs.c>
+#include<Matrix/stubs.c>

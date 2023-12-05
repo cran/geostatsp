@@ -352,7 +352,7 @@ gm.dataSpatial = function(
     }
 
     alltermsPlain = allVarsP(formula)
-
+    
 # find factors
     allterms = attributes(alltermsPlain)$orig
   # remove covariates not in the model
@@ -439,27 +439,37 @@ gm.dataSpatial = function(
     } else {
       covariatesDF = data.frame()
     }
-  # loop through covariates which aren't in data, extract it from `covariates`
+
+      # loop through covariates which aren't in data, extract it from `covariates`
     for(D in setdiff(alltermsPlain, names(data))){
       if(is.null(covariates[[D]]))
         warning("cant find covariate '", D, "' in covariates or data")
 
-      extractHere = extract(covariates[[D]], 
-            project(data, crs(covariates[[D]])), ID=FALSE)
-
+      if(any(class(covariates[[D]]) == 'SpatRaster')) {
+        extractHere = terra::extract(covariates[[D]], 
+                                     project(data, crs(covariates[[D]])), ID=FALSE)
+      } else {
+        extractHere = terra::extract(covariates[[D]], 
+                                     project(data, crs(covariates[[D]])))
+        extractHere = extractHere[match(1:length(data), extractHere[,'id.y']), 2]
+      }
+      
+      
       if(is.data.frame(extractHere)) {
+        if(nrow(extractHere) != nrow(data)) {warning("mismatch in extracted covariates and data")}
+        extractHere = extractHere[,grep("^ID$|^id.y", names(extractHere), invert=TRUE), drop=FALSE]
         data[[D]] = extractHere[,1]
       } else {
         data[[D]] = extractHere
       }
     }
 
-
+    
     # reproject data to grid
     if(!identical(crs(cellsSmall), crs(data))) {
         data = project(data, crs(cellsSmall))
     }
-    data$space = suppressWarnings(extract(cellsSmall, data, ID=FALSE, mat=FALSE, dataframe=FALSE))
+    data$space = suppressWarnings(terra::extract(cellsSmall, data, ID=FALSE, mat=FALSE, dataframe=FALSE))
 
 
   # loop through spatial covariates which are factors
@@ -556,6 +566,7 @@ gm.dataSpatial = function(
           labels=theLabels)     
    } # end refactor
    } # end loop D trhoguh factors
+
 
    list(
     data=data,
