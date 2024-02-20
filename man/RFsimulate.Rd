@@ -40,7 +40,11 @@ modelRandomFields(param, includeNugget=FALSE)
 }
 
 \arguments{
- \item{model}{object of class \code{\link[RandomFields]{RMmodel}}, a vector of named model
+ \item{model}{object of class 
+\Sexpr[results=rd]{c(
+  '\\\\code{RMmodel}', 
+  '\\\\command{\\\\link[RandomFields]{RMmodel}}'
+  )[1+requireNamespace('RandomFields', quietly=TRUE)]}, a vector of named model
  parameters, or a matrix where each column is a model parameter
  }
  \item{x}{Object of type \code{\link[terra]{SpatRaster}} or \command{\link[terra]{SpatVector}}.}
@@ -60,7 +64,11 @@ modelRandomFields(param, includeNugget=FALSE)
  }
  \item{...}{for advanced use:
  further options and control parameters for the simulation
- that are passed to and processed by \command{\link[RandomFields]{RFoptions}}
+ that are passed to and processed by 
+\Sexpr[results=rd]{c(
+  '\\\\code{RFoptions} in the \\\\code{RandomFields} package', 
+  '\\\\command{\\\\link[RandomFields]{RFoptions}}'
+  )[1+requireNamespace('RandomFields', quietly=TRUE)]} 
  }
  \item{param}{A vector of named parameters}
  \item{includeNugget}{If \code{FALSE}, the \code{nugget} parameter is ignored. }
@@ -81,14 +89,10 @@ An object of the same class as \code{x}.
 }
 
 \seealso{
- \command{\link[RandomFields]{RFsimulate}},
- \command{\link[RandomFields]{RFfit}},
- \command{\link[RandomFields]{RFgetModelInfo}},
- \command{\link[RandomFields]{RFgui}},
- \command{\link[RandomFields]{RMmodel}},
- \command{\link[RandomFields]{RFoptions}},
- \command{\link[RandomFields]{RFsimulateAdvanced}},
- \command{\link[RandomFields]{RFsimulate.more.examples}}
+\Sexpr[results=rd]{c(
+  '\\\\code{RFsimulate} in the \\\\code{RandomFields} package', 
+  '\\\\command{\\\\link[RandomFields]{RFsimulate}}'
+  )[1+requireNamespace('RandomFields', quietly=TRUE)]}
 }
 
 \examples{

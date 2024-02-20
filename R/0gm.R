@@ -56,7 +56,7 @@ gm.dataRaster = function(
 
   # find factors
   
-  theFactors = grep("^factor", alltermsFull, value=T)
+  theFactors = grep("^factor", alltermsFull, value=TRUE)
   theFactors = gsub("^factor\\(|\\)$", "", theFactors)
   
   termsInF = grep("^f[(]", alltermsFull, value=TRUE)
@@ -64,7 +64,7 @@ gm.dataRaster = function(
   
   covFactors = NULL
   for(D in names(covariates)) {
-    if(is.factor(covariates[[D]]))
+    if(any(is.factor(covariates[[D]])))
       covFactors = c(D, covFactors)
   }
   dataFactors = NULL
@@ -130,8 +130,7 @@ gm.dataRaster = function(
 
         covariatesForStack = covariates[[which(notLogOffset)]]
 
-        covariatesForStackData = 
-        covariates[[notInData]]
+        covariatesForStackData = covariates[[notInData]]
 
       } else {
         covariatesForStack = covariates[notLogOffset]
@@ -398,7 +397,7 @@ gm.dataSpatial = function(
 
     covFactors = NULL
     for(D in names(covariates)) {
-      if(is.factor(covariates[[D]]))
+      if(any(is.factor(covariates[[D]])))
         covFactors = c(D, covFactors)
     }
 
@@ -420,7 +419,7 @@ gm.dataSpatial = function(
     cellsSmall = cellsBoth$small
 
   # 
-    if(length(names(covariates))) {
+  if(length(names(covariates))) {
 
       dataFactors = intersect(Sfactors, names(data))
 
@@ -433,10 +432,10 @@ gm.dataSpatial = function(
         covariates, 
         template=cellsSmall, 
         method=rmethod)
-      covariatesStack = c(cellsSmall, covariatesStack)
-      covariatesSP = suppressWarnings(as.points(covariatesStack))
+      covariatesStack2 = c(cellsSmall, covariatesStack)
+      covariatesSP = suppressWarnings(as.points(covariatesStack2))
       covariatesDF = values(covariatesSP)
-    } else {
+    } else { # else no covariates
       covariatesDF = data.frame()
     }
 
@@ -447,7 +446,8 @@ gm.dataSpatial = function(
 
       if(any(class(covariates[[D]]) == 'SpatRaster')) {
         extractHere = terra::extract(covariates[[D]], 
-                                     project(data, crs(covariates[[D]])), ID=FALSE)
+                                     project(data, crs(covariates[[D]])), ID=FALSE,
+                                     method = rmethod[D])
       } else {
         extractHere = terra::extract(covariates[[D]], 
                                      project(data, crs(covariates[[D]])))
@@ -458,19 +458,29 @@ gm.dataSpatial = function(
       if(is.data.frame(extractHere)) {
         if(nrow(extractHere) != nrow(data)) {warning("mismatch in extracted covariates and data")}
         extractHere = extractHere[,grep("^ID$|^id.y", names(extractHere), invert=TRUE), drop=FALSE]
-        data[[D]] = extractHere[,1]
+        terra::values(data)[[D]] = extractHere[,1]
       } else {
         data[[D]] = extractHere
       }
-    }
+    } # D loop extracting covariates
 
     
     # reproject data to grid
     if(!identical(crs(cellsSmall), crs(data))) {
         data = project(data, crs(cellsSmall))
     }
-    data$space = suppressWarnings(terra::extract(cellsSmall, data, ID=FALSE, mat=FALSE, dataframe=FALSE))
+    data$space = suppressWarnings(terra::extract(cellsSmall, data, 
+      ID=FALSE, mat=FALSE, dataframe=FALSE, method = 'near'))
 
+    # check for strange things where no cell value is found
+    theNA = which(is.na(data$space))
+    if(length(theNA)) {
+      cellHere = cellFromRowCol(cellsSmall, 
+        rowFromY(cellsSmall, crds(data)[theNA, 2]) , 
+        colFromX(cellsSmall, crds(data)[theNA, 1]) 
+      ) 
+      data$space[theNA] = values(cellsSmall)[cellHere, 'space']
+    }
 
   # loop through spatial covariates which are factors
     for(D in intersect(Sfactors, names(covariatesDF))) {
@@ -485,7 +495,7 @@ gm.dataSpatial = function(
       }
       if(is.na(labelCol)) labelCol = 2
 
-      dataD = unlist(data[[D]])
+      dataD = unlist(terra::values(data)[[D]])
       if(is.factor(dataD)) {
 
         # give covariatesDF factor levels from data
@@ -493,18 +503,16 @@ gm.dataSpatial = function(
           # match factor levels in data to 
           # factor levels in raster
         theTable = table(dataD)
-        # make baseline category the most populous category
-        # unless the variable was supplied as a factor in the 'data' argument
-        if(D %in% covFactors) {
+        if(theTable[1]==0) {
+          warning("no data in baseline level ", D)
           theTable = sort(theTable, decreasing=TRUE)
         }
-        if(theTable[1]==0) warning("no data in baseline level ", D)
         levelsHave = names(theTable)[theTable > 0]
           covariatesDF[[D]] = factor(
             as.character(covariatesDF[[D]]),
             levels = levelsHave
             )
-          data[[D]] = factor(as.character(dataD), levels = levelsHave)
+          terra::values(data)[[D]] = factor(as.character(dataD), levels = levelsHave)
         } else { 
           # levels in data can't be found in raster levels
           # ignore raster levels
@@ -521,7 +529,7 @@ gm.dataSpatial = function(
         # choose baseline category 
 
 
-      theTable = sort(table(data[[D]]), decreasing=TRUE)
+      theTable = sort(table(dataD), decreasing=TRUE)
       theTable = theTable[theTable > 0]
       if(is.null(theLevels)) {
         theLabels = paste("l", names(theTable),sep="")
@@ -540,7 +548,7 @@ gm.dataSpatial = function(
           match(names(theTable), as.character(theLevels[,idCol])), 
           labelCol
           ])
-        if(is.numeric(data[[D]])) {
+        if(is.numeric(dataD)) {
           levelsD = as.integer(names(theTable))
         } else {
           levelsD = theLabels
@@ -556,13 +564,13 @@ gm.dataSpatial = function(
       } # end else (not is null thelevels)
 
       # re-factor data with new baseline category
-        data[[D]] = factor(
-          data[[D]], 
+        terra::values(data)[[D]] = factor(
+          dataD, 
           levels=levelsD,
           labels=theLabels)     
        covariatesDF[[D]] = factor(
-          as.integer(covariatesDF[[D]]), 
-          levels=as.integer(names(theTable)),
+          as.character(covariatesDF[[D]]), 
+          levels=theLabels,
           labels=theLabels)     
    } # end refactor
    } # end loop D trhoguh factors

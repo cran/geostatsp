@@ -29,7 +29,7 @@ setMethod("squareRaster",
 setMethod("squareRaster", 
   signature(x="SpatRaster"), 
   function(x, cells=NULL, buffer=0) {
-	x=rast(x)
+	x=rast(x, nl=1)
 	if(is.null(cells)) {
 		cells = ncol(x)
 	} else {
@@ -38,7 +38,7 @@ setMethod("squareRaster",
 	Ny = ceiling(signif( (ymax(x) - ymin(x))/xres(x), 10) )
 	terra::ymax(x) = ymin(x) + Ny*xres(x)
 	terra::nrow(x) = Ny
-	extend(x, round(buffer/xres(x)))
+	extend(x, ceiling(buffer/xres(x)))
 })
 
 setMethod("squareRaster", 

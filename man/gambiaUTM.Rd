@@ -35,13 +35,12 @@ gambiaUTM = unwrap(gambiaUTM)
 plot(gambiaUTM, main="gambia data")
 
 if(require('mapmisc', quietly=TRUE)) {
-  data(worldMap)
-  worldMap = unwrap(worldMap)
-  gambia = project(worldMap[grep("Gambia", worldMap$NAME), ], crs(gambiaUTM))
-  gambiaTiles = openmap(gambia, buffer=100*1000)
-  oldpar=map.new(gambia)
+  gambiaTiles = openmap(gambiaUTM, zoom=6, buffer=50*1000)
+  oldpar=map.new(gambiaTiles)
   plot(gambiaTiles, add=TRUE)
   plot(gambiaUTM, add=TRUE)
+  scaleBar(gambiaUTM, 'topright')
+
   par(oldpar)
 }
 

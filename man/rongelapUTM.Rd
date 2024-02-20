@@ -27,10 +27,9 @@ rongelapUTM = unwrap(rongelapUTM)
 plot(rongelapUTM, main="Rongelap island")
 
 if(require('mapmisc')) {
-
-  bgMap = openmap(rongelapUTM, buffer=200)
+  bgMap = openmap(rongelapUTM, buffer=300, maxTiles=2)
   plot(bgMap)
-  points(rongelapUTM)
+  points(rongelapUTM, cex=0.4)
   scaleBar(rongelapUTM, 'left')
 
 }

@@ -38,7 +38,6 @@ swissFitAgain = lgm(
 		boxcox=0.5, fixBoxcox=TRUE,
 		aniso=TRUE, verbose=FALSE)	
 names(swissFitAgain)
-swissFitAgain$param
 swissFitAgain$summary[,c('estimate','stdErr','Estimated')]
 bob(swissFitAgain)
 
@@ -49,8 +48,7 @@ swissFitAgain = lgm(
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
-names(swissFitAgain)
-swissFitAgain$param
+swissFitAgain$summary[,c('estimate','stdErr','Estimated')]
 bob(swissFitAgain)
 
 
@@ -61,8 +59,7 @@ swissFitAgain = lgm(data=swissRain, formula="rain",
 		shape=1,  fixShape=TRUE, 
 		boxcox=0.5, fixBoxcox=TRUE, 
 		aniso=TRUE)	
-names(swissFitAgain)
-swissFitAgain$param
+swissFitAgain$summary[,c('estimate','stdErr','Estimated')]
 bob(swissFitAgain)
 
 
@@ -145,7 +142,8 @@ bob(fitMLE)
 
 # not remove covariates from data
 myPoints = vect(crds(myPoints),
-		atts=values(myPoints)[,"y",drop=FALSE])
+		atts=values(myPoints)[,"y",drop=FALSE],
+		crs = crs(myPoints))
 
 # now give covariates as raster brick
 fitMLE =  lgm(y~ cov1 + cov2,  myPoints, grid=10,  

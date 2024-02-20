@@ -59,7 +59,7 @@ fact
 (Ncell = round(25*fact))
 
 ## ----swissINla----------------------------------------------------------------
-swissFit =  glgm(
+swissFit =  geostatsp::glgm(
     formula = lograin~ CHE_alt,
     data = swissRain, 
     grid = Ncell,
@@ -129,7 +129,7 @@ swissAltCut = classify(
 names(swissAltCut) = 'bqrnt'
 
   
-  swissFitNp = glgm(
+  swissFitNp = geostatsp::glgm(
     formula = lograin ~ f(bqrnt, model = 'rw2', scale.model=TRUE, 
       values = 1:length(altSeq),
       prior = 'pc.prec', param = c(0.1, 0.01)),
@@ -166,7 +166,7 @@ if(length(swissFitNp$parameters)) {
 } 
 
 ## ----asHelpFile---------------------------------------------------------------
-swissFit =  glgm("lograin", swissRain, Ncell, 
+swissFit =  geostatsp::glgm("lograin", swissRain, Ncell, 
     covariates=swissAltitude, family="gaussian", buffer=20000,
     priorCI=list(sd=c(0.2, 2), range=c(50000,500000), sdObs = 2), 
     control.inla=list(strategy='gaussian')
@@ -175,7 +175,7 @@ if(length(swissFit$parameters))
     knitr::kable(swissFit$parameters$summary[,c(1, 3:5, 8)], digits=4)
 
 ## ----swissINterceptOnly, fig.cap = 'Swiss intercept only', fig.subcap = c('exc prob','range')----
-  swissFit =  glgm(
+  swissFit =  geostatsp::glgm(
     formula=lograin~1, 
     data=swissRain, 
     grid=Ncell, 
@@ -208,7 +208,7 @@ if(length(swissFit$parameters))
 newdat = swissRain
 newdat$elev = extract(swissAltitude, swissRain, ID=FALSE)
 swissLandType = unwrap(swissLandType)
-  swissFit =  glgm(lograin~ elev + land,
+  swissFit =  geostatsp::glgm(lograin~ elev + land,
     newdat, Ncell, 
     covariates=list(land=swissLandType),
     family="gaussian", buffer=40000,
@@ -232,7 +232,7 @@ swissLandType = unwrap(swissLandType)
 }
 
 ## ----swissFitNamedList--------------------------------------------------------
-swissFit =  glgm(lograin~ elev,
+swissFit =  geostatsp::glgm(lograin~ elev,
     swissRain, Ncell, 
     covariates=list(elev=swissAltitude), 
     family="gaussian", buffer=20000,
@@ -246,7 +246,7 @@ if(length(swissFit$parameters))
     swissFit$parameters$summary[,c(1,3,5)]
 
 ## ----swissFitCategorical, fig.cap = 'categorical covariates', fig.subcap = c('map','range')----
-swissFit =  glgm(
+swissFit =  geostatsp::glgm(
     formula = lograin ~ elev + factor(land),
     data = swissRain, grid = Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
@@ -277,7 +277,7 @@ temp = values(swissAltitude)
 temp[seq(10000,12000)] = NA
 values(swissAltitude) = temp
   
-swissFitMissing =  glgm(rain ~ elev + land,swissRain,  Ncell, 
+swissFitMissing =  geostatsp::glgm(rain ~ elev + land,swissRain,  Ncell, 
     covariates=list(elev=swissAltitude,land=swissLandType), 
     family="gaussian", buffer=20000,
     prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
@@ -293,11 +293,11 @@ newdat = swissRain
 newdat$landOrig = extract(swissLandType, swissRain, ID=FALSE)
 newdat$landRel = relevel(newdat$landOrig, 'Mixed forests')
 
-swissFit =  glgm(
+swissFit =  geostatsp::glgm(
     formula = lograin~ elev + landOrig,
     data=newdat, 
     covariates=list(elev = swissAltitude),
-    grid=squareRaster(swissRain,Ncell), 
+    grid=geostatsp::squareRaster(swissRain,Ncell), 
     family="gaussian", buffer=0,
     prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
     control.inla = list(strategy='gaussian'),
@@ -305,10 +305,10 @@ swissFit =  glgm(
           param=c(.1, .1))))
 )
 
-swissFitR =  glgm(
+swissFitR =  geostatsp::glgm(
     formula = lograin~ elev + landRel,
     data=newdat, 
-    grid=squareRaster(swissRain,Ncell), 
+    grid=geostatsp::squareRaster(swissRain,Ncell), 
     covariates=list(elev = swissAltitude, landRel = swissLandType),
     family="gaussian", buffer=0,
     prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
@@ -338,10 +338,10 @@ newdat = swissRain
 newdat$elev = extract(swissAltitude, swissRain, ID=FALSE)
 
 ## ----interactionsRun----------------------------------------------------------
-swissFit =  glgm(
+swissFit =  geostatsp::glgm(
     formula = lograin~ elev : land,
     data=newdat, 
-    grid=squareRaster(swissRain,Ncell), 
+    grid=geostatsp::squareRaster(swissRain,Ncell), 
     covariates=list(land=swissLandType),
     family="gaussian", buffer=0,
     prior=list(sd=c(0.2, 0.5), range=c(100000,0.5)), 
@@ -392,7 +392,7 @@ covList = list(elLow = elevLow, elHigh = elevHigh,
     land = ltLoaR, evi=eviLoa2)
 
 ## ----longTestsLoa-------------------------------------------------------------
- loaFit = glgm(
+ loaFit = geostatsp::glgm(
     y ~ 1 + land + evi + elHigh + elLow + 
       f(villageID, prior = 'pc.prec', param = c(log(2), 0.5),
        model="iid"),
@@ -424,7 +424,7 @@ matplot(
 }
 
 ## ----LongTestsSwiss-----------------------------------------------------------
-swissFit =  glgm( formula="lograin",data=swissRain, grid=Ncell,
+swissFit =  geostatsp::glgm( formula="lograin",data=swissRain, grid=Ncell,
     covariates=swissAltitude, family="gaussian", buffer=20000,
     prior=list(sd=0.5, range=200000, sdObs=1), 
     control.inla = list(strategy='gaussian')
@@ -437,7 +437,7 @@ data2 = vect(cbind(c(1,0), c(0,1)),
     crs = '+proj=merc')
 
   
-resNoData = res = glgm(
+resNoData = res = geostatsp::glgm(
   data=data2, grid=Ncell, 
     formula=y~1 + x+offset(offset), 
     prior = list(sd=0.5, range=0.1),
@@ -487,7 +487,7 @@ if(length(res$parameters)) {
 ## ----noDataQuantile, fig.height=3, fig.width=4, fig.cap = 'no data quantile priors', fig.subcap = c('intercept','sd','range','scale')----
 
 
-  resQuantile = res = glgm(
+  resQuantile = res = geostatsp::glgm(
     data=data2, 
     grid=25, 
     formula=y~1 + x+offset(offset), 
@@ -539,7 +539,7 @@ if(length(res$parameters)) {
 
 ## ----noDataLegacy, fig.height=3, fig.width=4, fig.cap='No data, legacy priors', fig.subcap = c('intercept','beta','sd','range')----
 
-resLegacy = res = glgm(data=data2, 
+resLegacy = res = geostatsp::glgm(data=data2, 
     grid=20, 
     formula=y~1 + x+offset(offset), 
     priorCI = list(
@@ -589,9 +589,9 @@ if(length(res$parameters)) {
 ## ----spaceFormula, fig.cap='spatial formula provided', fig.subcap = c('one','two')----
 
 swissRain$group = 1+rbinom(length(swissRain), 1, 0.5)
-theGrid = squareRaster(swissRain, Ncell, buffer=10*1000)
+theGrid = geostatsp::squareRaster(swissRain, Ncell, buffer=10*1000)
 
-swissFit = glgm(
+swissFit = geostatsp::glgm(
     formula = rain ~ 1,
     data=swissRain, 
     grid=theGrid, 

@@ -4,6 +4,13 @@ useRandomFields = function() {
     all(options()$useRandomFields)
 }
 
+setClass("GridTopology",
+  representation(
+    cellcentre.offset = 'numeric',
+    cellsize = 'numeric',
+    cells.dim = 'integer'
+  )
+)
 setClass('RMmodel', 
   representation(
     # call='RMexp(var=1, sclae=1, Aniso=id, proj=id)
@@ -33,7 +40,7 @@ setMethod("RFsimulate",
     err.model=NULL, n = 1, ...)  {
     
     
-    if (useRandomFields()) { 
+    if (useRandomFields()) {
       
       # convert data to an RFspdf (it might be a vanilla spdf)	
       if(!is.null(data)) {
@@ -49,7 +56,10 @@ setMethod("RFsimulate",
         } }
       
       theArgs = list(...)
-      theArgs$x = x
+      theArgs$x = new("GridTopology",
+          cellcentre.offset = c(0,0),
+          cellsize = terra::res(x)[1:2],
+          cells.dim = as.integer(dim(x)[1:2]))
       if(!is.null(data))
         theArgs$data = data
       if(!is.null(err.model)) {
@@ -61,12 +71,14 @@ setMethod("RFsimulate",
       
       theArgs$model = model
       theArgs$n = n
-      theArgs$spConform=TRUE
-      res = do.call(RandomFields::RFsimulate, theArgs)
-      res = rast(res)
+      theArgs$spConform=FALSE
+      resFromRF = do.call(RandomFields::RFsimulate, theArgs)
+      res = rast(x, nlyrs = n)
+      values(res) = resFromRF
     } else {
       warning("RandomFields package not available")
-      res = NULL
+      res = rast(x, nlyrs = n)
+      values(res) = NA
     }
     res
   }
@@ -140,6 +152,7 @@ setMethod("RFsimulate",
       names(theSim) = gsub("^variable1(\\.n)?","sim", names(theSim))
       
     } else { #RandomFields not available
+      model = fillParam(model)
       model['nugget']=0
       if(!is.null(data)) {
         theCov = matern(x, param=model)
@@ -281,7 +294,7 @@ setMethod("RFsimulate",
         theCov  =theCov - xcov2
         theChol = chol(theCov)
         
-      } else {
+      } else { # not conditional simulation
         theChol = matern(res2, param=model,
           type='cholesky')
         # do the multiplication with random normals in C?

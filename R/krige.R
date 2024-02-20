@@ -77,6 +77,50 @@ meanBoxCox=function(pred, sd, boxcox, Nbc = 100) {
   result
 }
 
+
+krigeOneRowPar = function(
+	Drow, yFromRowDrow, 
+	locations,
+	param,coordinates,Ny,
+	cholVarDataInv,
+	cholVarDatInvData,
+	xminl,xresl,ncoll,
+	lengthc){
+
+		  # covariance of cells in row Drow with data points
+	resC =  .C(C_maternArasterBpoints, 
+		as.double(xminl), 
+		as.double(xresl), 
+		as.integer(ncoll), 
+		as.double(yFromRowDrow), 
+		as.double(0), as.integer(1),
+		as.double(crds(coordinates)[,1]), 
+		as.double(crds(coordinates)[,2]), 
+		N=as.integer(Ny), 
+		result=as.double(matrix(0, ncoll, 
+			lengthc)),
+		as.double(param["range"]),
+		as.double(param["shape"]),
+		as.double(param["variance"]),
+		as.double(param["anisoRatio"]),
+		as.double(param["anisoAngleRadians"])
+	) 
+	covDataPred = matrix(resC$result, nrow=ncoll, ncol=Ny)
+
+
+	cholVarDataInvCovDataPred = tcrossprod(cholVarDataInv, covDataPred)
+
+	x= cbind( # the conditional expectation
+		forExp=as.vector(Matrix::crossprod(cholVarDataInvCovDataPred, 
+			cholVarDatInvData)),
+				  # part of the conditional variance
+		forVar=apply(cholVarDataInvCovDataPred^2, 2, sum)
+	) 
+	x
+
+}
+
+
 krigeLgm = function(
 		formula, data, 
 		grid,
@@ -118,8 +162,12 @@ krigeLgm = function(
 	 
 	 observations = meanRaster = NULL
 	 
+	 noCovariates = length(names(covariates)) == 0
+	 if(is.data.frame(covariates)) {
+	 	if(!nrow(covariates)) noCovariates = TRUE
+	 }
   
-	 if(!length(names(covariates))) {
+	 if(noCovariates) {
 		  # no coariates, mean is intercept
 		  if(any(names(param)=='(Intercept)')) {
 			   meanForRaster = param['(Intercept)']		
@@ -128,23 +176,28 @@ krigeLgm = function(
 		  }
 		  meanFixedEffects = 
 				  rep(meanForRaster, ncell(locations))
-		  meanRaster = locations
+		  meanRaster = terra::rast(locations)
 		  terra::values(meanRaster) = meanFixedEffects	
 	 }
 	 
 	 
-	 if( is.data.frame(covariates) & any(class(formula)=="formula"))  {
+	 if( is.data.frame(covariates) & any(class(formula)=="formula") & !noCovariates)  {
     
-		  if(nrow(covariates)){		
-		    if(nrow(covariates) !=  ncell(locations)) 
-			     warning("covariates and grid aren't compatible")
-		    
 		    # put zeros for covariates not included in the data frame
 		    notInCov = setdiff(all.vars(formula), names(covariates))
 		    for(D in notInCov)
 			     covariates[[D]] = 0
       
 		    modelMatrixForRaster = model.matrix(formula, covariates)
+		    if(nrow(modelMatrixForRaster) < nrow(covariates)) {
+		    	# some cells missing covariates
+		    	toAdd = setdiff(rownames(covariates), rownames(modelMatrixForRaster))
+		    	toAdd = matrix(NA, length(toAdd), ncol(modelMatrixForRaster),
+		    			dimnames = list(toAdd, colnames(modelMatrixForRaster)))
+		    	modelMatrixForRaster = rbind(
+		    		modelMatrixForRaster, toAdd
+		    	)[rownames(covariates), ]
+		    }
       
 		    theParams = intersect(colnames(modelMatrixForRaster), names(param))
 		    
@@ -152,18 +205,21 @@ krigeLgm = function(
 				    tcrossprod( param[theParams], modelMatrixForRaster[,theParams] )
 		    )
 		    meanFixedEffects = rep(NA, ncell(locations))
-		    meanFixedEffects[as.integer(names(meanForRaster))] = meanForRaster
-		    meanRaster = locations
+		    if('space' %in% names(covariates)  & 'space' %in% names(locations)) {
+		    	meanFixedEffects[match(covariates$space, terra::values(locations)[,'space'])] = meanForRaster
+		    } else {
+			    meanFixedEffects[as.integer(names(meanForRaster))] = meanForRaster
+			  }
+		    meanRaster = rast(locations)
 		    terra::values(meanRaster) = meanFixedEffects
       
       
-		  }	
 	 } # end covariates is DF
 	 
 	 if(any(class(data)=="SpatVector")&
 	 		any(class(formula)=="formula")) {
     
-		  if(all(names(covariates) %in% names(data))) {
+		  if(all(setdiff(names(covariates), 'space') %in% names(data))) {
       
 			   modelMatrixForData = model.matrix(formula, values(data))
       
@@ -201,7 +257,10 @@ krigeLgm = function(
 	 } # end data is spdf	
   
 	 
-	 if(!length(observations) | is.null(meanRaster)) { # old code, not called from lgm
+	 if(!length(observations) | is.null(meanRaster)) {
+
+
+	  # old code, not called from lgm
 		  # the above didn't create observations and meanRaster
 		  # use the old code, probably not being called from lgm
  	  
@@ -521,63 +580,24 @@ krigeLgm = function(
 	   
 	   observations = observations - meanForData
     
+
+    
 	 } # end old code not called from LGM
 	 
-  cholVarData = geostatsp::matern(coordinates, param=param, type='cholesky')
-#	if(haveNugget) Matrix::diag(varData) = Matrix::diag(varData) + param["nugget"]
+  cholVarDataInv = geostatsp::matern(
+  	coordinates, 
+  	param=param, type='inverseCholesky')
 
-#	cholVarData = Matrix::chol(varData)
-  observations = as.matrix(observations)
-	 cholVarDatInvData = Matrix::solve(cholVarData, observations)
-  
+  cholVarDatInvData = cholVarDataInv %*% observations
+
 	 Ny = length(observations)
 	 param = fillParam(param)
 	 
-	 krigeOneRowPar = function(Drow, yFromRowDrow, 
-			 locations,
-			 param,coordinates,Ny,cholVarData,
-			 cholVarDatInvData,
-			 xminl,xresl,ncoll,
-			 lengthc){
-		  
-		  # covariance of cells in row Drow with data points
-		  resC =  .C(C_maternArasterBpoints, 
-				  as.double(xminl), 
-				  as.double(xresl), 
-				  as.integer(ncoll), 
-				  as.double(yFromRowDrow), 
-				  as.double(0), as.integer(1),
-				  as.double(crds(coordinates)[,1]), 
-				  as.double(crds(coordinates)[,2]), 
-				  N=as.integer(Ny), 
-				  result=as.double(matrix(0, ncoll, 
-								  lengthc)),
-				  as.double(param["range"]),
-				  as.double(param["shape"]),
-				  as.double(param["variance"]),
-				  as.double(param["anisoRatio"]),
-				  as.double(param["anisoAngleRadians"])
-		  ) 
-		  covDataPred = matrix(resC$result, nrow=ncoll, ncol=Ny)
-		  
-		  
-		  cholVarDataInvCovDataPred = Matrix::solve(cholVarData, 
-				  t(covDataPred))
-		  
-	   x= cbind( # the conditional expectation
-				  forExp=as.vector(Matrix::crossprod(cholVarDataInvCovDataPred, 
-								  cholVarDatInvData)),
-				  # part of the conditional variance
-				  forVar=apply(cholVarDataInvCovDataPred^2, 2, sum)
-		  ) 
-		  x
-		  
-	 }
-  
+
 	 datForK = list(
 			 locations=locations,param=param,
 			 coordinates=coordinates,Ny=Ny,
-			 cholVarData=cholVarData,
+			 cholVarDataInv=cholVarDataInv,
 			 cholVarDatInvData = cholVarDatInvData,
 			 xminl=xmin(locations),
 			 xresl = xres(locations),
@@ -587,11 +607,12 @@ krigeLgm = function(
 		)
 	 Srow = 1:nrow(locations)
 	 
-  
 	 if(mc.cores ==1 ) {
-	   sums=mapply(krigeOneRowPar, Srow, 
-				  yFromRow(locations,Srow),
-				  MoreArgs=datForK,SIMPLIFY=FALSE)
+	   sums=mapply(krigeOneRowPar, 
+	   	Drow = Srow, 
+				  yFromRowDrow = yFromRow(locations,Srow),
+				  MoreArgs=datForK,
+				  SIMPLIFY=FALSE)
     
 	 } else {
 		  sums=parallel::mcmapply(krigeOneRowPar, Srow, 
@@ -609,7 +630,7 @@ krigeLgm = function(
 	 
 	 randomRaster = rast(meanRaster)
 	 names(randomRaster) = "random"
- 	terra::values(randomRaster) = as.vector(forExpected)
+ 	terra::values(randomRaster) = t(forExpected)
 	 
 
 	 predRaster = meanRaster + randomRaster
@@ -619,7 +640,7 @@ krigeLgm = function(
 		  themax = max(forVar - param["variance"],na.rm=TRUE)
 		  if(themax > 1e-6)
 			   warning("converted variances of ", themax, " to zero")	
-#		forVar = pmin(forVar, param["variance"])	
+		forVar = pmin(forVar, param["variance"])	
 	 }
 	 
 	 krigeSd = rast(meanRaster)

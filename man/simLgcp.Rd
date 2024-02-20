@@ -28,7 +28,11 @@ Give covariates and model parameters, simulates a log-Gaussian Cox process
 \item{rasterTemplate}{Raster on which the latent surface is simulated,
 defaults to the first covariate.}
 \item{n}{number of realisations to simulate}
-\item{...}{ additional arguments, see \code{\link[RandomFields]{RFsimulate}}.}
+\item{...}{ additional arguments, see 
+\Sexpr[results=rd]{c(
+  '\\\\code{RFsimulate} in the \\\\code{RandomFields} package', 
+  '\\\\command{\\\\link[RandomFields]{RFsimulate}}'
+  )[1+requireNamespace('RandomFields', quietly=TRUE)]}.}
 \item{intensity}{Raster of the intensity of a Poisson point process.}
 }
 

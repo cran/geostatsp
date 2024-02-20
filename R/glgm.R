@@ -827,10 +827,16 @@ getRid = c('random.ID', 'predict.ID', 'predict.space', 'predict.kld')
     resRasterFitted[[setdiff(names(resRasterFitted), getRid)]], 
     cells[[setdiff(names(cells), getRid)]])
 
+  resRaster = terra::writeRaster(
+    resRaster,
+    filename = tempfile(fileext='.tif')
+  )
+  attributes(resRaster)$source = terra::sources(resRaster)
 
   result=list(inla=inlaResult,
     raster=resRaster,
-    parameters=params
+    parameters=params,
+    rasterFile = terra::sources(resRaster)
     )
 
   result

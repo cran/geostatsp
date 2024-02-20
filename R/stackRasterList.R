@@ -65,7 +65,7 @@ stackRasterList = function(x, template=x[[1]],method='near',mc.cores=NULL) {
 # 				toAdd = deratify(toAdd)
  				toAdd = as.numeric(toAdd, 2)
  			}
-		} else { # not a spdf
+		} else { # not a spatvect, assume it's a raster
 			if(compareGeom(rast(x[[D]]), template, stopOnError=FALSE)) {
 				# same projection, same resolution
 				toAdd =  x[[D]]			
@@ -93,7 +93,7 @@ stackRasterList = function(x, template=x[[1]],method='near',mc.cores=NULL) {
 						} else {
 							xToAgg = x[[D]]
 						}
-						xagg = aggregate(xToAgg, fact=toAgg,
+						xagg = terra::aggregate(xToAgg, fact=toAgg,
 								fun=aggFun)
 						levels(xagg) = levels(x[[D]])
 
