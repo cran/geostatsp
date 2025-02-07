@@ -1,4 +1,5 @@
 stackRasterList = function(x, template=x[[1]],method='near',mc.cores=NULL) {
+# method mean and mode?  optino for a function?  defalut to 'auto'
 
 # TO DO: fix with mc.cores > 1, currently pointer error.
 
@@ -27,12 +28,14 @@ stackRasterList = function(x, template=x[[1]],method='near',mc.cores=NULL) {
 			method = method[names(x)]
 	} else {
 		method = rep(method, Nlayers)
+		names(method) = names(x)
 	}
  	
 	modefun = function(qq, na.rm=NULL) {
+			# use DescTools::Mode(res)
 		res = as.data.frame(table(qq))
 		if(nrow(res)) {
-			res = as.numeric(res[which.max(res[,2]),1])
+			res = as.numeric(as.character(res[which.max(res[,2]),1]))
 		} else {
 			res = NA
 		}

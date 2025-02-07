@@ -86,9 +86,12 @@ gamma priors.
 
 <<lgcpGamma, tidy=FALSE>>=
 resG=lgcp(
-	formula = formulaHere, data=murderT, 
-	grid=squareRaster(borderC, 30), covariates=covList,
-	border=borderC, buffer=2000,
+	formula = formulaHere, 
+	data=murderT, 
+	grid=squareRaster(borderC, 30), 
+	covariates=covList,
+	border=borderC, 
+	buffer=2000,
 	prior = list(
 				sd = c(lower = 0.2, upper = 2), 
 				range = c(lower = 2, upper=20)*1000),

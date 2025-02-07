@@ -48,10 +48,11 @@ can be overridden with a
 \item{buffer}{Extra space padded around the data bounding box to reduce edge effects.}
 \item{border}{boundary of the region on which an LGCP is defined, passed to \code{\link[terra]{mask}}}
 \item{...}{Additional options passed to  
-\Sexpr[results=rd]{c(
-  '\\\\code{inla} in the \\\\code{INLA} package', 
-  '\\\\code{\\\\link[INLA]{inla}}'
-  )[1+requireNamespace('INLA', quietly=TRUE)]} }
+%\Sexpr[results=rd]{c(
+\code{inla} in the \code{INLA} package
+%  '\\\\code{\\\\link[INLA]{inla}}'
+%  )[1+requireNamespace('INLA', quietly=TRUE)]} 
+}
 }
 \details{
 This function performs Bayesian inference for generalized linear geostatistical models with INLA.  The Markov random field
@@ -87,14 +88,14 @@ A list with two components named  \code{inla}, \code{raster}, and \code{paramete
 }
 
 \seealso{
-\Sexpr[results=rd]{c(
-  '\\\\code{inla} in the \\\\code{INLA} package', 
-  '\\\\code{\\\\link[INLA]{inla}}'
-  )[1+requireNamespace('INLA', quietly=TRUE)]}, 
+%\Sexpr[results=rd]{c(
+%  '\\\\code{inla} in the \\\\code{INLA} package', 
+%  '\\\\code{\\\\link[INLA]{inla}}'
+%  )[1+requireNamespace('INLA', quietly=TRUE)]}, 
   \url{https://www.r-inla.org}
 }
 \examples{
-
+\dontrun{
 # geostatistical model for the swiss rainfall data
 
 if(requireNamespace("INLA", quietly=TRUE) ) {
@@ -179,7 +180,7 @@ if(length(res$parameters)) {
 	plot(res$raster[["predict.exp"]])
 	plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 }
-
+}
 }
 
 

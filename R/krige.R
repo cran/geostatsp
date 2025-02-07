@@ -111,7 +111,7 @@ krigeOneRowPar = function(
 	cholVarDataInvCovDataPred = tcrossprod(cholVarDataInv, covDataPred)
 
 	x= cbind( # the conditional expectation
-		forExp=as.vector(Matrix::crossprod(cholVarDataInvCovDataPred, 
+		forExp=as.vector(crossprod(cholVarDataInvCovDataPred, 
 			cholVarDatInvData)),
 				  # part of the conditional variance
 		forVar=apply(cholVarDataInvCovDataPred^2, 2, sum)
@@ -179,8 +179,7 @@ krigeLgm = function(
 		  meanRaster = terra::rast(locations)
 		  terra::values(meanRaster) = meanFixedEffects	
 	 }
-	 
-	 
+
 	 if( is.data.frame(covariates) & any(class(formula)=="formula") & !noCovariates)  {
     
 		    # put zeros for covariates not included in the data frame
@@ -218,7 +217,7 @@ krigeLgm = function(
 	 
 	 if(any(class(data)=="SpatVector")&
 	 		any(class(formula)=="formula")) {
-    
+	   
 		  if(all(setdiff(names(covariates), 'space') %in% names(data))) {
       
 			   modelMatrixForData = model.matrix(formula, values(data))
@@ -254,8 +253,9 @@ krigeLgm = function(
 		    } # have boxcox
 		    observations = observations - meanForData		
 		  } # end all covariates in data
+	   
 	 } # end data is spdf	
-  
+	 
 	 
 	 if(!length(observations) | is.null(meanRaster)) {
 
@@ -583,16 +583,18 @@ krigeLgm = function(
 
     
 	 } # end old code not called from LGM
-	 
+
+	 	 
   cholVarDataInv = geostatsp::matern(
   	coordinates, 
   	param=param, type='inverseCholesky')
 
+    
   cholVarDatInvData = cholVarDataInv %*% observations
 
 	 Ny = length(observations)
 	 param = fillParam(param)
-	 
+
 
 	 datForK = list(
 			 locations=locations,param=param,

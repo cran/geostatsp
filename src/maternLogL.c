@@ -253,7 +253,9 @@ void maternLogLGivenVarU(
 	for(D = 0; D < N[0]; D++)
 		determinants[0] += log(varMat[D*N[0]+D]);
 
-	LxLy = (double *) calloc(N[1]*(N[2]),sizeof(double));
+	//LxLy = (double *) calloc(N[1]*(N[2]),sizeof(double));
+	LxLy = (double *) R_alloc(N[1]*(N[2]), sizeof(double));
+	
 
 	maternLogLGivenChol(
 			obsCov,
@@ -264,7 +266,7 @@ void maternLogLGivenVarU(
 			varBetaHat, // an Ncov by Ncov matrix
 			determinants, LxLy
 			);
-	free(LxLy);
+//	free(LxLy);
 }
 
 // computes the -2 log likelihood
@@ -359,9 +361,9 @@ void maternLogL(
 		boxcox,
 		*boxcoxType);
 
-	corMat = (double *) calloc(N[0]*N[0],sizeof(double));
-	LxLy = (double *) calloc(N[1]*(N[2]),sizeof(double));
-	totalSsq = (double *) calloc(2*(N[1]),sizeof(double));
+	corMat = (double *) R_alloc(N[0]*N[0],sizeof(double));
+	LxLy = (double *) R_alloc(N[1]*(N[2]),sizeof(double));
+	totalSsq = (double *) R_alloc(2*(N[1]),sizeof(double));
 
 	
 	/////////
@@ -384,8 +386,8 @@ void maternLogL(
 		determinants, // detVarHalf, detCholCovInvXcrossHalf
 		LxLy);
 
-	free(corMat);
-	free(LxLy);
+//	free(corMat);
+//	free(LxLy);
 
  //////////
 	logLfromComponents(
@@ -398,7 +400,7 @@ void maternLogL(
 
 	F77_NAME(dcopy)(&N[1],totalSsq, &oneI,logL, &oneI);
 	F77_NAME(dcopy)(&N[1],&totalSsq[N[1]], &oneI,  totalVarHat, &oneI);
-	free(totalSsq);
+//	free(totalSsq);
 
 	obsCov[0] = determinants[0];
 	obsCov[1] = determinants[1];

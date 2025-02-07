@@ -6,38 +6,38 @@ maternCholSolve = function(param, obsCov, coordinates){
 
   if(FALSE){ # do this in R
 #  covMat = geostatsp::matern(x=coordinates, param=param)	
-#  cholCovMat = Matrix::chol(covMat)
+#  cholCovMat = chol(covMat)
     
     
   # cholCovMat %*% t(cholCovMat) = covMat
   
   # cholCovInvXY = cholCovMat^{-1} %*% cbind(obs, covariates)
-  cholCovInvXY = Matrix::solve(cholCovMat, obsCov)
-#  cholCovInvX = Matrix::solve(cholCovMat, covariates)
+  cholCovInvXY = solve(cholCovMat, obsCov)
+#  cholCovInvX = solve(cholCovMat, covariates)
   cholCovInvX = cholCovInvXY[,-1]
   # cholCovInvY = cholCovMat^{-1} %*% observations
-  #cholCovInvY = Matrix::solve(cholCovMat, observations)
+  #cholCovInvY = solve(cholCovMat, observations)
   cholCovInvY = cholCovInvXY[,1]
   
-  cholCovInvXcross = Matrix::crossprod(cholCovInvX)
-  cholCovInvXcrossInv =       Matrix::solve(cholCovInvXcross)
-  detCholCovInvXcross = Matrix::determinant(cholCovInvXcross)$modulus
+  cholCovInvXcross = crossprod(cholCovInvX)
+  cholCovInvXcrossInv =       solve(cholCovInvXcross)
+  detCholCovInvXcross = determinant(cholCovInvXcross)$modulus
   
   betaHat = as.vector(
       cholCovInvXcrossInv %*% 
-          Matrix::crossprod(cholCovInvX, cholCovInvY)
+          crossprod(cholCovInvX, cholCovInvY)
   ) 
   
   resids = obsCov[,1] - as.vector(obsCov[,-1] %*% betaHat)
   # sigsqhat = resids' %*% Vinv %*% residsx
   #    =   resids' Linv' Linv resids
-  cholCovInvResid = Matrix::solve(cholCovMat, resids)
+  cholCovInvResid = solve(cholCovMat, resids)
   detCholCovMat = determinant(cholCovMat)$modulus
   
   Nobs = nrow(obsCov)
   Ncov = ncol(obsCov)-1
   Nadj = c(ml=Nobs, reml=Nobs-Ncov)
-  totalSsq = as.vector(Matrix::crossprod(cholCovInvResid))
+  totalSsq = as.vector(crossprod(cholCovInvResid))
   totalVarHat = totalSsq/Nadj
   
   minusTwoLogLik =  

@@ -24,7 +24,7 @@ Murder locations
 \source{
 Murder data:\url{https://mdl.library.utoronto.ca/collections/geospatial-data/toronto-homicide-data-1990-2013}, 
 
-Lights: \url{https://ngdc.noaa.gov/eog/viirs/download_ut_mos.html}
+Lights: \url{https://www.ngdc.noaa.gov/eog/viirs/download_ut_mos.html}
 
 Boundary files: \url{https://www150.statcan.gc.ca/n1/en/catalogue/92-160-X}
 

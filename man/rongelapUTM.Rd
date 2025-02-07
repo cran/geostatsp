@@ -18,7 +18,7 @@ the measurement was taken for.  A UTM coordinate reference system is used, where
 }
 
 \source{
-\url{http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets}.  For further details on the radionuclide concentration data, see Diggle,Harper and Simon (1997), Diggle, Tawn and Moyeed (1998) and Christensen (2004).
+\url{https://web.archive.org/web/20240110054727/http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets}.  For further details on the radionuclide concentration data, see Diggle,Harper and Simon (1997), Diggle, Tawn and Moyeed (1998) and Christensen (2004).
 }
 
 \examples{

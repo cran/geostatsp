@@ -372,7 +372,7 @@ if(Sys.info()['user'] =='patrick') {
 	abline(v=0)
 	
 	if(interactive()){
-		hist(Matrix::diag(prodAdj),breaks=thebreaks,ylab='adj')
+		hist(Matrix::diag(prodAdj),60,ylab='adj')
 	} else {
 		hist(Matrix::diag(prodAdj),breaks=60,ylab='edge')
 	}
@@ -381,7 +381,7 @@ if(Sys.info()['user'] =='patrick') {
 	abline(v=0)
 	
 	if(interactive()){
-		hist(Matrix::diag(prodAdjOpt),breaks=thebreaks,ylab='adj optimal')
+		hist(Matrix::diag(prodAdjOpt),breaks=60,ylab='adj optimal')
 	} else {
 		hist(Matrix::diag(prodAdjOpt),breaks=60,ylab='edge')
 	}

@@ -24,7 +24,7 @@ Gambia data
 }
 
 \source{
-\url{http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets}.  For further details 
+\url{https://web.archive.org/web/20240110054727/http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets}.  For further details 
 on the malaria data, see Thomson et al. (1999).
 }
 

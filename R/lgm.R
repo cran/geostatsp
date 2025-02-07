@@ -259,9 +259,10 @@ setMethod("lgm",
 			dots$data=data
 			dots$paramToEstimate=paramToEstimate
 			dots$reml = reml
+			
 			likRes = do.call(likfitLgm, dots)
 
-# call krige	
+			# call krige	
 			krigeRes =  krigeLgm(
 				formula=formula,data=data,
 				grid=grid,
@@ -269,7 +270,8 @@ setMethod("lgm",
 				expPred=expPred,
 				nuggetInPrediction=nuggetInPrediction
 				)
-			res = c(predict=krigeRes, likRes)
+
+				res = c(predict=krigeRes, likRes)
 
     # add confidence intervals for covariance parameters
 			theInf=informationLgm(res)

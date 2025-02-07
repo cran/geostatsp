@@ -18,14 +18,12 @@ myPoints = vect(cbind(rbeta(100,2,2), rbeta(100,3,4)))
 mycov = rast(matrix(rbinom(100, 1, 0.5), 10, 10), extent=ext(0, 1, 0, 1))
 names(mycov)="x1"
 
-if(all(havePackages)) {
-  
 res = lgcp(
     formula=~factor(x1),
     data=myPoints, 
     grid=20, 
     covariates=mycov,
-		priorCI=list(sd=c(u=0.1, alpha = 0.01), range=c(0.4, 0.41))
+		prior=list(sd=0.1, range=c(0.4)),  
 )
 
 if(length(res$parameters)) {
@@ -34,7 +32,7 @@ knitr::kable(res$parameters$summary, digits=3)
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
 }
-	
+
 # intercept only
 
 res = lgcp(
@@ -51,7 +49,6 @@ knitr::kable(res$parameters$summary, digits=3)
 
 plot(res$raster[["predict.exp"]])
 plot(myPoints,add=TRUE,col="#0000FF30",cex=0.5)
-}
 }
 
 
@@ -83,18 +80,21 @@ torontoPdens = unwrap(torontoPdens)
 torontoIncome = unwrap(torontoIncome)
 torontoBorder = unwrap(torontoBorder)
 
+highDens = torontoPdens > 100
+
+
 myCov = list(
     pop=torontoPdens,
+    highDens = highDens,
     inc = log(torontoIncome)
 )
 
-formula = ~ inc + offset(pop, log=TRUE)
+formula = ~ inc*highDens + offset(pop, log=TRUE)
 
-if(all(havePackages)) {
 
 resL=lgcp(formula, data=murder, 
     grid=squareRaster(murder, 30),
-    covariates=myCov,
+    covariates=myCov, verbose=TRUE,
     border=torontoBorder)
 
 resO = lgcp( ~ inc + pop, 
@@ -108,8 +108,6 @@ if(length(resL$parameters)) {
 	rbind(resL$param$summary, resO$param$summary)
 }
 
-
-}	
 
 
 # check spdfToBrock

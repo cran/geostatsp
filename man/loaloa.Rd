@@ -22,8 +22,8 @@ of individuals tested and \code{y} being the number of positives.
 }
 
 \source{
-\url{http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets} for the loaloa data,
-\url{https://lpdaac.usgs.gov/data/} for EVI and land type and  
+\url{https://web.archive.org/web/20240110054727/http://www.leg.ufpr.br/doku.php/pessoais:paulojus:mbgbook:datasets} for the loaloa data,
+\url{https://web.archive.org/web/20241129120557/https://lpdaac.usgs.gov/data/} for EVI and land type and  
 \url{https://srtm.csi.cgiar.org} for the elevation data.
 }
 

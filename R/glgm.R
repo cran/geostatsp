@@ -406,7 +406,6 @@ setMethod("glgm",
   if(!length(forInla$lincomb)) 
     forInla = forInla[setdiff(names(forInla), 'lincomb')] 
 
-
   if(requireNamespace("INLA", quietly=TRUE)) {
     if(identical(forInla$verbose, TRUE)) {
       tFile = tempfile('glgm', tempdir(), '.rds')
@@ -415,8 +414,7 @@ setMethod("glgm",
     }
     inlaResult = try(do.call(INLA::inla, forInla))
   } else {
-    inlaResult = 
-    list(logfile="INLA is not installed. \n see www.r-inla.org")
+    inlaResult = list(logfile="INLA is not installed. \n see www.r-inla.org")
   }
   if(identical(forInla$verbose, TRUE)) {
     message("inla done") 
@@ -827,9 +825,11 @@ getRid = c('random.ID', 'predict.ID', 'predict.space', 'predict.kld')
     resRasterFitted[[setdiff(names(resRasterFitted), getRid)]], 
     cells[[setdiff(names(cells), getRid)]])
 
+
   resRaster = terra::writeRaster(
     resRaster,
-    filename = tempfile(fileext='.tif')
+    filename = tempfile(fileext='.tif'),
+    datatype = 'FLT8S'
   )
   attributes(resRaster)$source = terra::sources(resRaster)
 

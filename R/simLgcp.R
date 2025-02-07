@@ -61,6 +61,7 @@ simLgcp = function(param, covariates=NULL, betas=NULL,
 		names(betas) = names(covariates)
 	
 	if(!is.null(covariates)){
+		# method = bilinear?
 		covariates = stackRasterList(covariates, randomEffect)
 	}
 	

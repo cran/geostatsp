@@ -30,9 +30,14 @@ void maternArasterBpoints(
   double distTopLeftR[2], distHere[2];
   double costheta, sintheta, anisoRatioSq;
   double logxscale, xscale, varscale,  thisx, logthisx;
-  int nb;
-  double *bk, alpha,truncate;
 
+  double *bk, alpha= *shape,truncate=0.00001;
+  
+  int nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
+  bk = (double *) R_alloc(nb, sizeof(double));
+
+
+    
 
   AyN2 = *AyN;
   AxN2 = *AxN;
@@ -58,10 +63,6 @@ void maternArasterBpoints(
 
   truncate = *variance*1e-06; // count a zero if var < truncate
 
-  alpha = *shape;
-  // code stolen from R's src/nmath/bessel_k.c
-  nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
-  bk = (double *) calloc(nb, sizeof(double));
 
 
   //Nzeros=0;
@@ -137,7 +138,7 @@ void maternArasterBpoints(
   //*range = xscale;
   //*shape=varscale;
   //*anisoRatio = anisoRatioSq;
-  free(bk);
+  //free(bk);
 
 }
 
@@ -166,8 +167,10 @@ void maternAniso(
   double logxscale, varscale,  logthisx, thisx;
   double anisoRatioSq, dist[2], distRotate[2], costheta, sintheta;
 
-  int nb;
-  double *bk, alpha,truncate=0.00001;
+  double *bk, alpha= *shape,truncate=0.00001;
+  int nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
+  bk = (double *) R_alloc(nb, sizeof(double));
+  
 
   costheta = cos(*anisoAngleRadians);
   sintheta = sin(*anisoAngleRadians);
@@ -178,10 +181,6 @@ void maternAniso(
   logxscale  =  1.5 * M_LN2 +   0.5 * log(*shape)  - log(*range);
   varscale =  log(*variance)  - lgammafn(*shape ) -  (*shape -1)*M_LN2;
 
-  alpha = *shape;
-  // code stolen from R's src/nmath/bessel_k.c
-  nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
-  bk = (double *) calloc(nb, sizeof(double));
 
   Nm1 = *N-1;
   N2 = *N;
@@ -238,17 +237,17 @@ void maternAniso(
       } // end for Drow
   }// end for Dcol
 
-
   if(*type >1 ){ // cholesky
       F77_CALL(dpotrf)("L", N, result, N, &Dcol FCONE);
       *halfLogDet=0;  // the log determinant
+
       for(Drow = 0; Drow < N2; Drow++)
         *halfLogDet += log(result[Drow*N2+Drow]);
       if(*type == 3){ // precision
           F77_NAME(dpotri)("L", N,
               result, N, &Dcol FCONE);
       } else if (*type==4) {// cholkesy of precision
-          F77_NAME(dtrtri)("L", "N",N,
+            F77_NAME(dtrtri)("L", "N",N,
               result, N, &Dcol FCONE FCONE);
       } else {
           Drow = 0;
@@ -256,7 +255,7 @@ void maternAniso(
       *type = Dcol;
   }
 
-  free(bk);
+//  free(bk);
 }
 
 void matern(
@@ -273,14 +272,12 @@ void matern(
   double varscale,  thisx, //xscale,
   logthisx, logxscale;
 
-  int nb;
-  double *bk, alpha;
-
-  alpha = *shape;
+  
+  double *bk, alpha = *shape;
 
   // code stolen from R's src/nmath/bessel_k.c
-  nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
-  bk = (double *) calloc(nb, sizeof(double));
+  int nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
+  bk = (double *) R_alloc(nb, sizeof(double));
 
   // evaluate the matern!
   /*
@@ -359,7 +356,7 @@ void matern(
       }
       *type = Dcol;
   }
-  free(bk);
+  //free(bk);
 }
 
 // matern for a vector of parameters
@@ -450,9 +447,11 @@ SEXP maternPoints(
     // nugget,
     SEXP type) {
 
-  SEXP halfLogDet= NEW_NUMERIC(1);
+  SEXP halfLogDet= PROTECT(NEW_NUMERIC(1));
   int N= Rf_nrows(points);
 
+  
+  
 
   maternAniso(
       REAL(points), // x
@@ -468,7 +467,7 @@ SEXP maternPoints(
       INTEGER(type),
       REAL(halfLogDet)
   );
-
+  UNPROTECT(1);
   return halfLogDet;
 }
 
@@ -483,12 +482,15 @@ SEXP maternDistance(
     //c('variance','cholesky','precision','inverseCholesky')
 ) {
 
-  SEXP halfLogDet= NEW_NUMERIC(1);
+//  SEXP halfLogDet= PROTECT(NEW_NUMERIC(1));
+  double halfLogDet;
   const char
   *valid[] = {"dsyMatrix"};
   int typeInt=*type, D, D2, N;
   double *P, *Presult;
 
+
+  
   N = INTEGER(GET_SLOT(distance, install("Dim")))[0];
   P = REAL(GET_SLOT(distance, install("x")));
   Presult = REAL(GET_SLOT(result, install("x")));
@@ -521,9 +523,10 @@ SEXP maternDistance(
       &REAL(param)[2],// variance,
       &REAL(param)[3],// nugget,
       &typeInt,
-      REAL(halfLogDet));
-
-  return halfLogDet;
+      &halfLogDet //REAL(halfLogDet)
+      );
+//  UNPROTECT(1);
+  return Rf_ScalarReal(halfLogDet);
 }
 
 
@@ -550,7 +553,14 @@ void maternRaster(
   double logxscale, xscale, varscale,  thisx, logthisx;
   int nb;
   double *bk, alpha,truncate;
-
+  
+  alpha = *shape;
+  // code stolen from R's src/nmath/bessel_k.c
+  nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
+  //bk = (double *) calloc(nb, sizeof(double));
+  bk = (double *) R_alloc(nb, sizeof(double));
+  
+  
 
   AyN2 = *AyN;
   AxN2 = *AxN;
@@ -575,10 +585,6 @@ void maternRaster(
 
   truncate = *variance*1e-06; // count a zero if var < truncate
 
-  alpha = *shape;
-  // code stolen from R's src/nmath/bessel_k.c
-  nb = 1+ (int)floor(alpha);/* nb-1 <= |alpha| < nb */
-  bk = (double *) calloc(nb, sizeof(double));
 
   DB = 0; // cell index
   for(DBy=0;DBy<AyN2;++DBy){ // loop through rows of raster B
@@ -666,7 +672,7 @@ void maternRaster(
       }
   }
 
-  free(bk);
+//  free(bk);
 
 
 }

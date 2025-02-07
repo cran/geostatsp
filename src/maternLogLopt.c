@@ -118,8 +118,8 @@ void maternLogLgr(
 
 	Nparam = SparamOpt[0];
 
-	parHere = (double *) calloc(Nparam,sizeof(double));
-	fullGr = (double *) calloc(6*Nparam,sizeof(double));
+	parHere = (double *) R_alloc(Nparam,sizeof(double));
+	fullGr = (double *) R_alloc(6*Nparam,sizeof(double));
 
 
 	if(verboseOpt) {
@@ -194,8 +194,8 @@ void maternLogLgr(
 
 	if(verboseOpt)	Rprintf("\n");
 
-	free(parHere);
-	free(fullGr);
+//	free(parHere);
+//	free(fullGr);
 
 }
 
@@ -243,7 +243,7 @@ void maternLogLOpt(
 	anisoOpt=*aniso;
 
 
-	SparamOpt = (int *) calloc(7,sizeof(int));
+	SparamOpt = (int *) R_alloc(7,sizeof(int));
 
 	// create a vector of indices of parameters to estimate
 	DparamForOpt = 1;
@@ -256,7 +256,7 @@ void maternLogLOpt(
 	// first entry is number of parameters to be estimated
 	SparamOpt[0]=DparamForOpt-1;
 
-	paramArg = (double *) calloc(SparamOpt[0],sizeof(double));
+	paramArg = (double *) R_alloc(SparamOpt[0],sizeof(double));
 
 
 	// create vector of values for parameters to be estimated
@@ -303,14 +303,14 @@ void maternLogLOpt(
 
 // allocate memory
 
-	betaHatOpt= (double *) calloc(N[2],sizeof(double));
-	varBetaHatOpt = (double *) calloc(N[2]*N[2],sizeof(double));
+	betaHatOpt= (double *) R_alloc(N[2],sizeof(double));
+	varBetaHatOpt = (double *) R_alloc(N[2]*N[2],sizeof(double));
 	LtypeOpt = *Ltype;
-	obsCovCopy = (double *) calloc(N[0]*(N[1]+N[2]),sizeof(double));
+	obsCovCopy = (double *) R_alloc(N[0]*(N[1]+N[2]),sizeof(double));
 	// enough memory for covariates and one vector of observations
-	corMatOpt = (double *) calloc(N[0]*N[0],sizeof(double));
-	LxLyOpt = (double *) calloc(N[1]*N[2],sizeof(double));
-	totalSsqOpt = (double *) calloc(2*N[1],sizeof(double));
+	corMatOpt = (double *) R_alloc(N[0]*N[0],sizeof(double));
+	LxLyOpt = (double *) R_alloc(N[1]*N[2],sizeof(double));
+	totalSsqOpt = (double *) R_alloc(2*N[1],sizeof(double));
 
 
 	if(scalarsInt[0]){
@@ -351,7 +351,7 @@ void maternLogLOpt(
 
 // run once again to ensure the global objects
 	// reflect the optimal parameters
-	resultGr = (double *) calloc(SparamOpt[0],sizeof(double));
+	resultGr = (double *) R_alloc(SparamOpt[0],sizeof(double));
 	maternLogLgr(
 			*N,
 			paramArg,
@@ -395,7 +395,7 @@ void maternLogLOpt(
 
 
 //# endif
-	free(resultGr);
+/*	free(resultGr);
 	free(corMatOpt);
 	free(obsCovCopy);
 	free(LxLyOpt);
@@ -403,6 +403,6 @@ void maternLogLOpt(
 	free(SparamOpt);
 	free(totalSsqOpt);
 	free(betaHatOpt);
-	free(varBetaHatOpt);
+	free(varBetaHatOpt);*/
 }
 

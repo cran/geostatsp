@@ -414,7 +414,8 @@ SEXP gmrfLik(
   resultXisqTausq =
       &REAL(resultR)[twoNxyvarmat + 6*Nrep*NxisqTausq];
 
-  copyLx = (double *) calloc(Nxy*Nrep,sizeof(double));
+//  copyLx = (double *) calloc(Nxy*Nrep,sizeof(double));
+copyLx = (double *) R_alloc(Nxy*Nrep, sizeof(double));
 
 
   Q = AS_CHM_SP(QR);
@@ -612,7 +613,7 @@ SEXP gmrfLik(
   // don't free obsCov because it's from an R object
   //	M_cholmod_free_dense(&obsCov, &c);
 
-  free(copyLx);
+//  free(copyLx);
   //	free(YXYX);
   M_cholmod_free_dense(&YwkL, &c);
   M_cholmod_free_dense(&YwkD, &c);

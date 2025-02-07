@@ -52,12 +52,13 @@ lgcp = function(formula=NULL, data,  grid, covariates=NULL,
 		)
 	formula = update.formula(formula, count ~ .)
 
-	alltermsFull = rownames(attributes(terms(formula))$factors)[-1]
+	theTerms = terms(formula)
+	allOffsets = rownames(attr(theTerms, 'factors'))[attr(theTerms, 'offset')]
+	
 	offsetToLogOrig = grep(
 		"^offset\\([[:print:]]+,log=TRUE\\)$", 
-		gsub("[[:space:]]+", "", alltermsFull))
-	offsetToLogOrig = alltermsFull[offsetToLogOrig]
-
+		gsub("[[:space:]]+", "", allOffsets), value=TRUE)
+	
 	offsetToMask = gsub(
 		"^[[:space:]]?offset\\(|,[[:space:]]?log[[:space:]]?=[[:space:]]?TRUE[[:space:]]?\\)[[:space:]]?$",
 		'', offsetToLogOrig
