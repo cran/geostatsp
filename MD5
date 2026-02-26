@@ -1,4 +1,4 @@
-6a818b05e06d6143534e762aa03c8dcb *DESCRIPTION
+2e02e4afbe71b1ddcc8e104521ca708a *DESCRIPTION
 45f35e8c7a0b0b97dadddd7c394b8e04 *NAMESPACE
 1f80782c00ec7aa0e9a3140f77994cc1 *R/0gm.R
 30124373fa21ffbb4158f9bcbdd33948 *R/NNmat.R
@@ -25,7 +25,7 @@ adc8a6d8db0ed5d52f3201889adfb81b *R/param.R
 0c2ebe29a2abaf0665d08d0e1d226a1a *R/postExp.R
 c90198ef0edaf561ca147f0c10d14a14 *R/priorInla.R
 d195a981c05fcbe4a6ed7f8ba3d8e2dc *R/priorLegacy.R
-aeb53564b6714d816622948a96191c52 *R/profLlgm.R
+4960ff2ea8888f91dd07e61ef10e4171 *R/profLlgm.R
 a74ed537d77761ca3d868bec6980b9d7 *R/resampleMethods.R
 38417e7afe9f4a5af223df71544b9b2f *R/simLgcp.R
 ddc43b32d39eaddcaa843f3b3ab11334 *R/spatialRoc.R
@@ -34,7 +34,7 @@ c6b8b9eabc15b189efc35e0c3665e279 *R/squareRaster.R
 4532b59bf1ac5b02c9a3ec120386527c *R/stackRasterList.R
 27e1fa100b2c113bba685b242934b732 *R/utils.R
 4a45f0003c92f47835121d12e4b3c9cd *R/variog.R
-28de87cfeba59dfc8619a1889712cdff *build/stage23.rdb
+b7c1ce81dc5edbfa4c81e28b846a2684 *build/stage23.rdb
 598d9b30a86ae6d2a1c468ce49e8ed72 *build/vignette.rds
 ec434a2f57f852ecc704e49462342c70 *data/datalist
 969d6ebe6294f046034c49eb44d118b5 *data/gambiaUTM.RData
@@ -48,10 +48,10 @@ aa0049030ea42d3fa3e7d20087362d9a *data/rongelapUTM.RData
 3e2b6839bc6b9121c760eb4f73c066d0 *inst/CITATION
 62c9d4a00aa06593d16515c6b215017d *inst/doc/glgm.R
 b2809b81ef4ca02443924f39348b069f *inst/doc/glgm.Rnw
-942047b0e39ffb1ead1aeb96aea3d58f *inst/doc/glgm.pdf
+14f41f122e564eeb8982927d1ed9169b *inst/doc/glgm.pdf
 f4f10ae931f7ac1c1d77cf5805ba24f4 *inst/doc/lgcp.R
 fc6b0f6a7090586f909446c3e55dc275 *inst/doc/lgcp.Rnw
-9540eb24dd2747c3c9097efbcc94d2e3 *inst/doc/lgcp.pdf
+4226fbf131db366f767e19a92fea3907 *inst/doc/lgcp.pdf
 bcdf577fcf13596205126370b3a2af5f *inst/extR/gmrfShape4.R
 fd12c48a429d8fcebdd659a51b4f7b52 *inst/extR/loaloaData.R
 710aeda1762f0327004f4c081e1451ff *man/RFsimulate.Rd
@@ -100,6 +100,5 @@ ed65f40970e4911fe122051539b084f7 *tests/maternGmrfPrec.R
 5258c53e5f96d42e5faad82fffd6663e *tests/profLlgm.R
 c4ea8d5edc9985333a26bbbc027a0e10 *tests/simLgcp.R
 5469c49033e802fb8e018a219bc577d5 *tests/stackRasterList.R
-524fc09c06a6c1cba29ff5ffa2403ddb *vignettes/Makefile
 b2809b81ef4ca02443924f39348b069f *vignettes/glgm.Rnw
 fc6b0f6a7090586f909446c3e55dc275 *vignettes/lgcp.Rnw
