@@ -42,7 +42,7 @@ containing a raster stack of the covariates, spatial random effect, and intensit
 }
 
 \examples{
-mymodel = c(mean=-0.5, variance=1, 
+mymodel = c(mean=-0.5, variance=0.4^2, 
 				range=2, shape=2)
 
 myraster = rast(nrows=15,ncols=20,xmin=0,xmax=10,ymin=0,ymax=7.5)

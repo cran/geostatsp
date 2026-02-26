@@ -148,6 +148,10 @@ void maternLogLGivenChol(
 	//    A = L  * L**T,  if UPLO = 'L'
 	// lower or upper, dim, A, nrow, info
 	F77_CALL(dpotrf)("L", Ncov, cholCovInvXcross, Ncov, &infoCholCovInvXcross FCONE);
+	if(infoCholCovInvXcross != 0){
+		error("LAPACK dpotrf failed in maternLogLGivenChol (X'V^{-1}X), info=%d",
+		      infoCholCovInvXcross);
+	}
 	// cholCovInvXcross is now cholesky of cholCovInvXcross
 	determinants[1]=0.0;  // the log determinant
 	for(D = 0; D < *Ncov; D++)
@@ -160,6 +164,10 @@ void maternLogLGivenChol(
 	F77_NAME(dpotri)("L", Ncov,
 			cholCovInvXcross, Ncov,
 			&infoInvCholCovInvXcross FCONE);
+	if(infoInvCholCovInvXcross != 0){
+		error("LAPACK dpotri failed in maternLogLGivenChol (X'V^{-1}X) inversion, info=%d",
+		      infoInvCholCovInvXcross);
+	}
 	// cholCovInvXcross is now cholCovInvXcrossInv
 
 	//betaHat = as.vector(
@@ -248,6 +256,10 @@ void maternLogLGivenVarU(
 	}
 
 	F77_CALL(dpotrf)("L", N, varMat, N, &infoCholVarmat FCONE);
+	if(infoCholVarmat != 0){
+		error("LAPACK dpotrf failed in maternLogLGivenVarU (variance matrix), info=%d",
+		      infoCholVarmat);
+	}
 
 	determinants[0]=0.0;  // the log determinant
 	for(D = 0; D < N[0]; D++)
@@ -372,8 +384,12 @@ void maternLogL(
 		N,corMat,
 		param,aniso,
 		&zero,// don't ignore nugget
-		&maternType,//chol of variance matrix
-		determinants);
+			&maternType,//chol of variance matrix
+			determinants);
+	if(maternType != 0){
+		error("LAPACK factorization failed in maternLogL (matern covariance), info=%d",
+		      maternType);
+	}
 
 	////////
 	maternLogLGivenChol(
@@ -407,5 +423,4 @@ void maternLogL(
 
 	*Ltype = maternType;
 }
-
 

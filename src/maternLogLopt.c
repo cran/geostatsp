@@ -54,16 +54,19 @@ double maternLogLObj(
 			obsCovOpt, &oneI,
 			obsCovCopy, &oneI);
 
-	maternForL(
-		xcoordOpt, ycoordOpt,
-		Nopt,corMatOpt,
-		paramOpt,
-		&anisoOpt,
-		&zero,// don't ignore nugget
-		&maternType,//chol of variance matrix
-		determinants);
+		maternForL(
+			xcoordOpt, ycoordOpt,
+			Nopt,corMatOpt,
+			paramOpt,
+			&anisoOpt,
+			&zero,// don't ignore nugget
+			&maternType,//chol of variance matrix
+			determinants);
+		if(maternType != 0){
+			return R_PosInf;
+		}
 
-	maternLogLGivenChol(
+		maternLogLGivenChol(
 		obsCovCopy,
 		Nopt,  // Nobs, 1, Ncov,
 		corMatOpt,
@@ -405,4 +408,3 @@ void maternLogLOpt(
 	free(betaHatOpt);
 	free(varBetaHatOpt);*/
 }
-

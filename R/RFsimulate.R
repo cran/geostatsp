@@ -132,7 +132,7 @@ setMethod("RFsimulate",
   function(model, x,  data = NULL, 
     err.model=NULL, n = 1, ...)  {
     
-    if (useRandomFields()) { 
+    if (useRandomFields()) {
       model = modelRandomFields(model)
       if(!is.null(err.model))
         err.model = RandomFields::RMnugget(var=err.model)
@@ -177,8 +177,9 @@ setMethod("RFsimulate",
         nrow=nrow(theChol), ncol=n)
       theSim = theChol %*% theRandom
       if(!is.null(data)) {
-        theSim = theSim + xcov %*% 
-          (Linv %*% data.frame(data)[,1])
+        LinvData = Linv %*% data.frame(data)[,1]
+        LinvDataCov0  = xcov %*% LinvData
+        theSim = theSim + LinvDataCov0
       }
       theSim = as.data.frame(as.matrix(theSim))
       names(theSim) = paste("sim", 1:n,sep="")
@@ -303,8 +304,11 @@ setMethod("RFsimulate",
       theSim = crossprod(theChol , theRandom)
       
       if(!is.null(data)) {
-        theSim = theSim + xcov %*% 
-          (Linv %*% as.matrix(data.frame(data)[,1]))	
+        # bug here?
+        LinvData = Linv %*% data.frame(data)[,1]
+        LinvDataCov1 = xcov %*% LinvData
+        theSim = theSim + matrix(LinvDataCov1, nrow(theSim), ncol(theSim))
+
       }
       theSim = as.data.frame(as.matrix(theSim))
       
@@ -316,7 +320,8 @@ setMethod("RFsimulate",
     }
     
     
-    result = rast(x, nlyrs = ncol(theSim), vals = theSim, names = colnames(theSim))
+    result = rast(x, nlyrs = ncol(theSim), vals = theSim, 
+      names = colnames(theSim))
   }
 )
 

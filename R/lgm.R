@@ -43,7 +43,7 @@ setMethod("lgm",
 			fixNugget,
 			...)
 	}
-	)
+)
 
 
 setMethod("lgm", 
@@ -64,7 +64,7 @@ setMethod("lgm",
 
 		callGeneric()
 	}
-	)
+)
 
 # change character to formula
 setMethod("lgm", 
@@ -93,12 +93,12 @@ setMethod("lgm",
 
 		formula = paste(formula[1] , "~",
 			paste(formula[-1], collapse=" + ")
-			)
+		)
 		formula = as.formula(formula)
 
 		callGeneric()
 	}
-	)
+)
 
 
 
@@ -121,7 +121,7 @@ setMethod("lgm",
 
 		callGeneric()
 	}
-	)
+)
 
 # missing covariates, create empty list
 setMethod("lgm", 
@@ -151,7 +151,7 @@ setMethod("lgm",
 			fixNugget,
 			...)
 	}
-	)
+)
 
 
 setMethod("lgm",
@@ -167,7 +167,8 @@ setMethod("lgm",
 		fixNugget = FALSE,
 		...) {
 
-		dataCov = gm.dataSpatial(
+		dataCov = #geostatsp:::
+		gm.dataSpatial(
 			formula, data, 
 			grid, covariates, buffer)
 
@@ -177,7 +178,7 @@ setMethod("lgm",
 
 		callGeneric()
 	}
-	)
+)
 
 setMethod("lgm",
 	signature("formula", "SpatVector", "SpatRaster", "SpatRaster"),
@@ -202,7 +203,7 @@ setMethod("lgm",
 
 		callGeneric()
 	}
-	)
+)
 
 # the real work
 setMethod("lgm", 
@@ -229,24 +230,24 @@ setMethod("lgm",
 
 		paramToEstimate	= c(
 			"variance", "range", "shape","nugget","boxcox"
-			)[c(
+		)[c(
 			TRUE, TRUE, !fixShape, !fixNugget, !fixBoxcox
-			)]
-			
-			range=NA
-			Spar = c(shape=as.numeric(shape),
-				nugget=as.numeric(nugget),
-				range=NA,
-				boxcox=as.numeric(boxcox))
+		)]
+		
+		range=NA
+		Spar = c(shape=as.numeric(shape),
+			nugget=as.numeric(nugget),
+			range=NA,
+			boxcox=as.numeric(boxcox))
 
-			if(aniso) {
-				Spar = c(Spar, anisoAngleRadians=NA,anisoRatio=NA)
-				paramToEstimate = c(paramToEstimate,
-					"anisoAngleDegrees","anisoRatio")		
-			}
+		if(aniso) {
+			Spar = c(Spar, anisoAngleRadians=NA,anisoRatio=NA)
+			paramToEstimate = c(paramToEstimate,
+				"anisoAngleDegrees","anisoRatio")		
+		}
 
-			Spar = Spar[!names(Spar) %in% names(param)]
-			param = c(param, Spar)
+		Spar = Spar[!names(Spar) %in% names(param)]
+		param = c(param, Spar)
 
 # to do: make sure factors in rasters are set up correctly
 	   # NA's for levels without data
@@ -254,13 +255,13 @@ setMethod("lgm",
 
 # call likfit
 
-			dots$param = param
-			dots$formula=formula
-			dots$data=data
-			dots$paramToEstimate=paramToEstimate
-			dots$reml = reml
-			
-			likRes = do.call(likfitLgm, dots)
+		dots$param = param
+		dots$formula=formula
+		dots$data=data
+		dots$paramToEstimate=paramToEstimate
+		dots$reml = reml
+		
+		likRes = do.call(likfitLgm, dots)
 
 			# call krige	
 			krigeRes =  krigeLgm(
@@ -268,66 +269,67 @@ setMethod("lgm",
 				grid=grid,
 				covariates=covariates, param=likRes$param, 
 				expPred=expPred,
-				nuggetInPrediction=nuggetInPrediction
-				)
+				nuggetInPrediction=nuggetInPrediction,
+				mc.cores=mc.cores
+			)
 
-				res = c(predict=krigeRes, likRes)
+		res = c(predict=krigeRes, likRes)
 
     # add confidence intervals for covariance parameters
-			theInf=informationLgm(res)
+		theInf=informationLgm(res)
 
-			res$varBetaHat = list(beta=res$varBetaHat)
-			names(res) = gsub("varBetaHat", "varParam", names(res))
-			res$varParam$information = theInf$information
-
-
-			res$summary = 	theInf$summary
-
-			if(is.na(res$summary ['anisoAngleDegrees','ci0.05']) &
-				!is.na(res$summary ['anisoAngleRadians','ci0.05']) ){
-				ciCols = grep("^ci0\\.[[:digit:]]+$", colnames(res$summary ))
-				res$summary ['anisoAngleDegrees',ciCols] =
-				(360/(2*pi))*res$summary ['anisoAngleRadians',ciCols]
-				res$summary ['anisoAngleDegrees','Estimated'] = 
-				res$summary ['anisoAngleRadians','Estimated']
-			}
+		res$varBetaHat = list(beta=res$varBetaHat)
+		names(res) = gsub("varBetaHat", "varParam", names(res))
+		res$varParam$information = theInf$information
 
 
-			if(FALSE){
-				for(Dvar in names(covariates)) {
-					theLevels =levels(covariates[[Dvar]])[[1]]
-					if(!is.null(nrow(theLevels))){
-						for(D in 1:nrow(theLevels)) {
-							rownames(res$summary) = gsub(
-								paste("(factor)?(\\()?", Dvar, "(\\))?:?", 
-									theLevels[D,1],"$",sep=""),
-								paste(Dvar, ":",theLevels[D,2],sep=""), 
-								rownames(res$summary))
-						}
+		res$summary = 	theInf$summary
+
+		if(is.na(res$summary ['anisoAngleDegrees','ci0.05']) &
+			!is.na(res$summary ['anisoAngleRadians','ci0.05']) ){
+			ciCols = grep("^ci0\\.[[:digit:]]+$", colnames(res$summary ))
+			res$summary ['anisoAngleDegrees',ciCols] =
+			(360/(2*pi))*res$summary ['anisoAngleRadians',ciCols]
+			res$summary ['anisoAngleDegrees','Estimated'] = 
+			res$summary ['anisoAngleRadians','Estimated']
+		}
+
+
+		if(FALSE){
+			for(Dvar in names(covariates)) {
+				theLevels =levels(covariates[[Dvar]])[[1]]
+				if(!is.null(nrow(theLevels))){
+					for(D in 1:nrow(theLevels)) {
+						rownames(res$summary) = gsub(
+							paste("(factor)?(\\()?", Dvar, "(\\))?:?", 
+								theLevels[D,1],"$",sep=""),
+							paste(Dvar, ":",theLevels[D,2],sep=""), 
+							rownames(res$summary))
 					}
 				}
 			}
+		}
 
-			theOrder = c('sdNugget','sdSpatial', 'range', 'shape','anisoRatio',
-				'anisoAngleRadians','anisoAngleDegrees', 'boxcox')  
-			theOrder = na.omit(match(theOrder, rownames(res$summary)))
-			notInOrder = (1:nrow(res$summary))[-theOrder]
-			res$summary = res$summary[c(notInOrder,theOrder),]
+		theOrder = c('sdNugget','sdSpatial', 'range', 'shape','anisoRatio',
+			'anisoAngleRadians','anisoAngleDegrees', 'boxcox')  
+		theOrder = na.omit(match(theOrder, rownames(res$summary)))
+		notInOrder = (1:nrow(res$summary))[-theOrder]
+		res$summary = res$summary[c(notInOrder,theOrder),]
 
 
 	   # if range is very big, it's probably in metres, convert to km
-			if(res$summary['range','estimate']>1000) {
-				logicalCol = names(res$summary) == "Estimated"
-				res$summary["range",!logicalCol] = 
-				res$summary["range",!logicalCol] /1000
-				rownames(res$summary) = gsub("^range$", "range/1000", 
-					rownames(res$summary))
-			}
-			class(res) = c('lgm',class(res))    
-			return(res)
+		if(res$summary['range','estimate']>1000) {
+			logicalCol = names(res$summary) == "Estimated"
+			res$summary["range",!logicalCol] = 
+			res$summary["range",!logicalCol] /1000
+			rownames(res$summary) = gsub("^range$", "range/1000", 
+				rownames(res$summary))
 		}
+		class(res) = c('lgm',class(res))    
+		return(res)
+	}
 
-		)
+)
 AIC.lgm = function(object, ..., k = 2) {
 
 	AIC(logLik(object, ..., k))
@@ -344,17 +346,17 @@ logLik.lgm = function(object, ...){
 		object$summary[
 		grep("^anisoAngle", srows, invert=TRUE),
 		'Estimated']
-		) + any(
+	) + any(
 		object$summary[
 		grep("^anisoAngle", srows, invert=FALSE),
 		'Estimated']
-		)
-		attributes(res)$df = df
-		attributes(res)$nobs = try(nrow(data.frame(object$data)), silent=TRUE)
-		class(res)= 'logLik'
-		res
-	}
+	)
+	attributes(res)$df = df
+	attributes(res)$nobs = try(nrow(data.frame(object$data)), silent=TRUE)
+	class(res)= 'logLik'
+	res
+}
 
-	summary.lgm = function(object, ...) {
-		object$summary
-	}
+summary.lgm = function(object, ...) {
+	object$summary
+}

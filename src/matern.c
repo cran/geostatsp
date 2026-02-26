@@ -238,21 +238,38 @@ void maternAniso(
   }// end for Dcol
 
   if(*type >1 ){ // cholesky
-      F77_CALL(dpotrf)("L", N, result, N, &Dcol FCONE);
+      int requestedType = *type;
+      int infoLapack;
+      F77_CALL(dpotrf)("L", N, result, N, &infoLapack FCONE);
+      if(infoLapack != 0){
+          *type = infoLapack;
+          *halfLogDet = NA_REAL;
+          return;
+      }
       *halfLogDet=0;  // the log determinant
 
       for(Drow = 0; Drow < N2; Drow++)
         *halfLogDet += log(result[Drow*N2+Drow]);
-      if(*type == 3){ // precision
+      if(requestedType == 3){ // precision
           F77_NAME(dpotri)("L", N,
-              result, N, &Dcol FCONE);
-      } else if (*type==4) {// cholkesy of precision
+              result, N, &infoLapack FCONE);
+          if(infoLapack != 0){
+              *type = infoLapack;
+              *halfLogDet = NA_REAL;
+              return;
+          }
+      } else if (requestedType==4) {// cholkesy of precision
             F77_NAME(dtrtri)("L", "N",N,
-              result, N, &Dcol FCONE FCONE);
+              result, N, &infoLapack FCONE FCONE);
+            if(infoLapack != 0){
+                *type = infoLapack;
+                *halfLogDet = NA_REAL;
+                return;
+            }
       } else {
           Drow = 0;
       }
-      *type = Dcol;
+      *type = 0;
   }
 
 //  free(bk);
@@ -341,20 +358,37 @@ void matern(
   } // Dcol
 
   if(*type >1 ){ // cholesky
-      F77_CALL(dpotrf)("L", N, result, N, &Dcol FCONE);
+      int requestedType = *type;
+      int infoLapack;
+      F77_CALL(dpotrf)("L", N, result, N, &infoLapack FCONE);
+      if(infoLapack != 0){
+          *type = infoLapack;
+          *halfLogDet = NA_REAL;
+          return;
+      }
       *halfLogDet=0;  // the log determinant
       for(D = 0; D < Nrow; D++)
         *halfLogDet += log(result[D*Nrow+D]);
-      if(*type == 3){//precision
+      if(requestedType == 3){//precision
           F77_NAME(dpotri)("L", N,
-              result, N, &Dcol FCONE);
-      } else if (*type==4) {// cholesky of precision
+              result, N, &infoLapack FCONE);
+          if(infoLapack != 0){
+              *type = infoLapack;
+              *halfLogDet = NA_REAL;
+              return;
+          }
+      } else if (requestedType==4) {// cholesky of precision
           F77_NAME(dtrtri)("L", "N",N,
-              result, N, &Dcol FCONE FCONE);
+              result, N, &infoLapack FCONE FCONE);
+          if(infoLapack != 0){
+              *type = infoLapack;
+              *halfLogDet = NA_REAL;
+              return;
+          }
       } else {
           D = 0;
       }
-      *type = Dcol;
+      *type = 0;
   }
   //free(bk);
 }
@@ -449,6 +483,7 @@ SEXP maternPoints(
 
   SEXP halfLogDet= PROTECT(NEW_NUMERIC(1));
   int N= Rf_nrows(points);
+  int requestedType = INTEGER(type)[0];
 
   
   
@@ -467,6 +502,9 @@ SEXP maternPoints(
       INTEGER(type),
       REAL(halfLogDet)
   );
+  if(requestedType > 1 && INTEGER(type)[0] != 0){
+      error("LAPACK factorization failed in maternPoints, info=%d", INTEGER(type)[0]);
+  }
   UNPROTECT(1);
   return halfLogDet;
 }
@@ -486,7 +524,7 @@ SEXP maternDistance(
   double halfLogDet;
   const char
   *valid[] = {"dsyMatrix"};
-  int typeInt=*type, D, D2, N;
+  int typeInt=*type, requestedType=*type, D, D2, N;
   double *P, *Presult;
 
 
@@ -525,6 +563,9 @@ SEXP maternDistance(
       &typeInt,
       &halfLogDet //REAL(halfLogDet)
       );
+  if(requestedType > 1 && typeInt != 0){
+      error("LAPACK factorization failed in maternDistance, info=%d", typeInt);
+  }
 //  UNPROTECT(1);
   return Rf_ScalarReal(halfLogDet);
 }
@@ -662,14 +703,29 @@ void maternRaster(
   } // y of raster B
 
   if(*type >1 ){ // cholesky
-      F77_CALL(dpotrf)("L", &Ncell, result, &Ncell, &Ncell FCONE);
-      if(*type == 3){//precision
-          F77_NAME(dpotri)("L", &Ncell,
-              result, &Ncell,&Ncell FCONE);
-      } else if (*type==4) {// cholesky of precision
-          F77_NAME(dtrtri)("L", "N", &Ncell,
-              result, &Ncell,&Ncell FCONE FCONE);
+      int requestedType = *type;
+      int infoLapack;
+      F77_CALL(dpotrf)("L", &Ncell, result, &Ncell, &infoLapack FCONE);
+      if(infoLapack != 0){
+          *type = infoLapack;
+          error("LAPACK dpotrf failed in maternRaster, info=%d", infoLapack);
       }
+      if(requestedType == 3){//precision
+          F77_NAME(dpotri)("L", &Ncell,
+              result, &Ncell,&infoLapack FCONE);
+          if(infoLapack != 0){
+              *type = infoLapack;
+              error("LAPACK dpotri failed in maternRaster, info=%d", infoLapack);
+          }
+      } else if (requestedType==4) {// cholesky of precision
+          F77_NAME(dtrtri)("L", "N", &Ncell,
+              result, &Ncell,&infoLapack FCONE FCONE);
+          if(infoLapack != 0){
+              *type = infoLapack;
+              error("LAPACK dtrtri failed in maternRaster, info=%d", infoLapack);
+          }
+      }
+      *type = 0;
   }
 
 //  free(bk);
@@ -805,6 +861,9 @@ void maternRasterConditional(
       F77_CALL(dpotrf)("L",
           &Ncell, varGrid,
           &Ncell, &D FCONE);
+      if(D != 0){
+          error("LAPACK dpotrf failed in maternRasterConditional (conditional covariance), info=%d", D);
+      }
 
 
       // multiply, want L %*% Z
@@ -846,4 +905,3 @@ void maternRasterConditional(
 //  free(covDataGrid);
   UNPROTECT(2);
 }
-

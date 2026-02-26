@@ -1,5 +1,15 @@
 library("geostatsp")
 
+Sys.setenv(
+  OMP_NUM_THREADS = "2",
+  OPENBLAS_NUM_THREADS = "2",
+  MKL_NUM_THREADS = "2",
+  BLIS_NUM_THREADS = "2",
+  VECLIB_MAXIMUM_THREADS = "2",   # macOS Accelerate
+  NUMEXPR_NUM_THREADS = "2"
+)
+options(mc.cores = 2)
+
 model <- c(var=5, range=20,shape=0.5)
 
 # any old crs
@@ -89,7 +99,7 @@ xPoints = suppressWarnings(
     model=swissRes$param,
     data=swissRes$data[,'resid'],
     x=swissRes$predict,
-    err.model=swissRes$param["nugget"],
+    err.model=swissRes$param["nugget"]+1,
     n=3
   )
   
@@ -101,10 +111,10 @@ xPoints = suppressWarnings(
   swissSim = RFsimulate(model=
       rbind(
         swissRes$param,
-        swissRes$param*0.99),
+        swissRes$param*0.9),
     data=swissRes$data[,'resid'],
     x=swissRes$predict,
-    err.model=c(1, 0.99)*swissRes$param["nugget"],
+    err.model=c(1, 0.9)*swissRes$param["nugget"]+1,
     n=3
   )
 # plot the simulated random effect
@@ -119,14 +129,13 @@ xPoints = suppressWarnings(
         0.99*swissRes$param,
         1.01*swissRes$param),
     data=swissRes$data[,rep('resid',3)],
-    err.model=c(1, 0.99, 1.01)*swissRes$param["nugget"],
+    err.model=c(1, 0.99, 1.01)*swissRes$param["nugget"]+1,
     x=swissRes$predict,
     n=3
   )
 # plot the simulated random effect
   plot(swissSim[[1]])
   plot(swissBorder, add=TRUE)
-  
   
   
   
@@ -147,3 +156,5 @@ xPoints = suppressWarnings(
   points(swissLocation)
   
   
+
+

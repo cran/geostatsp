@@ -73,6 +73,9 @@ void ssqFromXprod(
       &Ncov, xvx,
       &N, // Ncov by Ncov submatrix of N by N matrix
       &infoCholXX FCONE);
+  if(infoCholXX != 0){
+      error("LAPACK dpotrf failed in ssqFromXprod (X'V^{-1}X), info=%d", infoCholXX);
+  }
 
   // determinant for reml
   *detXVinvX  = 0.0;
@@ -88,6 +91,9 @@ void ssqFromXprod(
       &N,
       &infoInvXX
       FCONE);
+  if(infoInvXX != 0){
+      error("LAPACK dpotri failed in ssqFromXprod (X'V^{-1}X) inversion, info=%d", infoInvXX);
+  }
 
   // put beta hat in last row
   // (first Nrep rows still have LyLx)
@@ -625,5 +631,4 @@ copyLx = (double *) R_alloc(Nxy*Nrep, sizeof(double));
   UNPROTECT(1);
   return resultR;
 }
-
 
